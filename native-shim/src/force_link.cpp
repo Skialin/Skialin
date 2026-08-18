@@ -2,6 +2,7 @@
 #include "include/core/SkCanvas.h"
 #include "include/core/SkColorSpace.h"
 #include "include/core/SkData.h"
+#include "include/core/SkImageInfo.h"
 #include "include/core/SkImage.h"
 #include "include/core/SkMatrix.h"
 #include "include/core/SkPaint.h"
@@ -81,6 +82,22 @@ SKIALIN_NOINLINE void touch(const SkColorSpace& cs) {
     (void)cs.toXYZD50Hash();
     (void)cs.transferFnHash();
     (void)cs.hash();
+}
+
+SKIALIN_NOINLINE void touch(const SkImageInfo& info) {
+    (void)info.width();
+    (void)info.height();
+    (void)info.colorType();
+    (void)info.alphaType();
+    (void)info.isEmpty();
+    (void)info.isOpaque();
+    (void)info.gammaCloseToSRGB();
+    (void)info.bytesPerPixel();
+    (void)info.shiftPerPixel();
+    (void)info.minRowBytes64();
+    (void)info.minRowBytes();
+    (void)info.computeMinByteSize();
+    (void)info.validRowBytes(0);
 }
 
 }  // namespace skialin_force_link
