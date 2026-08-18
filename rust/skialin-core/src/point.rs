@@ -23,3 +23,27 @@ impl From<sys::SkPoint> for Point {
         Point { x: p.fX, y: p.fY }
     }
 }
+
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub struct IPoint {
+    pub x: i32,
+    pub y: i32,
+}
+
+impl IPoint {
+    pub const fn new(x: i32, y: i32) -> Self {
+        IPoint { x, y }
+    }
+}
+
+impl From<IPoint> for sys::SkIPoint {
+    fn from(p: IPoint) -> Self {
+        sys::SkIPoint { fX: p.x, fY: p.y }
+    }
+}
+
+impl From<sys::SkIPoint> for IPoint {
+    fn from(p: sys::SkIPoint) -> Self {
+        IPoint { x: p.fX, y: p.fY }
+    }
+}
