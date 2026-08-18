@@ -48,6 +48,10 @@ impl PathBuilder {
         PathBuilder(crate::support::new_boxed(sys::SkPathBuilder_SkPathBuilder))
     }
 
+    pub(crate) fn as_raw_mut(&mut self) -> *mut sys::SkPathBuilder {
+        &mut *self.0
+    }
+
     pub fn move_to(&mut self, point: Point) -> &mut Self {
         unsafe { self.0.moveTo(point.into()) };
         self

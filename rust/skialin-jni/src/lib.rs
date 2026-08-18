@@ -18,6 +18,7 @@ mod paragraph_builder;
 mod paragraph_style;
 mod path;
 mod path_effect;
+mod path_measure;
 mod pixmap;
 mod rrect;
 mod runtime_effect;

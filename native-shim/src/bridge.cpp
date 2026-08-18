@@ -40,6 +40,7 @@
 #include "include/effects/SkCornerPathEffect.h"
 #include "include/effects/SkDiscretePathEffect.h"
 #include "include/effects/SkTrimPathEffect.h"
+#include "include/core/SkPathMeasure.h"
 #include "include/core/SkString.h"
 #include "include/core/SkStream.h"
 #include "include/encode/SkPngEncoder.h"
@@ -1263,6 +1264,45 @@ SkPathEffect* skialin_bridge_PathEffect_MakeSum(SkPathEffect* first, SkPathEffec
 
 void skialin_bridge_Paint_setPathEffect(SkPaint* paint, SkPathEffect* effect) {
     paint->setPathEffect(sk_ref_sp(effect));
+}
+
+SkPathMeasure* skialin_bridge_PathMeasure_new(const SkPath* path, bool forceClosed, float resScale) {
+    if (path) {
+        return new SkPathMeasure(*path, forceClosed, resScale);
+    }
+    return new SkPathMeasure();
+}
+
+void skialin_bridge_PathMeasure_delete(SkPathMeasure* measure) {
+    delete measure;
+}
+
+void skialin_bridge_PathMeasure_setPath(SkPathMeasure* measure, const SkPath* path, bool forceClosed) {
+    measure->setPath(path, forceClosed);
+}
+
+float skialin_bridge_PathMeasure_getLength(SkPathMeasure* measure) {
+    return measure->getLength();
+}
+
+bool skialin_bridge_PathMeasure_getPosTan(SkPathMeasure* measure, float distance, SkPoint* outPosition, SkPoint* outTangent) {
+    return measure->getPosTan(distance, outPosition, outTangent);
+}
+
+bool skialin_bridge_PathMeasure_getMatrix(SkPathMeasure* measure, float distance, SkMatrix* outMatrix, int32_t flags) {
+    return measure->getMatrix(distance, outMatrix, static_cast<SkPathMeasure::MatrixFlags>(flags));
+}
+
+bool skialin_bridge_PathMeasure_getSegment(SkPathMeasure* measure, float startD, float stopD, SkPathBuilder* dst, bool startWithMoveTo) {
+    return measure->getSegment(startD, stopD, dst, startWithMoveTo);
+}
+
+bool skialin_bridge_PathMeasure_isClosed(SkPathMeasure* measure) {
+    return measure->isClosed();
+}
+
+bool skialin_bridge_PathMeasure_nextContour(SkPathMeasure* measure) {
+    return measure->nextContour();
 }
 
 }  // extern "C"

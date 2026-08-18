@@ -36,6 +36,7 @@ class SkMaskFilter;
 class SkRuntimeEffect;
 class SkRRect;
 class SkPathEffect;
+class SkPathMeasure;
 enum class SkBlendMode;
 enum class SkClipOp;
 enum SkBlurStyle : int;
@@ -315,6 +316,25 @@ SkPathEffect* skialin_bridge_PathEffect_MakeSum(SkPathEffect* first, SkPathEffec
 
 /* Attaches a path effect to paint; the effect may be null to clear it. */
 void skialin_bridge_Paint_setPathEffect(SkPaint* paint, SkPathEffect* effect);
+
+/* PathMeasure: owned by the caller. Free with skialin_bridge_PathMeasure_delete.
+ * Routed entirely through the bridge, not direct bindgen calls: SkPathMeasure
+ * holds a non-trivial sk_sp<SkContourMeasure> member, the same category as
+ * SkFont, and is never given to bindgen (forward-declared only) so there
+ * are no raw symbols to call anyway. flags for getMatrix: 0x1 = position,
+ * 0x2 = tangent, 0x3 = both (matches SkPathMeasure::MatrixFlags). */
+SkPathMeasure* skialin_bridge_PathMeasure_new(const SkPath* path, bool forceClosed, float resScale);
+void skialin_bridge_PathMeasure_delete(SkPathMeasure* measure);
+/* path may be null to clear it. */
+void skialin_bridge_PathMeasure_setPath(SkPathMeasure* measure, const SkPath* path, bool forceClosed);
+float skialin_bridge_PathMeasure_getLength(SkPathMeasure* measure);
+/* False (position/tangent unchanged) if there is no path or it's zero-length. */
+bool skialin_bridge_PathMeasure_getPosTan(SkPathMeasure* measure, float distance, SkPoint* outPosition, SkPoint* outTangent);
+bool skialin_bridge_PathMeasure_getMatrix(SkPathMeasure* measure, float distance, SkMatrix* outMatrix, int32_t flags);
+/* False (dst untouched) if the segment is zero-length or startD > stopD. */
+bool skialin_bridge_PathMeasure_getSegment(SkPathMeasure* measure, float startD, float stopD, SkPathBuilder* dst, bool startWithMoveTo);
+bool skialin_bridge_PathMeasure_isClosed(SkPathMeasure* measure);
+bool skialin_bridge_PathMeasure_nextContour(SkPathMeasure* measure);
 
 /* Typeface: ref-owned by the caller. Free with skialin_bridge_Typeface_unref.
  * SkTypeface has pure virtual methods (onGetFamilyName etc.), which defeats
