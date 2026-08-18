@@ -37,6 +37,8 @@ class SkRuntimeEffect;
 class SkRRect;
 class SkPathEffect;
 class SkPathMeasure;
+class SkM44;
+class SkVertices;
 enum class SkBlendMode;
 enum class SkClipOp;
 enum SkBlurStyle : int;
@@ -343,6 +345,39 @@ bool skialin_bridge_PathMeasure_nextContour(SkPathMeasure* measure);
 SkPath* skialin_bridge_Path_op(const SkPath* one, const SkPath* two, int32_t op);
 /* Null on failure. */
 SkPath* skialin_bridge_Path_simplify(const SkPath* path);
+
+/* M44: heap-allocated with `new`/`delete`. A plain value class (16 floats),
+ * but never given to bindgen (forward-declared only), so routed through
+ * the bridge like RRect. rowMajor16, where present, is 16 floats in row-
+ * major order (matches the SkM44(m0, m4, m8, m12, m1, m5, ...) constructor
+ * and getRowMajor()/getColMajor() naming). */
+SkM44* skialin_bridge_M44_MakeIdentity(void);
+SkM44* skialin_bridge_M44_MakeFromRowMajor(const float* rowMajor16);
+SkM44* skialin_bridge_M44_MakeTranslate(float x, float y, float z);
+SkM44* skialin_bridge_M44_MakeScale(float x, float y, float z);
+/* axis need not be normalized. */
+SkM44* skialin_bridge_M44_MakeRotate(float axisX, float axisY, float axisZ, float radians);
+void skialin_bridge_M44_delete(SkM44* m);
+SkM44* skialin_bridge_M44_clone(const SkM44* m);
+void skialin_bridge_M44_getRowMajor(const SkM44* m, float* outRowMajor16);
+SkM44* skialin_bridge_M44_concat(const SkM44* a, const SkM44* b);
+/* Null if `m` isn't invertible. */
+SkM44* skialin_bridge_M44_invert(const SkM44* m);
+/* v4 is a 4-float [x, y, z, w] vector; outV4 receives the transformed result. */
+void skialin_bridge_M44_mapV4(const SkM44* m, const float* v4, float* outV4);
+bool skialin_bridge_M44_equals(const SkM44* a, const SkM44* b);
+
+/* Vertices: ref-owned by the caller. Free with skialin_bridge_Vertices_unref.
+ * texs/colors/indices may be null (indices additionally needs indexCount 0).
+ * mode: 0 triangles, 1 triangle-strip, 2 triangle-fan (matches
+ * SkVertices::VertexMode's declaration order). */
+void skialin_bridge_Vertices_unref(SkVertices* vertices);
+SkVertices* skialin_bridge_Vertices_MakeCopy(
+    int32_t mode, int32_t vertexCount, const SkPoint* positions, const SkPoint* texs, const uint32_t* colors,
+    int32_t indexCount, const uint16_t* indices);
+void skialin_bridge_Canvas_drawVertices(SkCanvas* canvas, const SkVertices* vertices, SkBlendMode mode, const SkPaint* paint);
+/* Draws using an SkM44 local-to-device transform concatenated onto the canvas's current matrix. */
+void skialin_bridge_Canvas_concat44(SkCanvas* canvas, const SkM44* matrix);
 
 /* Typeface: ref-owned by the caller. Free with skialin_bridge_Typeface_unref.
  * SkTypeface has pure virtual methods (onGetFamilyName etc.), which defeats

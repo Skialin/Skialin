@@ -42,6 +42,8 @@
 #include "include/effects/SkTrimPathEffect.h"
 #include "include/core/SkPathMeasure.h"
 #include "include/pathops/SkPathOps.h"
+#include "include/core/SkM44.h"
+#include "include/core/SkVertices.h"
 #include "include/core/SkString.h"
 #include "include/core/SkStream.h"
 #include "include/encode/SkPngEncoder.h"
@@ -1320,6 +1322,83 @@ SkPath* skialin_bridge_Path_simplify(const SkPath* path) {
         return nullptr;
     }
     return new SkPath(*result);
+}
+
+SkM44* skialin_bridge_M44_MakeIdentity(void) {
+    return new SkM44();
+}
+
+SkM44* skialin_bridge_M44_MakeFromRowMajor(const float* rowMajor16) {
+    return new SkM44(SkM44::RowMajor(rowMajor16));
+}
+
+SkM44* skialin_bridge_M44_MakeTranslate(float x, float y, float z) {
+    return new SkM44(SkM44::Translate(x, y, z));
+}
+
+SkM44* skialin_bridge_M44_MakeScale(float x, float y, float z) {
+    return new SkM44(SkM44::Scale(x, y, z));
+}
+
+SkM44* skialin_bridge_M44_MakeRotate(float axisX, float axisY, float axisZ, float radians) {
+    return new SkM44(SkM44::Rotate(SkV3{axisX, axisY, axisZ}, radians));
+}
+
+void skialin_bridge_M44_delete(SkM44* m) {
+    delete m;
+}
+
+SkM44* skialin_bridge_M44_clone(const SkM44* m) {
+    return new SkM44(*m);
+}
+
+void skialin_bridge_M44_getRowMajor(const SkM44* m, float* outRowMajor16) {
+    m->getRowMajor(outRowMajor16);
+}
+
+SkM44* skialin_bridge_M44_concat(const SkM44* a, const SkM44* b) {
+    return new SkM44(*a, *b);
+}
+
+SkM44* skialin_bridge_M44_invert(const SkM44* m) {
+    SkM44 inverse;
+    if (!m->invert(&inverse)) {
+        return nullptr;
+    }
+    return new SkM44(inverse);
+}
+
+void skialin_bridge_M44_mapV4(const SkM44* m, const float* v4, float* outV4) {
+    SkV4 result = *m * SkV4{v4[0], v4[1], v4[2], v4[3]};
+    outV4[0] = result.x;
+    outV4[1] = result.y;
+    outV4[2] = result.z;
+    outV4[3] = result.w;
+}
+
+bool skialin_bridge_M44_equals(const SkM44* a, const SkM44* b) {
+    return *a == *b;
+}
+
+void skialin_bridge_Vertices_unref(SkVertices* vertices) {
+    SkSafeUnref(vertices);
+}
+
+SkVertices* skialin_bridge_Vertices_MakeCopy(
+    int32_t mode, int32_t vertexCount, const SkPoint* positions, const SkPoint* texs, const uint32_t* colors,
+    int32_t indexCount, const uint16_t* indices) {
+    return SkVertices::MakeCopy(
+                   static_cast<SkVertices::VertexMode>(mode), vertexCount, positions, texs,
+                   reinterpret_cast<const SkColor*>(colors), indexCount, indices)
+        .release();
+}
+
+void skialin_bridge_Canvas_drawVertices(SkCanvas* canvas, const SkVertices* vertices, SkBlendMode mode, const SkPaint* paint) {
+    canvas->drawVertices(vertices, mode, *paint);
+}
+
+void skialin_bridge_Canvas_concat44(SkCanvas* canvas, const SkM44* matrix) {
+    canvas->concat(*matrix);
 }
 
 }  // extern "C"

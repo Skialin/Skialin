@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::paint::BlendMode;
 use crate::path::Path;
-use crate::{sys, Color, Image, Matrix, Paint, Point, RRect, Rect, SamplingOptions, TextBlob};
+use crate::{sys, Color, Image, Matrix, Paint, Point, RRect, Rect, SamplingOptions, TextBlob, Vertices, M44};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum PointMode {
@@ -244,5 +244,14 @@ impl<'a> Canvas<'a> {
 
     pub fn clip_rrect(&mut self, rrect: &RRect, op: ClipOp) {
         unsafe { sys::skialin_bridge_Canvas_clipRRect(self.ptr, rrect.0, op.into()) };
+    }
+
+    pub fn draw_vertices(&mut self, vertices: &Vertices, mode: BlendMode, paint: &Paint) {
+        unsafe { sys::skialin_bridge_Canvas_drawVertices(self.ptr, vertices.0, mode.into(), &*paint.0) };
+    }
+
+    /// Concatenates a 4x4 local-to-device transform onto the canvas's current matrix.
+    pub fn concat_44(&mut self, matrix: &M44) {
+        unsafe { sys::skialin_bridge_Canvas_concat44(self.ptr, matrix.0) };
     }
 }

@@ -86,6 +86,11 @@ class Canvas internal constructor(internal val ptr: Long) {
 
     fun clipRRect(rrect: RRect, op: ClipOp = ClipOp.INTERSECT) = CanvasNative.nClipRRect(ptr, rrect.nativePtr, op.ordinal)
 
+    fun drawVertices(vertices: Vertices, mode: BlendMode, paint: Paint) = CanvasNative.nDrawVertices(ptr, vertices.nativePtr, mode.ordinal, paint.nativePtr)
+
+    /** Concatenates a 4x4 local-to-device transform onto the canvas's current matrix. */
+    fun concat44(matrix: M44) = CanvasNative.nConcat44(ptr, matrix.nativePtr)
+
     /**
      * Saves the canvas state, then redirects drawing to a new layer. [bounds], if given, is
      * a hint for the layer's extent. Returns the new save count, for [restoreToCount].
@@ -149,4 +154,6 @@ private object CanvasNative {
     external fun nDrawRRect(ptr: Long, rrectPtr: Long, paintPtr: Long)
     external fun nDrawDRRect(ptr: Long, outerPtr: Long, innerPtr: Long, paintPtr: Long)
     external fun nClipRRect(ptr: Long, rrectPtr: Long, op: Int)
+    external fun nDrawVertices(ptr: Long, verticesPtr: Long, mode: Int, paintPtr: Long)
+    external fun nConcat44(ptr: Long, matrixPtr: Long)
 }

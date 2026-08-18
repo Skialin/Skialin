@@ -1,7 +1,7 @@
 use jni::sys::{jboolean, jfloat, jfloatArray, jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{Canvas, ClipOp, Image, Matrix, Paint, Path, Point, PointMode, RRect, Rect, SamplingOptions, SrcRectConstraint, TextBlob};
+use skialin_core::{Canvas, ClipOp, Image, Matrix, Paint, Path, Point, PointMode, RRect, Rect, SamplingOptions, SrcRectConstraint, TextBlob, Vertices, M44};
 
 use crate::paint::blend_mode_from_ordinal;
 use crate::util::borrow;
@@ -343,6 +343,16 @@ pub extern "system" fn Java_org_skialin_CanvasNative_nDrawDRRect(_env: JNIEnv, _
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_CanvasNative_nClipRRect(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, rrect_ptr: jlong, op: jint) {
     canvas_from_ptr(ptr).clip_rrect(unsafe { borrow::<RRect>(rrect_ptr) }, clip_op_from_ordinal(op));
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nDrawVertices(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, vertices_ptr: jlong, mode: jint, paint_ptr: jlong) {
+    canvas_from_ptr(ptr).draw_vertices(unsafe { borrow::<Vertices>(vertices_ptr) }, blend_mode_from_ordinal(mode), unsafe { borrow::<Paint>(paint_ptr) });
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nConcat44(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, matrix_ptr: jlong) {
+    canvas_from_ptr(ptr).concat_44(unsafe { borrow::<M44>(matrix_ptr) });
 }
 
 #[no_mangle]
