@@ -8,5 +8,6 @@ mod image_info;
 mod matrix;
 mod paint;
 mod path;
+mod pixmap;
 mod surface;
 mod util;
