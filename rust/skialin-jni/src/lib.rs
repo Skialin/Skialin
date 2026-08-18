@@ -1,8 +1,10 @@
 mod bitmap;
 mod canvas;
 mod color_space;
+mod color_type;
 mod data;
 mod image;
+mod image_info;
 mod matrix;
 mod paint;
 mod path;

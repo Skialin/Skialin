@@ -18,6 +18,11 @@ fn write_floats(env: &JNIEnv, values: &[f32]) -> jfloatArray {
     array.into_raw()
 }
 
+/// `ptr` is a `ColorSpace` pointer, or `0` for "no color space".
+pub(crate) fn color_space_ptr_from_jlong<'a>(ptr: jlong) -> Option<&'a ColorSpace> {
+    (ptr != 0).then(|| unsafe { borrow::<ColorSpace>(ptr) })
+}
+
 fn cicp_primaries_from_code(v: jint) -> CicpPrimaries {
     use CicpPrimaries::*;
     match v {

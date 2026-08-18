@@ -1,27 +1,9 @@
 use jni::sys::{jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{AlphaType, Bitmap, ColorType};
+use skialin_core::{Bitmap, ImageInfo};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
-
-fn color_type_from_ordinal(ordinal: jint) -> ColorType {
-    match ordinal {
-        1 => ColorType::Bgra8888,
-        2 => ColorType::Alpha8,
-        3 => ColorType::Gray8,
-        _ => ColorType::Rgba8888,
-    }
-}
-
-fn alpha_type_from_ordinal(ordinal: jint) -> AlphaType {
-    match ordinal {
-        1 => AlphaType::Opaque,
-        2 => AlphaType::Premul,
-        3 => AlphaType::Unpremul,
-        _ => AlphaType::Unknown,
-    }
-}
 
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_BitmapNative_nMake(_env: JNIEnv, _class: jni::objects::JClass) -> jlong {
@@ -34,16 +16,9 @@ pub extern "system" fn Java_org_skialin_BitmapNative_nRelease(_env: JNIEnv, _cla
 }
 
 #[no_mangle]
-pub extern "system" fn Java_org_skialin_BitmapNative_nAllocPixels(
-    _env: JNIEnv,
-    _class: jni::objects::JClass,
-    ptr: jlong,
-    width: jint,
-    height: jint,
-    color_type: jint,
-    alpha_type: jint,
-) {
-    unsafe { borrow_mut::<Bitmap>(ptr) }.alloc_pixels(width, height, color_type_from_ordinal(color_type), alpha_type_from_ordinal(alpha_type));
+pub extern "system" fn Java_org_skialin_BitmapNative_nAllocPixels(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, info_ptr: jlong) {
+    let info = unsafe { borrow::<ImageInfo>(info_ptr) };
+    unsafe { borrow_mut::<Bitmap>(ptr) }.alloc_pixels(info);
 }
 
 #[no_mangle]
