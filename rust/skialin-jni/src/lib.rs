@@ -13,5 +13,6 @@ mod path;
 mod pixmap;
 mod shader;
 mod surface;
+mod text_blob;
 mod typeface;
 mod util;

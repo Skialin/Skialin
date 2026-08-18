@@ -29,6 +29,7 @@ class SkPaint;
 class SkTypeface;
 class SkFontMgr;
 class SkFont;
+class SkTextBlob;
 
 extern "C" {
 
@@ -266,5 +267,18 @@ void skialin_bridge_Font_delete(SkFont* font);
 SkTypeface* skialin_bridge_Font_refTypeface(const SkFont* font);
 /* typeface may be null to clear it; ref'd by the bridge, not consumed. */
 void skialin_bridge_Font_setTypeface(SkFont* font, SkTypeface* typeface);
+
+/* TextBlob: ref-owned by the caller. Free with skialin_bridge_TextBlob_unref.
+ * Factories return sk_sp<SkTextBlob> by value in the real API, which hits
+ * the same by-value ABI hazard as SkPath (gotcha #1), so they're bridged.
+ * text is encoded per `encoding` (SkTextEncoding::kUTF8 = 0, kUTF16 = 1,
+ * kUTF32 = 2, kGlyphID = 3); byteLength is the byte length of text.
+ * Null if byteLength is zero. */
+void skialin_bridge_TextBlob_unref(SkTextBlob* blob);
+SkTextBlob* skialin_bridge_TextBlob_MakeFromText(const void* text, size_t byteLength, const SkFont* font, int32_t encoding);
+/* xpos.length must equal the glyph/character count implied by text/byteLength/encoding. */
+SkTextBlob* skialin_bridge_TextBlob_MakeFromPosTextH(const void* text, size_t byteLength, const float* xpos, size_t xposLength, float constY, const SkFont* font, int32_t encoding);
+/* pos.length must equal the glyph/character count implied by text/byteLength/encoding. */
+SkTextBlob* skialin_bridge_TextBlob_MakeFromPosText(const void* text, size_t byteLength, const SkPoint* pos, size_t posLength, const SkFont* font, int32_t encoding);
 
 }  // extern "C"

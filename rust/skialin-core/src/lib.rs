@@ -24,6 +24,7 @@ pub mod shader;
 pub mod size;
 mod support;
 pub mod surface;
+pub mod text_blob;
 pub mod tile_mode;
 pub mod typeface;
 
@@ -50,5 +51,6 @@ pub use sampling_options::SamplingOptions;
 pub use shader::Shader;
 pub use size::ISize;
 pub use surface::Surface;
+pub use text_blob::TextBlob;
 pub use tile_mode::TileMode;
 pub use typeface::Typeface;

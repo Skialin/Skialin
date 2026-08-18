@@ -9,6 +9,7 @@
 #include "include/core/SkPaint.h"
 #include "include/core/SkPathBuilder.h"
 #include "include/core/SkPixmap.h"
+#include "include/core/SkTextBlob.h"
 
 namespace skialin_force_link {
 
@@ -136,6 +137,11 @@ SKIALIN_NOINLINE void touch(const SkFont& font) {
     (void)font.countText(nullptr, 0, SkTextEncoding::kUTF8);
     (void)font.measureText(nullptr, 0, SkTextEncoding::kUTF8);
     font.getWidths({}, {});
+}
+
+SKIALIN_NOINLINE void touch(const SkTextBlob& blob) {
+    (void)blob.bounds();
+    (void)blob.uniqueID();
 }
 
 }  // namespace skialin_force_link

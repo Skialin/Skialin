@@ -24,6 +24,9 @@ class Canvas internal constructor(private val ptr: Long) {
 
     fun drawPath(path: Path, paint: Paint) = CanvasNative.nDrawPath(ptr, path.nativePtr, paint.nativePtr)
 
+    fun drawTextBlob(blob: TextBlob, x: Float, y: Float, paint: Paint) =
+        CanvasNative.nDrawTextBlob(ptr, blob.nativePtr, x, y, paint.nativePtr)
+
     fun save(): Int = CanvasNative.nSave(ptr)
     fun restore() = CanvasNative.nRestore(ptr)
     fun restoreToCount(saveCount: Int) = CanvasNative.nRestoreToCount(ptr, saveCount)
@@ -62,6 +65,7 @@ private object CanvasNative {
     external fun nDrawOval(ptr: Long, left: Float, top: Float, right: Float, bottom: Float, paintPtr: Long)
     external fun nDrawCircle(ptr: Long, cx: Float, cy: Float, radius: Float, paintPtr: Long)
     external fun nDrawPath(ptr: Long, pathPtr: Long, paintPtr: Long)
+    external fun nDrawTextBlob(ptr: Long, blobPtr: Long, x: Float, y: Float, paintPtr: Long)
     external fun nSave(ptr: Long): Int
     external fun nRestore(ptr: Long)
     external fun nRestoreToCount(ptr: Long, saveCount: Int)

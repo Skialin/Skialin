@@ -19,6 +19,7 @@
 #include "include/core/SkFontStyle.h"
 #include "include/core/SkFontMgr.h"
 #include "include/core/SkFont.h"
+#include "include/core/SkTextBlob.h"
 #include "include/core/SkString.h"
 #include "include/core/SkStream.h"
 #include "include/encode/SkPngEncoder.h"
@@ -576,6 +577,22 @@ SkTypeface* skialin_bridge_Font_refTypeface(const SkFont* font) {
 
 void skialin_bridge_Font_setTypeface(SkFont* font, SkTypeface* typeface) {
     font->setTypeface(sk_ref_sp(typeface));
+}
+
+void skialin_bridge_TextBlob_unref(SkTextBlob* blob) {
+    SkSafeUnref(blob);
+}
+
+SkTextBlob* skialin_bridge_TextBlob_MakeFromText(const void* text, size_t byteLength, const SkFont* font, int32_t encoding) {
+    return SkTextBlob::MakeFromText(text, byteLength, *font, static_cast<SkTextEncoding>(encoding)).release();
+}
+
+SkTextBlob* skialin_bridge_TextBlob_MakeFromPosTextH(const void* text, size_t byteLength, const float* xpos, size_t xposLength, float constY, const SkFont* font, int32_t encoding) {
+    return SkTextBlob::MakeFromPosTextH(text, byteLength, {xpos, xposLength}, constY, *font, static_cast<SkTextEncoding>(encoding)).release();
+}
+
+SkTextBlob* skialin_bridge_TextBlob_MakeFromPosText(const void* text, size_t byteLength, const SkPoint* pos, size_t posLength, const SkFont* font, int32_t encoding) {
+    return SkTextBlob::MakeFromPosText(text, byteLength, {pos, posLength}, *font, static_cast<SkTextEncoding>(encoding)).release();
 }
 
 }  // extern "C"

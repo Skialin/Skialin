@@ -1,7 +1,7 @@
 use jni::sys::{jfloat, jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{Canvas, ClipOp, Paint, Path, Point, Rect};
+use skialin_core::{Canvas, ClipOp, Paint, Path, Point, Rect, TextBlob};
 
 use crate::paint::blend_mode_from_ordinal;
 use crate::util::borrow;
@@ -91,6 +91,20 @@ pub extern "system" fn Java_org_skialin_CanvasNative_nDrawCircle(
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_CanvasNative_nDrawPath(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, path_ptr: jlong, paint_ptr: jlong) {
     canvas_from_ptr(ptr).draw_path(unsafe { borrow::<Path>(path_ptr) }, unsafe { borrow::<Paint>(paint_ptr) });
+}
+
+#[allow(clippy::too_many_arguments)]
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nDrawTextBlob(
+    _env: JNIEnv,
+    _class: jni::objects::JClass,
+    ptr: jlong,
+    blob_ptr: jlong,
+    x: jfloat,
+    y: jfloat,
+    paint_ptr: jlong,
+) {
+    canvas_from_ptr(ptr).draw_text_blob(unsafe { borrow::<TextBlob>(blob_ptr) }, x, y, unsafe { borrow::<Paint>(paint_ptr) });
 }
 
 #[no_mangle]

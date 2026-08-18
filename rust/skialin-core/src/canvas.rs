@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::paint::BlendMode;
 use crate::path::Path;
-use crate::{sys, Color, Matrix, Paint, Point, Rect};
+use crate::{sys, Color, Matrix, Paint, Point, Rect, TextBlob};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum ClipOp {
@@ -72,6 +72,10 @@ impl<'a> Canvas<'a> {
 
     pub fn draw_path(&mut self, path: &Path, paint: &Paint) {
         unsafe { self.as_mut().drawPath(path.0, &*paint.0) };
+    }
+
+    pub fn draw_text_blob(&mut self, blob: &TextBlob, x: f32, y: f32, paint: &Paint) {
+        unsafe { self.as_mut().drawTextBlob(blob.0, x, y, &*paint.0) };
     }
 
     pub fn save(&mut self) -> i32 {
