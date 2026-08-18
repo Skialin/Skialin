@@ -3,7 +3,6 @@ package org.skialin
 import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
-
 class ColorSpace internal constructor(ptr: Long) : Managed(ptr, ColorSpaceNative::nRelease) {
     val gammaCloseToSrgb: Boolean get() = ColorSpaceNative.nGammaCloseToSrgb(nativePtr)
     val gammaIsLinear: Boolean get() = ColorSpaceNative.nGammaIsLinear(nativePtr)
