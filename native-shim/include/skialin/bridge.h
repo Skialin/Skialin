@@ -183,6 +183,9 @@ bool skialin_bridge_ImageInfo_equals(const SkImageInfo* a, const SkImageInfo* b)
  * the caller; free with skialin_bridge_Pixmap_delete. Never owns the pixel
  * memory itself: addr must outlive the Pixmap. */
 SkPixmap* skialin_bridge_Pixmap_make(const SkImageInfo* info, const void* addr, size_t rowBytes);
+/* Default-constructed: no pixels, kUnknown_SkColorType, zero size. Useful as
+ * an out-parameter target, e.g. for SkImage::peekPixels. */
+SkPixmap* skialin_bridge_Pixmap_makeEmpty(void);
 void skialin_bridge_Pixmap_delete(SkPixmap* pixmap);
 /* Ref-owned by the caller; null if this Pixmap has no color space. */
 SkColorSpace* skialin_bridge_Pixmap_refColorSpace(const SkPixmap* pixmap);

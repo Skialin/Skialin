@@ -3,6 +3,10 @@ use crate::{sys, AlphaType, ColorSpace, ColorType, IRect, ISize};
 pub struct ImageInfo(pub(crate) *mut sys::SkImageInfo);
 
 impl ImageInfo {
+    pub(crate) unsafe fn from_raw(ptr: *mut sys::SkImageInfo) -> Self {
+        ImageInfo(ptr)
+    }
+
     pub fn new(width: i32, height: i32, color_type: ColorType, alpha_type: AlphaType) -> Self {
         Self::with_color_space(width, height, color_type, alpha_type, None)
     }

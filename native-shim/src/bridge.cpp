@@ -423,6 +423,10 @@ SkPixmap* skialin_bridge_Pixmap_make(const SkImageInfo* info, const void* addr, 
     return new SkPixmap(*info, addr, rowBytes);
 }
 
+SkPixmap* skialin_bridge_Pixmap_makeEmpty(void) {
+    return new SkPixmap();
+}
+
 void skialin_bridge_Pixmap_delete(SkPixmap* pixmap) {
     delete pixmap;
 }

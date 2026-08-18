@@ -4,7 +4,13 @@ import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 import java.nio.ByteBuffer
 
-class Pixmap private constructor(ptr: Long, private val buffer: ByteBuffer) : Managed(ptr, PixmapNative::nRelease) {
+/**
+ * [keepAlive] holds whatever object owns this pixmap's backing memory (a
+ * direct [ByteBuffer] for [make], or the source [Image] for pixmaps
+ * obtained via [Image.peekPixels]), so it can't be GC'd out from under the
+ * native pointer while this [Pixmap] is in use.
+ */
+class Pixmap private constructor(ptr: Long, private val keepAlive: Any?) : Managed(ptr, PixmapNative::nRelease) {
     val addr: Long get() = PixmapNative.nAddr(nativePtr)
     val rowBytes: Long get() = PixmapNative.nRowBytes(nativePtr)
     val width: Int get() = PixmapNative.nWidth(nativePtr)
@@ -26,7 +32,7 @@ class Pixmap private constructor(ptr: Long, private val buffer: ByteBuffer) : Ma
     /** The intersection with `area`, sharing this pixmap's backing storage, or null if empty. */
     fun extractSubset(area: IRect): Pixmap? {
         val ptr = PixmapNative.nExtractSubset(nativePtr, area.left, area.top, area.right, area.bottom)
-        return if (ptr == 0L) null else Pixmap(ptr, buffer)
+        return if (ptr == 0L) null else Pixmap(ptr, keepAlive)
     }
 
     companion object {
@@ -36,6 +42,9 @@ class Pixmap private constructor(ptr: Long, private val buffer: ByteBuffer) : Ma
             val addr = PixmapNative.nBufferAddress(buffer)
             return Pixmap(PixmapNative.nMake(info.nativePtr, addr, rowBytes), buffer)
         }
+
+        /** Wraps a pixmap pointer whose backing memory is kept alive by [keepAlive]. */
+        internal fun wrapNative(ptr: Long, keepAlive: Any?): Pixmap = Pixmap(ptr, keepAlive)
     }
 }
 

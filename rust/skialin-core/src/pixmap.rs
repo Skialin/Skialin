@@ -15,6 +15,16 @@ impl Pixmap {
         Pixmap(sys::skialin_bridge_Pixmap_make(info.0, addr.cast(), row_bytes))
     }
 
+    /// No pixels, `kUnknown` color type, zero size. Useful as an
+    /// out-parameter target, e.g. for [`crate::Image::peek_pixels`].
+    pub fn empty() -> Self {
+        Pixmap(unsafe { sys::skialin_bridge_Pixmap_makeEmpty() })
+    }
+
+    pub(crate) fn as_raw(&self) -> *mut sys::SkPixmap {
+        self.0
+    }
+
     pub fn row_bytes(&self) -> usize {
         unsafe { (*self.0).rowBytes() }
     }

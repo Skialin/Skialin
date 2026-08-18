@@ -3,7 +3,9 @@ package org.skialin
 import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
-class Bitmap : Managed(BitmapNative.nMake(), BitmapNative::nRelease) {
+class Bitmap internal constructor(ptr: Long) : Managed(ptr, BitmapNative::nRelease) {
+    constructor() : this(BitmapNative.nMake())
+
     fun allocPixels(info: ImageInfo) {
         BitmapNative.nAllocPixels(nativePtr, info.nativePtr)
     }
