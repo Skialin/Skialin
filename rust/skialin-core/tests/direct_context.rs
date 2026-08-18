@@ -1,7 +1,7 @@
-//! Ganesh + OpenGL smoke test. Creates a minimal native WGL context (test-only
-//! scaffolding, not part of the shim -- production callers create their GL
-//! context via LWJGL/GLFW instead), wraps it in a `DirectContext`, draws to a
-//! GPU-backed render-target `Surface`, and reads the pixels back.
+//! Ganesh + OpenGL smoke test. WGL context creation here is Windows-only
+//! test scaffolding, not part of the shim; other platforms need their own
+//! equivalent (GLX/EGL/CGL) test, or a GLFW-based one like the Kotlin test.
+#![cfg(windows)]
 
 use skialin_core::{AlphaType, ColorType, DirectContext, ImageInfo, Surface, SurfaceOrigin};
 use std::ptr;
@@ -98,10 +98,8 @@ impl Drop for GlWindow {
 
 #[test]
 fn render_target_round_trip() {
-    // Declared first so it's dropped last: GL context deletion (and, transitively,
-    // GrDirectContext's own GPU resource teardown, since Drop order is
-    // last-declared-drops-first) must happen while this window's context is
-    // still valid.
+    // Dropped last (reverse declaration order): GrDirectContext teardown
+    // needs the GL context to still be valid.
     let _window = GlWindow::new();
 
     let mut context = DirectContext::new_gl().expect("DirectContext::new_gl failed -- no GL driver current?");
@@ -121,8 +119,7 @@ fn render_target_round_trip() {
     let ok = unsafe { image.read_pixels(&info, pixels.as_mut_ptr(), 16 * 4, 0, 0) };
     assert!(ok, "read_pixels failed");
 
-    // ColorType::N32 is Bgra8888 on this platform: bytes are B, G, R, A.
-    // Premul opaque red -> B=0, G=0, R=255, A=255.
+    // ColorType::N32 is Bgra8888: opaque red is B=0, G=0, R=255, A=255.
     assert_eq!(&pixels[0..4], &[0, 0, 255, 255]);
     assert_eq!(&pixels[pixels.len() - 4..], &[0, 0, 255, 255]);
 }

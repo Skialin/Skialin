@@ -22,11 +22,7 @@ class Surface private constructor(ptr: Long) : Managed(ptr, SurfaceNative::nRele
             return if (ptr == 0L) null else Surface(ptr)
         }
 
-        /**
-         * Direct wrapper around `SkSurfaces::RenderTarget`; every parameter
-         * maps 1:1 onto that function's real signature. Must be called on
-         * the thread [context]'s GL context is current on.
-         */
+        /** Must be called on the thread [context]'s GL context is current on. */
         fun makeRenderTarget(
             context: DirectContext,
             budgeted: Boolean,

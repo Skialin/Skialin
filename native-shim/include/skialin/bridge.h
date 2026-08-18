@@ -14,6 +14,7 @@
 #include "include/core/SkRect.h"
 #include "include/core/SkSamplingOptions.h"
 #include "include/core/SkTileMode.h"
+#include "include/gpu/ganesh/gl/GrGLAssembleInterface.h"
 
 class SkSurface;
 class SkCanvas;
@@ -707,36 +708,28 @@ SkColorFilter* skialin_bridge_Paint_refColorFilter(const SkPaint* paint);
 SkImageFilter* skialin_bridge_Paint_refImageFilter(const SkPaint* paint);
 SkMaskFilter* skialin_bridge_Paint_refMaskFilter(const SkPaint* paint);
 
-/* DirectContext (GrDirectContext, Ganesh + OpenGL backend): wraps whatever
- * native GL context is already current on the calling OS thread. Creating
- * that native context (WGL/EGL/GLFW/...) is entirely the caller's
- * responsibility and happens before this is called -- e.g. via LWJGL/GLFW
- * on the JVM side. GrGLInterfaces::MakeWin() (Windows-only) assembles
- * function pointers for whatever GL context is current via
- * wglGetProcAddress/GetProcAddress; GrDirectContexts::MakeGL() then builds
- * the GrDirectContext from that interface.
+/* DirectContext (GrDirectContext, Ganesh + OpenGL). Wraps whatever native GL
+ * context is current on the calling thread; creating that context (WGL/GLX/
+ * EGL/CGL/GLFW/...) is the caller's job, not this bridge's. MakeGL resolves
+ * function pointers via GrGLMakeNativeInterface(), Skia's own per-platform
+ * dispatch (picked by how Skia itself was built, not by this bridge).
+ * MakeGLAssembled takes an explicit resolver instead, for callers supplying
+ * their own loader (ANGLE, a custom extension loader, etc); ctx is passed
+ * through to get() uninterpreted.
  *
- * GrDirectContext is thread-affine after creation the same way the
- * underlying GL context is: every Ganesh entry point reached through it
- * (draw, flush, submit, snapshot, unref) must run on the thread the GL
- * context is current on. Ref-owned by the caller; free with
- * skialin_bridge_DirectContext_unref. Null if no GL context is current on
- * this thread or interface/context assembly fails. */
+ * GrDirectContext is thread-affine: every call reached through it must run
+ * on the thread its GL context is current on. Ref-owned; free with
+ * skialin_bridge_DirectContext_unref. Null on failure. */
 GrDirectContext* skialin_bridge_DirectContext_MakeGL(void);
+GrDirectContext* skialin_bridge_DirectContext_MakeGLAssembled(void* ctx, GrGLGetProc get);
 void skialin_bridge_DirectContext_unref(GrDirectContext* context);
 void skialin_bridge_DirectContext_flush(GrDirectContext* context);
 void skialin_bridge_DirectContext_submit(GrDirectContext* context, bool syncCpu);
 
-/* GPU-backed render-target Surface: a direct wrapper around
- * SkSurfaces::RenderTarget (include/gpu/ganesh/SkSurfaceGanesh.h). Every
- * parameter maps 1:1 onto that function's real signature -- no defaults or
- * policy decisions (budgeted-ness, origin, mip usage, protected content)
- * are made here; the caller supplies all of them, same as calling the C++
- * API directly would require. surfaceProps may be null. Ref-owned by the
- * caller; free with the existing skialin_bridge_Surface_unref. Must be
- * created, drawn to, and destroyed on context's thread. sampleCount 0
- * disables MSAA. Null on failure (unsupported ImageInfo, zero width/height,
- * abandoned context). */
+/* Direct wrapper around SkSurfaces::RenderTarget (SkSurfaceGanesh.h); params
+ * map 1:1 to the real signature. surfaceProps may be null. Ref-owned; free
+ * with skialin_bridge_Surface_unref. Must run on context's thread. Null on
+ * failure. */
 SkSurface* skialin_bridge_Surface_MakeRenderTarget(
     GrDirectContext* context, skgpu::Budgeted budgeted, const SkImageInfo* info,
     int32_t sampleCount, GrSurfaceOrigin surfaceOrigin, const SkSurfaceProps* surfaceProps,

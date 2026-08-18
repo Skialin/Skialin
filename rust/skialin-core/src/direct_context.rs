@@ -1,6 +1,6 @@
 use crate::sys;
 
-/// Matches GrSurfaceOrigin's declaration order (include/gpu/ganesh/GrTypes.h).
+/// Matches GrSurfaceOrigin's declaration order.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum SurfaceOrigin {
     TopLeft,
@@ -16,18 +16,23 @@ impl From<SurfaceOrigin> for sys::GrSurfaceOrigin {
     }
 }
 
-/// Wraps a `GrDirectContext` (Ganesh + OpenGL). The native GL context it
-/// wraps must already be current on the calling OS thread before
-/// `new_gl` is called (e.g. via LWJGL/GLFW on the JVM side, or a
-/// platform GL context in a Rust test) -- this type does not create one
-/// itself. GrDirectContext is thread-affine after creation: every method
-/// here, and every `Surface` created from it, must run on that same
-/// thread for as long as the underlying GL context stays current there.
+/// Wraps a GrDirectContext (Ganesh + OpenGL). The caller must make a native
+/// GL context current on this thread first; this type doesn't create one.
+/// Thread-affine after creation: every method here, and every `Surface`
+/// made from it, must stay on that thread.
 pub struct DirectContext(pub(crate) *mut sys::GrDirectContext);
 
 impl DirectContext {
+    /// Resolves GL function pointers via Skia's own per-platform dispatch.
     pub fn new_gl() -> Option<Self> {
         let ptr = unsafe { sys::skialin_bridge_DirectContext_MakeGL() };
+        (!ptr.is_null()).then_some(DirectContext(ptr))
+    }
+
+    /// Same as `new_gl`, but with a caller-supplied function pointer
+    /// resolver instead of Skia's default loader.
+    pub fn new_gl_assembled(ctx: *mut std::ffi::c_void, get: sys::GrGLGetProc) -> Option<Self> {
+        let ptr = unsafe { sys::skialin_bridge_DirectContext_MakeGLAssembled(ctx, get) };
         (!ptr.is_null()).then_some(DirectContext(ptr))
     }
 

@@ -14,10 +14,8 @@ impl Surface {
         (!ptr.is_null()).then_some(Surface(ptr))
     }
 
-    /// Direct wrapper around `SkSurfaces::RenderTarget`; every parameter maps
-    /// 1:1 onto that function's real signature. Must be called on the thread
-    /// `context`'s GL context is current on. `surface_props` is not yet
-    /// bound and always passed as null.
+    /// Must be called on the thread `context`'s GL context is current on.
+    /// `surface_props` is TODO, always null for now.
     #[allow(clippy::too_many_arguments)]
     pub fn new_render_target(
         context: &mut DirectContext,

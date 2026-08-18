@@ -3,18 +3,14 @@ package org.skialin
 import org.skialin.impl.NativeLoader
 
 /**
- * Wraps a native GrDirectContext (Ganesh + OpenGL). The calling thread must
- * already have a native GL context current (e.g. via LWJGL/GLFW) before
- * calling [makeGL]. GrDirectContext is thread-affine after creation: this
- * object, and every [Surface] created from it, must only ever be used from
- * that same thread, for as long as the GL context stays current there.
+ * Wraps a native GrDirectContext (Ganesh + OpenGL). Caller must make a
+ * native GL context current on this thread first (e.g. via LWJGL/GLFW).
+ * Thread-affine after creation: this object, and any [Surface] made from
+ * it, must stay on that thread.
  *
- * Deliberately does not extend [org.skialin.impl.Managed]: Managed's
- * Cleaner-based safety net runs its release callback on an arbitrary JVM
- * thread, which is unsafe here since tearing down the underlying GL state
- * must happen on the thread the GL context is current on. [close] must be
- * called explicitly, from that thread; skipping it leaks the native
- * GrDirectContext rather than being caught by GC.
+ * Doesn't extend [org.skialin.impl.Managed]: its Cleaner runs release on an
+ * arbitrary thread, which would tear down GL state from the wrong one.
+ * [close] must be called explicitly; skipping it leaks.
  */
 class DirectContext private constructor(ptr: Long) : AutoCloseable {
     @Volatile

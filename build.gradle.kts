@@ -9,8 +9,18 @@ repositories {
     mavenCentral()
 }
 
+val osName = run {
+    val os = System.getProperty("os.name").lowercase()
+    when {
+        os.contains("win") -> "windows"
+        os.contains("mac") -> "macos"
+        os.contains("linux") -> "linux"
+        else -> error("skialin: unsupported OS $os")
+    }
+}
+
 val lwjglVersion = "3.3.4"
-val lwjglNatives = "natives-windows"
+val lwjglNatives = "natives-$osName"
 
 dependencies {
     testImplementation(kotlin("test"))
@@ -37,40 +47,62 @@ val rustDir = layout.projectDirectory.dir("rust")
 val cargoProfile = "release"
 
 val nativePlatformDir = run {
-    val os = System.getProperty("os.name").lowercase()
     val archProp = System.getProperty("os.arch").lowercase()
     val arch = when (archProp) {
         "amd64", "x86_64" -> "x64"
         "aarch64", "arm64" -> "arm64"
         else -> archProp
     }
-    val osName = when {
-        os.contains("win") -> "windows"
-        os.contains("mac") -> "macos"
-        os.contains("linux") -> "linux"
-        else -> error("skialin: unsupported OS $os")
-    }
     "$osName-$arch"
 }
 
-val nativeLibName = run {
-    val os = System.getProperty("os.name").lowercase()
-    when {
-        os.contains("win") -> "skialin_jni.dll"
-        os.contains("mac") -> "libskialin_jni.dylib"
-        else -> "libskialin_jni.so"
-    }
+val nativeLibName = when (osName) {
+    "windows" -> "skialin_jni.dll"
+    "macos" -> "libskialin_jni.dylib"
+    else -> "libskialin_jni.so"
 }
 
-val cargoBuild by tasks.registering(Exec::class) {
-    onlyIf { buildNative }
-    workingDir = rustDir.asFile
-    commandLine("cargo", "build", "-p", "skialin-jni", "--release")
+val skiaDir = layout.projectDirectory.dir("external/skia")
+
+/**
+ * Regenerates external/skia/out/Release from the tracked args.gn in
+ * native-shim/, then builds the static libs skialin-sys links against.
+ * Needed after a fresh clone or after `git submodule update` bumps skia
+ * (out/ is gitignored inside the skia submodule itself). Requires
+ * depot_tools (for ninja) on PATH.
+ */
+val setupSkia by tasks.registering(Exec::class) {
+    workingDir = skiaDir.asFile
+    doFirst {
+        val outDir = skiaDir.dir("out/Release").asFile
+        outDir.mkdirs()
+        skiaDir.file("../../native-shim/args.gn").asFile.copyTo(outDir.resolve("args.gn"), overwrite = true)
+    }
+    val gn = if (osName == "windows") "bin/gn.exe" else "bin/gn"
+    commandLine(gn, "gen", "out/Release")
+}
+
+val buildSkia by tasks.registering(Exec::class) {
+    dependsOn(setupSkia)
+    workingDir = skiaDir.asFile
+    val ninja = if (osName == "windows") "ninja.exe" else "ninja"
+    commandLine(
+        ninja, "-C", "out/Release",
+        "skia", "skparagraph", "skshaper", "skunicode_core", "skunicode_icu", "skcms",
+        "libpng", "zlib", "expat", "harfbuzz", "icu", "pathops",
+    )
 }
 
 val skiaLibDir = providers.gradleProperty("skialin.skiaLibDir")
     .orElse(providers.environmentVariable("SKIALIN_SKIA_LIB_DIR"))
-    .orElse(rustDir.dir("../external/skia/out/Release").asFile.absolutePath)
+    .orElse(skiaDir.dir("out/Release").asFile.absolutePath)
+
+val cargoBuild by tasks.registering(Exec::class) {
+    onlyIf { buildNative }
+    workingDir = rustDir.asFile
+    environment("SKIALIN_SKIA_LIB_DIR", skiaLibDir.get())
+    commandLine("cargo", "build", "-p", "skialin-jni", "--release")
+}
 
 /**
  * SkLoadICU() (third_party/icu/SkLoadICU.cpp) looks for icudtl.dat next to

@@ -53,9 +53,7 @@
 #include "include/gpu/ganesh/GrDirectContext.h"
 #include "include/gpu/ganesh/GrTypes.h"
 #include "include/gpu/ganesh/SkSurfaceGanesh.h"
-#include "include/gpu/ganesh/gl/GrGLInterface.h"
 #include "include/gpu/ganesh/gl/GrGLDirectContext.h"
-#include "include/gpu/ganesh/gl/win/GrGLMakeWinInterface.h"
 
 namespace {
 
@@ -1543,7 +1541,11 @@ void skialin_bridge_Canvas_concat44(SkCanvas* canvas, const SkM44* matrix) {
 }
 
 GrDirectContext* skialin_bridge_DirectContext_MakeGL(void) {
-    sk_sp<const GrGLInterface> interface = GrGLInterfaces::MakeWin();
+    return GrDirectContexts::MakeGL().release();
+}
+
+GrDirectContext* skialin_bridge_DirectContext_MakeGLAssembled(void* ctx, GrGLGetProc get) {
+    sk_sp<const GrGLInterface> interface = GrGLMakeAssembledInterface(ctx, get);
     if (!interface) {
         return nullptr;
     }
