@@ -1,9 +1,9 @@
 use jni::sys::{jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::Surface;
+use skialin_core::{ImageInfo, Surface};
 
-use crate::util::{borrow_mut, box_ptr, drop_ptr};
+use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_SurfaceNative_nMakeRasterN32Premul(
@@ -13,6 +13,15 @@ pub extern "system" fn Java_org_skialin_SurfaceNative_nMakeRasterN32Premul(
     height: jint,
 ) -> jlong {
     match Surface::new_raster_n32_premul(width, height) {
+        Some(surface) => box_ptr(surface),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_SurfaceNative_nMakeRaster(_env: JNIEnv, _class: jni::objects::JClass, info_ptr: jlong) -> jlong {
+    let info = unsafe { borrow::<ImageInfo>(info_ptr) };
+    match Surface::new_raster(info) {
         Some(surface) => box_ptr(surface),
         None => 0,
     }
