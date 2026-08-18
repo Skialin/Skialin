@@ -62,7 +62,7 @@ pub use paint::{BlendMode, Paint, PaintStyle, StrokeCap, StrokeJoin};
 pub use paragraph::{Affinity, GlyphPosition, LineMetrics, Paragraph};
 pub use paragraph_builder::ParagraphBuilder;
 pub use paragraph_style::{ParagraphStyle, TextAlign, TextDirection, TextHeightBehavior};
-pub use path::{Path, PathBuilder, PathDirection};
+pub use path::{Path, PathBuilder, PathDirection, PathOp};
 pub use path_effect::{PathEffect, TrimMode};
 pub use path_measure::{PathMeasure, PosTan};
 pub use pixmap::Pixmap;

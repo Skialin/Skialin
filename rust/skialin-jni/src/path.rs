@@ -1,7 +1,7 @@
 use jni::sys::{jboolean, jfloat, jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{Path, PathBuilder, PathDirection, Point, Rect};
+use skialin_core::{Path, PathBuilder, PathDirection, PathOp, Point, Rect};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 
@@ -149,4 +149,32 @@ pub extern "system" fn Java_org_skialin_PathNative_nGetBounds(env: JNIEnv, _clas
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_PathNative_nContains(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, x: jfloat, y: jfloat) -> jboolean {
     unsafe { borrow::<Path>(ptr) }.contains(Point::new(x, y)) as jboolean
+}
+
+fn path_op_from_ordinal(ordinal: jint) -> PathOp {
+    match ordinal {
+        1 => PathOp::Intersect,
+        2 => PathOp::Union,
+        3 => PathOp::Xor,
+        4 => PathOp::ReverseDifference,
+        _ => PathOp::Difference,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PathNative_nOp(_env: JNIEnv, _class: jni::objects::JClass, one_ptr: jlong, two_ptr: jlong, op: jint) -> jlong {
+    let one = unsafe { borrow::<Path>(one_ptr) };
+    let two = unsafe { borrow::<Path>(two_ptr) };
+    match Path::op(one, two, path_op_from_ordinal(op)) {
+        Some(result) => box_ptr(result),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PathNative_nSimplify(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jlong {
+    match unsafe { borrow::<Path>(ptr) }.simplify() {
+        Some(result) => box_ptr(result),
+        None => 0,
+    }
 }

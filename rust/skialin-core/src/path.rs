@@ -15,10 +15,35 @@ impl From<PathDirection> for sys::SkPathDirection {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PathOp {
+    Difference,
+    Intersect,
+    Union,
+    Xor,
+    ReverseDifference,
+}
+
+impl From<PathOp> for i32 {
+    fn from(op: PathOp) -> Self {
+        match op {
+            PathOp::Difference => 0,
+            PathOp::Intersect => 1,
+            PathOp::Union => 2,
+            PathOp::Xor => 3,
+            PathOp::ReverseDifference => 4,
+        }
+    }
+}
+
 /// An immutable, drawable path snapshot. Produced from a [`PathBuilder`].
 pub struct Path(pub(crate) *mut sys::SkPath);
 
 impl Path {
+    pub(crate) unsafe fn from_raw(ptr: *mut sys::SkPath) -> Option<Self> {
+        (!ptr.is_null()).then_some(Path(ptr))
+    }
+
     pub fn is_empty(&self) -> bool {
         unsafe { (*self.0).isEmpty() }
     }
@@ -29,6 +54,18 @@ impl Path {
 
     pub fn contains(&self, point: Point) -> bool {
         unsafe { (*self.0).contains(point.into()) }
+    }
+
+    /// Combines `one` and `two` with the given boolean operation. `None` if
+    /// the operation couldn't produce a result.
+    pub fn op(one: &Path, two: &Path, op: PathOp) -> Option<Path> {
+        unsafe { Self::from_raw(sys::skialin_bridge_Path_op(one.0, two.0, op.into())) }
+    }
+
+    /// A path with the same non-overlapping-contour area as this one,
+    /// with self-intersections removed. `None` on failure.
+    pub fn simplify(&self) -> Option<Path> {
+        unsafe { Self::from_raw(sys::skialin_bridge_Path_simplify(self.0)) }
     }
 }
 

@@ -41,6 +41,7 @@
 #include "include/effects/SkDiscretePathEffect.h"
 #include "include/effects/SkTrimPathEffect.h"
 #include "include/core/SkPathMeasure.h"
+#include "include/pathops/SkPathOps.h"
 #include "include/core/SkString.h"
 #include "include/core/SkStream.h"
 #include "include/encode/SkPngEncoder.h"
@@ -1303,6 +1304,22 @@ bool skialin_bridge_PathMeasure_isClosed(SkPathMeasure* measure) {
 
 bool skialin_bridge_PathMeasure_nextContour(SkPathMeasure* measure) {
     return measure->nextContour();
+}
+
+SkPath* skialin_bridge_Path_op(const SkPath* one, const SkPath* two, int32_t op) {
+    auto result = Op(*one, *two, static_cast<SkPathOp>(op));
+    if (!result) {
+        return nullptr;
+    }
+    return new SkPath(*result);
+}
+
+SkPath* skialin_bridge_Path_simplify(const SkPath* path) {
+    auto result = Simplify(*path);
+    if (!result) {
+        return nullptr;
+    }
+    return new SkPath(*result);
 }
 
 }  // extern "C"

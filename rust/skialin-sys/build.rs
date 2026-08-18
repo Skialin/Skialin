@@ -37,11 +37,53 @@ fn main() {
     println!("cargo:rerun-if-changed={}", shim_src.display());
     println!("cargo:rerun-if-changed=wrapper.h");
 
+    // The "pathops" GN target is a source_set, not a static_library, so it
+    // never produces its own .lib and isn't pulled into skia.lib either
+    // (nothing in this minimal build's dependency graph links it). Rather
+    // than patch the Skia GN build, compile Skia's own pathops sources
+    // directly as part of this crate's C++ build.
+    let pathops_dir = skia_dir.join("src/pathops");
+    let pathops_sources = [
+        "SkAddIntersections.cpp",
+        "SkDConicLineIntersection.cpp",
+        "SkDCubicLineIntersection.cpp",
+        "SkDCubicToQuads.cpp",
+        "SkDLineIntersection.cpp",
+        "SkDQuadLineIntersection.cpp",
+        "SkIntersections.cpp",
+        "SkOpAngle.cpp",
+        "SkOpBuilder.cpp",
+        "SkOpCoincidence.cpp",
+        "SkOpContour.cpp",
+        "SkOpCubicHull.cpp",
+        "SkOpEdgeBuilder.cpp",
+        "SkOpSegment.cpp",
+        "SkOpSpan.cpp",
+        "SkPathOpsAsWinding.cpp",
+        "SkPathOpsCommon.cpp",
+        "SkPathOpsConic.cpp",
+        "SkPathOpsCubic.cpp",
+        "SkPathOpsCurve.cpp",
+        "SkPathOpsDebug.cpp",
+        "SkPathOpsLine.cpp",
+        "SkPathOpsOp.cpp",
+        "SkPathOpsQuad.cpp",
+        "SkPathOpsRect.cpp",
+        "SkPathOpsSimplify.cpp",
+        "SkPathOpsTSect.cpp",
+        "SkPathOpsTightBounds.cpp",
+        "SkPathOpsTypes.cpp",
+        "SkPathOpsWinding.cpp",
+        "SkPathWriter.cpp",
+        "SkReduceOrder.cpp",
+    ];
+
     cc::Build::new()
         .cpp(true)
         .std("c++20")
         .file(shim_src.join("bridge.cpp"))
         .file(shim_src.join("force_link.cpp"))
+        .files(pathops_sources.iter().map(|f| pathops_dir.join(f)))
         .include(&skia_dir)
         .include(&shim_include)
         .warnings(false)

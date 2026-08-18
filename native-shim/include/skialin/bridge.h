@@ -336,6 +336,14 @@ bool skialin_bridge_PathMeasure_getSegment(SkPathMeasure* measure, float startD,
 bool skialin_bridge_PathMeasure_isClosed(SkPathMeasure* measure);
 bool skialin_bridge_PathMeasure_nextContour(SkPathMeasure* measure);
 
+/* Path boolean ops (SkPathOps.h). Ref-owned by the caller; free with
+ * skialin_bridge_Path_delete. op: 0 difference, 1 intersect, 2 union,
+ * 3 xor, 4 reverse-difference (matches SkPathOp's declaration order).
+ * Null if the operation couldn't produce a result. */
+SkPath* skialin_bridge_Path_op(const SkPath* one, const SkPath* two, int32_t op);
+/* Null on failure. */
+SkPath* skialin_bridge_Path_simplify(const SkPath* path);
+
 /* Typeface: ref-owned by the caller. Free with skialin_bridge_Typeface_unref.
  * SkTypeface has pure virtual methods (onGetFamilyName etc.), which defeats
  * bindgen's vtable-layout inference the same way SkImage does, so every
