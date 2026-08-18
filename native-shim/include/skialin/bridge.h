@@ -31,6 +31,13 @@ class SkFontMgr;
 class SkFont;
 class SkTextBlob;
 
+namespace skia {
+namespace textlayout {
+class TextStyle;
+struct ParagraphStyle;
+}  // namespace textlayout
+}  // namespace skia
+
 extern "C" {
 
 /* By-value returns from a C++ member function are classified differently
@@ -280,5 +287,89 @@ SkTextBlob* skialin_bridge_TextBlob_MakeFromText(const void* text, size_t byteLe
 SkTextBlob* skialin_bridge_TextBlob_MakeFromPosTextH(const void* text, size_t byteLength, const float* xpos, size_t xposLength, float constY, const SkFont* font, int32_t encoding);
 /* pos.length must equal the glyph/character count implied by text/byteLength/encoding. */
 SkTextBlob* skialin_bridge_TextBlob_MakeFromPosText(const void* text, size_t byteLength, const SkPoint* pos, size_t posLength, const SkFont* font, int32_t encoding);
+
+/* TextStyle (skia::textlayout::TextStyle): heap-allocated with `new`/`delete`.
+ * A plain value class with non-trivial members (std::vector<SkString>,
+ * sk_sp<SkTypeface>, a paint-or-id variant), so like SkFont it's routed
+ * entirely through the bridge rather than relying on bindgen's per-method
+ * symbols. Scoped to the common styling surface for this pass: color, font
+ * family/size/style, decoration, spacing, height, typeface, locale.
+ * Foreground/background paint, shadows, font features, font arguments, and
+ * placeholders are not yet bound. TextDecoration/-Mode/-Style are passed as
+ * plain ints matching the C++ enum's integer values (see TextStyle.h). */
+skia::textlayout::TextStyle* skialin_bridge_TextStyle_new(void);
+skia::textlayout::TextStyle* skialin_bridge_TextStyle_clone(const skia::textlayout::TextStyle* style);
+void skialin_bridge_TextStyle_delete(skia::textlayout::TextStyle* style);
+
+uint32_t skialin_bridge_TextStyle_getColor(const skia::textlayout::TextStyle* style);
+void skialin_bridge_TextStyle_setColor(skia::textlayout::TextStyle* style, uint32_t color);
+
+/* families is `count` C strings with matching byte lengths in `lengths` (not necessarily NUL-terminated). */
+void skialin_bridge_TextStyle_setFontFamilies(skia::textlayout::TextStyle* style, const char* const* families, const size_t* lengths, size_t count);
+size_t skialin_bridge_TextStyle_countFontFamilies(const skia::textlayout::TextStyle* style);
+/* UTF-8 bytes, no NUL terminator. Ref-owned by the caller; free with skialin_bridge_Data_unref. */
+SkData* skialin_bridge_TextStyle_fontFamily(const skia::textlayout::TextStyle* style, size_t index);
+
+float skialin_bridge_TextStyle_getFontSize(const skia::textlayout::TextStyle* style);
+void skialin_bridge_TextStyle_setFontSize(skia::textlayout::TextStyle* style, float size);
+
+void skialin_bridge_TextStyle_getFontStyle(const skia::textlayout::TextStyle* style, int32_t* weight, int32_t* width, int32_t* slant);
+void skialin_bridge_TextStyle_setFontStyle(skia::textlayout::TextStyle* style, int32_t weight, int32_t width, int32_t slant);
+
+void skialin_bridge_TextStyle_getDecoration(const skia::textlayout::TextStyle* style, int32_t* type, int32_t* mode, uint32_t* color, int32_t* decorationStyle, float* thicknessMultiplier);
+void skialin_bridge_TextStyle_setDecoration(skia::textlayout::TextStyle* style, int32_t type);
+void skialin_bridge_TextStyle_setDecorationMode(skia::textlayout::TextStyle* style, int32_t mode);
+void skialin_bridge_TextStyle_setDecorationColor(skia::textlayout::TextStyle* style, uint32_t color);
+void skialin_bridge_TextStyle_setDecorationStyle(skia::textlayout::TextStyle* style, int32_t decorationStyle);
+void skialin_bridge_TextStyle_setDecorationThicknessMultiplier(skia::textlayout::TextStyle* style, float multiplier);
+
+float skialin_bridge_TextStyle_getLetterSpacing(const skia::textlayout::TextStyle* style);
+void skialin_bridge_TextStyle_setLetterSpacing(skia::textlayout::TextStyle* style, float letterSpacing);
+float skialin_bridge_TextStyle_getWordSpacing(const skia::textlayout::TextStyle* style);
+void skialin_bridge_TextStyle_setWordSpacing(skia::textlayout::TextStyle* style, float wordSpacing);
+
+float skialin_bridge_TextStyle_getHeight(const skia::textlayout::TextStyle* style);
+void skialin_bridge_TextStyle_setHeight(skia::textlayout::TextStyle* style, float height);
+bool skialin_bridge_TextStyle_getHeightOverride(const skia::textlayout::TextStyle* style);
+void skialin_bridge_TextStyle_setHeightOverride(skia::textlayout::TextStyle* style, bool heightOverride);
+
+/* Ref-owned by the caller; null if this TextStyle has no typeface. Free with skialin_bridge_Typeface_unref. */
+SkTypeface* skialin_bridge_TextStyle_refTypeface(const skia::textlayout::TextStyle* style);
+/* typeface may be null to clear it; ref'd by the bridge, not consumed. */
+void skialin_bridge_TextStyle_setTypeface(skia::textlayout::TextStyle* style, SkTypeface* typeface);
+
+/* UTF-8 bytes, no NUL terminator. Ref-owned by the caller; free with skialin_bridge_Data_unref. */
+SkData* skialin_bridge_TextStyle_getLocale(const skia::textlayout::TextStyle* style);
+void skialin_bridge_TextStyle_setLocale(skia::textlayout::TextStyle* style, const char* locale, size_t length);
+
+/* ParagraphStyle (skia::textlayout::ParagraphStyle): heap-allocated with
+ * `new`/`delete`, same rationale as TextStyle. TextDirection is the key
+ * knob for RTL/bidi layout (skparagraph resolves character-level bidi via
+ * ICU internally once this is set to kRtl); TextAlign/TextDirection ints
+ * match the C++ enums in DartTypes.h. StrutStyle is not yet bound. */
+skia::textlayout::ParagraphStyle* skialin_bridge_ParagraphStyle_new(void);
+void skialin_bridge_ParagraphStyle_delete(skia::textlayout::ParagraphStyle* style);
+
+int32_t skialin_bridge_ParagraphStyle_getTextDirection(const skia::textlayout::ParagraphStyle* style);
+void skialin_bridge_ParagraphStyle_setTextDirection(skia::textlayout::ParagraphStyle* style, int32_t direction);
+int32_t skialin_bridge_ParagraphStyle_getTextAlign(const skia::textlayout::ParagraphStyle* style);
+void skialin_bridge_ParagraphStyle_setTextAlign(skia::textlayout::ParagraphStyle* style, int32_t align);
+
+size_t skialin_bridge_ParagraphStyle_getMaxLines(const skia::textlayout::ParagraphStyle* style);
+void skialin_bridge_ParagraphStyle_setMaxLines(skia::textlayout::ParagraphStyle* style, size_t maxLines);
+
+/* UTF-8 bytes, no NUL terminator. Ref-owned by the caller; free with skialin_bridge_Data_unref. */
+SkData* skialin_bridge_ParagraphStyle_getEllipsis(const skia::textlayout::ParagraphStyle* style);
+void skialin_bridge_ParagraphStyle_setEllipsis(skia::textlayout::ParagraphStyle* style, const char* ellipsis, size_t length);
+
+float skialin_bridge_ParagraphStyle_getHeight(const skia::textlayout::ParagraphStyle* style);
+void skialin_bridge_ParagraphStyle_setHeight(skia::textlayout::ParagraphStyle* style, float height);
+int32_t skialin_bridge_ParagraphStyle_getTextHeightBehavior(const skia::textlayout::ParagraphStyle* style);
+void skialin_bridge_ParagraphStyle_setTextHeightBehavior(skia::textlayout::ParagraphStyle* style, int32_t behavior);
+
+/* Owned by the caller; free with skialin_bridge_TextStyle_delete. */
+skia::textlayout::TextStyle* skialin_bridge_ParagraphStyle_getTextStyle(const skia::textlayout::ParagraphStyle* style);
+/* style is copied, not consumed; the caller retains ownership of it. */
+void skialin_bridge_ParagraphStyle_setTextStyle(skia::textlayout::ParagraphStyle* paragraphStyle, const skia::textlayout::TextStyle* style);
 
 }  // extern "C"

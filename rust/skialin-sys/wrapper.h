@@ -32,5 +32,7 @@
 #include "include/core/SkFontStyle.h"
 #include "include/core/SkTextBlob.h"
 #include "include/core/SkFontMetrics.h"
+#include "modules/skparagraph/include/TextStyle.h"
+#include "modules/skparagraph/include/ParagraphStyle.h"
 
 #include "skialin/bridge.h"

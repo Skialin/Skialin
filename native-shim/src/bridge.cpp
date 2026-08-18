@@ -20,6 +20,8 @@
 #include "include/core/SkFontMgr.h"
 #include "include/core/SkFont.h"
 #include "include/core/SkTextBlob.h"
+#include "modules/skparagraph/include/TextStyle.h"
+#include "modules/skparagraph/include/ParagraphStyle.h"
 #include "include/core/SkString.h"
 #include "include/core/SkStream.h"
 #include "include/encode/SkPngEncoder.h"
@@ -593,6 +595,209 @@ SkTextBlob* skialin_bridge_TextBlob_MakeFromPosTextH(const void* text, size_t by
 
 SkTextBlob* skialin_bridge_TextBlob_MakeFromPosText(const void* text, size_t byteLength, const SkPoint* pos, size_t posLength, const SkFont* font, int32_t encoding) {
     return SkTextBlob::MakeFromPosText(text, byteLength, {pos, posLength}, *font, static_cast<SkTextEncoding>(encoding)).release();
+}
+
+using skia::textlayout::TextStyle;
+using skia::textlayout::ParagraphStyle;
+
+skia::textlayout::TextStyle* skialin_bridge_TextStyle_new(void) {
+    return new TextStyle();
+}
+
+skia::textlayout::TextStyle* skialin_bridge_TextStyle_clone(const skia::textlayout::TextStyle* style) {
+    return new TextStyle(*style);
+}
+
+void skialin_bridge_TextStyle_delete(skia::textlayout::TextStyle* style) {
+    delete style;
+}
+
+uint32_t skialin_bridge_TextStyle_getColor(const skia::textlayout::TextStyle* style) {
+    return style->getColor();
+}
+
+void skialin_bridge_TextStyle_setColor(skia::textlayout::TextStyle* style, uint32_t color) {
+    style->setColor(color);
+}
+
+void skialin_bridge_TextStyle_setFontFamilies(skia::textlayout::TextStyle* style, const char* const* families, const size_t* lengths, size_t count) {
+    std::vector<SkString> result;
+    result.reserve(count);
+    for (size_t i = 0; i < count; ++i) {
+        result.emplace_back(families[i], lengths[i]);
+    }
+    style->setFontFamilies(std::move(result));
+}
+
+size_t skialin_bridge_TextStyle_countFontFamilies(const skia::textlayout::TextStyle* style) {
+    return style->getFontFamilies().size();
+}
+
+SkData* skialin_bridge_TextStyle_fontFamily(const skia::textlayout::TextStyle* style, size_t index) {
+    const SkString& name = style->getFontFamilies()[index];
+    return SkData::MakeWithCopy(name.c_str(), name.size()).release();
+}
+
+float skialin_bridge_TextStyle_getFontSize(const skia::textlayout::TextStyle* style) {
+    return style->getFontSize();
+}
+
+void skialin_bridge_TextStyle_setFontSize(skia::textlayout::TextStyle* style, float size) {
+    style->setFontSize(size);
+}
+
+void skialin_bridge_TextStyle_getFontStyle(const skia::textlayout::TextStyle* style, int32_t* weight, int32_t* width, int32_t* slant) {
+    SkFontStyle fontStyle = style->getFontStyle();
+    *weight = fontStyle.weight();
+    *width = fontStyle.width();
+    *slant = fontStyle.slant();
+}
+
+void skialin_bridge_TextStyle_setFontStyle(skia::textlayout::TextStyle* style, int32_t weight, int32_t width, int32_t slant) {
+    style->setFontStyle(SkFontStyle(weight, width, static_cast<SkFontStyle::Slant>(slant)));
+}
+
+void skialin_bridge_TextStyle_getDecoration(const skia::textlayout::TextStyle* style, int32_t* type, int32_t* mode, uint32_t* color, int32_t* decorationStyle, float* thicknessMultiplier) {
+    skia::textlayout::Decoration decoration = style->getDecoration();
+    *type = decoration.fType;
+    *mode = decoration.fMode;
+    *color = decoration.fColor;
+    *decorationStyle = decoration.fStyle;
+    *thicknessMultiplier = decoration.fThicknessMultiplier;
+}
+
+void skialin_bridge_TextStyle_setDecoration(skia::textlayout::TextStyle* style, int32_t type) {
+    style->setDecoration(static_cast<skia::textlayout::TextDecoration>(type));
+}
+
+void skialin_bridge_TextStyle_setDecorationMode(skia::textlayout::TextStyle* style, int32_t mode) {
+    style->setDecorationMode(static_cast<skia::textlayout::TextDecorationMode>(mode));
+}
+
+void skialin_bridge_TextStyle_setDecorationColor(skia::textlayout::TextStyle* style, uint32_t color) {
+    style->setDecorationColor(color);
+}
+
+void skialin_bridge_TextStyle_setDecorationStyle(skia::textlayout::TextStyle* style, int32_t decorationStyle) {
+    style->setDecorationStyle(static_cast<skia::textlayout::TextDecorationStyle>(decorationStyle));
+}
+
+void skialin_bridge_TextStyle_setDecorationThicknessMultiplier(skia::textlayout::TextStyle* style, float multiplier) {
+    style->setDecorationThicknessMultiplier(multiplier);
+}
+
+float skialin_bridge_TextStyle_getLetterSpacing(const skia::textlayout::TextStyle* style) {
+    return style->getLetterSpacing();
+}
+
+void skialin_bridge_TextStyle_setLetterSpacing(skia::textlayout::TextStyle* style, float letterSpacing) {
+    style->setLetterSpacing(letterSpacing);
+}
+
+float skialin_bridge_TextStyle_getWordSpacing(const skia::textlayout::TextStyle* style) {
+    return style->getWordSpacing();
+}
+
+void skialin_bridge_TextStyle_setWordSpacing(skia::textlayout::TextStyle* style, float wordSpacing) {
+    style->setWordSpacing(wordSpacing);
+}
+
+float skialin_bridge_TextStyle_getHeight(const skia::textlayout::TextStyle* style) {
+    return style->getHeight();
+}
+
+void skialin_bridge_TextStyle_setHeight(skia::textlayout::TextStyle* style, float height) {
+    style->setHeight(height);
+}
+
+bool skialin_bridge_TextStyle_getHeightOverride(const skia::textlayout::TextStyle* style) {
+    return style->getHeightOverride();
+}
+
+void skialin_bridge_TextStyle_setHeightOverride(skia::textlayout::TextStyle* style, bool heightOverride) {
+    style->setHeightOverride(heightOverride);
+}
+
+SkTypeface* skialin_bridge_TextStyle_refTypeface(const skia::textlayout::TextStyle* style) {
+    return style->refTypeface().release();
+}
+
+void skialin_bridge_TextStyle_setTypeface(skia::textlayout::TextStyle* style, SkTypeface* typeface) {
+    style->setTypeface(sk_ref_sp(typeface));
+}
+
+SkData* skialin_bridge_TextStyle_getLocale(const skia::textlayout::TextStyle* style) {
+    SkString locale = style->getLocale();
+    return SkData::MakeWithCopy(locale.c_str(), locale.size()).release();
+}
+
+void skialin_bridge_TextStyle_setLocale(skia::textlayout::TextStyle* style, const char* locale, size_t length) {
+    style->setLocale(SkString(locale, length));
+}
+
+skia::textlayout::ParagraphStyle* skialin_bridge_ParagraphStyle_new(void) {
+    return new ParagraphStyle();
+}
+
+void skialin_bridge_ParagraphStyle_delete(skia::textlayout::ParagraphStyle* style) {
+    delete style;
+}
+
+int32_t skialin_bridge_ParagraphStyle_getTextDirection(const skia::textlayout::ParagraphStyle* style) {
+    return static_cast<int32_t>(style->getTextDirection());
+}
+
+void skialin_bridge_ParagraphStyle_setTextDirection(skia::textlayout::ParagraphStyle* style, int32_t direction) {
+    style->setTextDirection(static_cast<skia::textlayout::TextDirection>(direction));
+}
+
+int32_t skialin_bridge_ParagraphStyle_getTextAlign(const skia::textlayout::ParagraphStyle* style) {
+    return static_cast<int32_t>(style->getTextAlign());
+}
+
+void skialin_bridge_ParagraphStyle_setTextAlign(skia::textlayout::ParagraphStyle* style, int32_t align) {
+    style->setTextAlign(static_cast<skia::textlayout::TextAlign>(align));
+}
+
+size_t skialin_bridge_ParagraphStyle_getMaxLines(const skia::textlayout::ParagraphStyle* style) {
+    return style->getMaxLines();
+}
+
+void skialin_bridge_ParagraphStyle_setMaxLines(skia::textlayout::ParagraphStyle* style, size_t maxLines) {
+    style->setMaxLines(maxLines);
+}
+
+SkData* skialin_bridge_ParagraphStyle_getEllipsis(const skia::textlayout::ParagraphStyle* style) {
+    SkString ellipsis = style->getEllipsis();
+    return SkData::MakeWithCopy(ellipsis.c_str(), ellipsis.size()).release();
+}
+
+void skialin_bridge_ParagraphStyle_setEllipsis(skia::textlayout::ParagraphStyle* style, const char* ellipsis, size_t length) {
+    style->setEllipsis(SkString(ellipsis, length));
+}
+
+float skialin_bridge_ParagraphStyle_getHeight(const skia::textlayout::ParagraphStyle* style) {
+    return style->getHeight();
+}
+
+void skialin_bridge_ParagraphStyle_setHeight(skia::textlayout::ParagraphStyle* style, float height) {
+    style->setHeight(height);
+}
+
+int32_t skialin_bridge_ParagraphStyle_getTextHeightBehavior(const skia::textlayout::ParagraphStyle* style) {
+    return static_cast<int32_t>(style->getTextHeightBehavior());
+}
+
+void skialin_bridge_ParagraphStyle_setTextHeightBehavior(skia::textlayout::ParagraphStyle* style, int32_t behavior) {
+    style->setTextHeightBehavior(static_cast<skia::textlayout::TextHeightBehavior>(behavior));
+}
+
+skia::textlayout::TextStyle* skialin_bridge_ParagraphStyle_getTextStyle(const skia::textlayout::ParagraphStyle* style) {
+    return new TextStyle(style->getTextStyle());
+}
+
+void skialin_bridge_ParagraphStyle_setTextStyle(skia::textlayout::ParagraphStyle* paragraphStyle, const skia::textlayout::TextStyle* style) {
+    paragraphStyle->setTextStyle(*style);
 }
 
 }  // extern "C"
