@@ -63,4 +63,14 @@ SKIALIN_NOINLINE void touch(const SkPathBuilder& builder) {
     (void)builder.computeBounds();
 }
 
+SKIALIN_NOINLINE void touch(const SkData& data, SkData& mutableData) {
+    (void)data.size();
+    (void)data.empty();
+    (void)data.isEmpty();
+    (void)data.data();
+    (void)data.bytes();
+    (void)mutableData.writable_data();
+    (void)data.equals(&data);
+}
+
 }  // namespace skialin_force_link

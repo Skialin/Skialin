@@ -76,4 +76,32 @@ void skialin_bridge_Data_unref(SkData* data) {
     SkSafeUnref(data);
 }
 
+SkData* skialin_bridge_Data_makeEmpty(void) {
+    return SkData::MakeEmpty().release();
+}
+
+SkData* skialin_bridge_Data_makeWithCopy(const void* data, size_t length) {
+    return SkData::MakeWithCopy(data, length).release();
+}
+
+SkData* skialin_bridge_Data_makeUninitialized(size_t length) {
+    return SkData::MakeUninitialized(length).release();
+}
+
+SkData* skialin_bridge_Data_makeZeroInitialized(size_t length) {
+    return SkData::MakeZeroInitialized(length).release();
+}
+
+SkData* skialin_bridge_Data_makeFromFileName(const char* path) {
+    return SkData::MakeFromFileName(path).release();
+}
+
+SkData* skialin_bridge_Data_copySubset(const SkData* data, size_t offset, size_t length) {
+    return data->copySubset(offset, length).release();
+}
+
+SkData* skialin_bridge_Data_shareSubset(const SkData* data, size_t offset, size_t length) {
+    return const_cast<SkData*>(data)->shareSubset(offset, length).release();
+}
+
 }  // extern "C"
