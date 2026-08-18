@@ -1,4 +1,4 @@
-use crate::sys;
+use crate::{sys, Data};
 
 pub struct Image(pub(crate) *mut sys::SkImage);
 
@@ -16,18 +16,12 @@ impl Image {
         unsafe { (*self.0).height() }
     }
 
+    pub fn encode_to_data(&self) -> Option<Data> {
+        unsafe { Data::from_raw(sys::skialin_bridge_Image_encodeToData(self.0)) }
+    }
+
     pub fn encode_to_png(&self) -> Option<Vec<u8>> {
-        let data = unsafe { sys::skialin_bridge_Image_encodeToData(self.0) };
-        if data.is_null() {
-            return None;
-        }
-        let bytes = unsafe {
-            let ptr = sys::SkData_bytes(data);
-            let len = sys::SkData_size(data);
-            std::slice::from_raw_parts(ptr, len).to_vec()
-        };
-        unsafe { sys::skialin_bridge_Data_unref(data) };
-        Some(bytes)
+        self.encode_to_data().map(|data| data.as_bytes().to_vec())
     }
 }
 
