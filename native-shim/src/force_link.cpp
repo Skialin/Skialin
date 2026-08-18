@@ -41,10 +41,6 @@ SKIALIN_NOINLINE void touch(const SkData& data) {
 SKIALIN_NOINLINE void touch(const SkImage& image) {
     (void)image.height();
     (void)image.width();
-    (void)image.uniqueID();
-    (void)image.alphaType();
-    (void)image.colorType();
-    (void)image.colorSpace();
 }
 
 SKIALIN_NOINLINE void touch(SkMatrix& matrix) {
