@@ -229,6 +229,12 @@ impl Paint {
         unsafe { crate::MaskFilter::from_raw(sys::skialin_bridge_Paint_refMaskFilter(&*self.0)) }
     }
 
+    pub fn set_path_effect(&mut self, effect: Option<&crate::PathEffect>) -> &mut Self {
+        let ptr = effect.map_or(std::ptr::null_mut(), |e| e.0);
+        unsafe { sys::skialin_bridge_Paint_setPathEffect(&mut *self.0, ptr) };
+        self
+    }
+
     /// Resets this paint to its default (freshly-constructed) state.
     pub fn reset(&mut self) -> &mut Self {
         unsafe { self.0.reset() };

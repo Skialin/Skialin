@@ -48,6 +48,10 @@ class Paint : Managed(PaintNative.nMake(), PaintNative::nRelease) {
         PaintNative.nSetMaskFilter(nativePtr, filter?.nativePtr ?: 0L)
     }
 
+    fun setPathEffect(effect: PathEffect?) {
+        PaintNative.nSetPathEffect(nativePtr, effect?.nativePtr ?: 0L)
+    }
+
     fun getShader(): Shader? = PaintNative.nGetShader(nativePtr).takeIf { it != 0L }?.let { Shader(it) }
     fun getColorFilter(): ColorFilter? = PaintNative.nGetColorFilter(nativePtr).takeIf { it != 0L }?.let { ColorFilter(it) }
     fun getImageFilter(): ImageFilter? = PaintNative.nGetImageFilter(nativePtr).takeIf { it != 0L }?.let { ImageFilter(it) }
@@ -105,6 +109,7 @@ private object PaintNative {
     external fun nSetColorFilter(ptr: Long, filterPtr: Long)
     external fun nSetImageFilter(ptr: Long, filterPtr: Long)
     external fun nSetMaskFilter(ptr: Long, filterPtr: Long)
+    external fun nSetPathEffect(ptr: Long, effectPtr: Long)
     external fun nGetShader(ptr: Long): Long
     external fun nGetColorFilter(ptr: Long): Long
     external fun nGetImageFilter(ptr: Long): Long

@@ -35,6 +35,7 @@ class SkImageFilter;
 class SkMaskFilter;
 class SkRuntimeEffect;
 class SkRRect;
+class SkPathEffect;
 enum class SkBlendMode;
 enum class SkClipOp;
 enum SkBlurStyle : int;
@@ -296,6 +297,24 @@ SkRRect* skialin_bridge_RRect_transform(const SkRRect* rrect, const SkMatrix* ma
 void skialin_bridge_Canvas_drawRRect(SkCanvas* canvas, const SkRRect* rrect, const SkPaint* paint);
 void skialin_bridge_Canvas_drawDRRect(SkCanvas* canvas, const SkRRect* outer, const SkRRect* inner, const SkPaint* paint);
 void skialin_bridge_Canvas_clipRRect(SkCanvas* canvas, const SkRRect* rrect, SkClipOp op);
+
+/* PathEffect: ref-owned by the caller. Free with skialin_bridge_PathEffect_unref.
+ * Routed entirely through the bridge: SkPathEffect's SkFlattenable base
+ * defeats bindgen's vtable-layout inference, same as SkShader/SkColorFilter.
+ * Scoped to Dash/Corner/Discrete/Trim plus Compose/Sum. 1D/2D path effects
+ * (path-along-path, line/tile-based) are not yet bound. */
+void skialin_bridge_PathEffect_unref(SkPathEffect* effect);
+/* Null if intervals is empty, has an odd count, or any interval is negative. */
+SkPathEffect* skialin_bridge_PathEffect_MakeDash(const float* intervals, size_t count, float phase);
+SkPathEffect* skialin_bridge_PathEffect_MakeCorner(float radius);
+SkPathEffect* skialin_bridge_PathEffect_MakeDiscrete(float segLength, float deviation, uint32_t seedAssist);
+/* mode: 0 = normal (keep [startT, stopT]), 1 = inverted (keep the complement). */
+SkPathEffect* skialin_bridge_PathEffect_MakeTrim(float startT, float stopT, int32_t mode);
+SkPathEffect* skialin_bridge_PathEffect_MakeCompose(SkPathEffect* outer, SkPathEffect* inner);
+SkPathEffect* skialin_bridge_PathEffect_MakeSum(SkPathEffect* first, SkPathEffect* second);
+
+/* Attaches a path effect to paint; the effect may be null to clear it. */
+void skialin_bridge_Paint_setPathEffect(SkPaint* paint, SkPathEffect* effect);
 
 /* Typeface: ref-owned by the caller. Free with skialin_bridge_Typeface_unref.
  * SkTypeface has pure virtual methods (onGetFamilyName etc.), which defeats

@@ -1,7 +1,7 @@
 use jni::sys::{jboolean, jfloat, jint, jlong, JNI_TRUE};
 use jni::JNIEnv;
 
-use skialin_core::{BlendMode, ColorFilter, ImageFilter, MaskFilter, Paint, PaintStyle, Shader, StrokeCap, StrokeJoin};
+use skialin_core::{BlendMode, ColorFilter, ImageFilter, MaskFilter, Paint, PaintStyle, PathEffect, Shader, StrokeCap, StrokeJoin};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 
@@ -158,6 +158,12 @@ pub extern "system" fn Java_org_skialin_PaintNative_nSetImageFilter(_env: JNIEnv
 pub extern "system" fn Java_org_skialin_PaintNative_nSetMaskFilter(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, filter_ptr: jlong) {
     let filter = (filter_ptr != 0).then(|| unsafe { borrow::<MaskFilter>(filter_ptr) });
     unsafe { borrow_mut::<Paint>(ptr).set_mask_filter(filter) };
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nSetPathEffect(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, effect_ptr: jlong) {
+    let effect = (effect_ptr != 0).then(|| unsafe { borrow::<PathEffect>(effect_ptr) });
+    unsafe { borrow_mut::<Paint>(ptr).set_path_effect(effect) };
 }
 
 #[no_mangle]

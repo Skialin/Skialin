@@ -35,6 +35,11 @@
 #include "include/effects/SkGradient.h"
 #include "include/effects/SkRuntimeEffect.h"
 #include "include/core/SkRRect.h"
+#include "include/core/SkPathEffect.h"
+#include "include/effects/SkDashPathEffect.h"
+#include "include/effects/SkCornerPathEffect.h"
+#include "include/effects/SkDiscretePathEffect.h"
+#include "include/effects/SkTrimPathEffect.h"
 #include "include/core/SkString.h"
 #include "include/core/SkStream.h"
 #include "include/encode/SkPngEncoder.h"
@@ -1225,6 +1230,39 @@ void skialin_bridge_Canvas_drawDRRect(SkCanvas* canvas, const SkRRect* outer, co
 
 void skialin_bridge_Canvas_clipRRect(SkCanvas* canvas, const SkRRect* rrect, SkClipOp op) {
     canvas->clipRRect(*rrect, op);
+}
+
+void skialin_bridge_PathEffect_unref(SkPathEffect* effect) {
+    SkSafeUnref(effect);
+}
+
+SkPathEffect* skialin_bridge_PathEffect_MakeDash(const float* intervals, size_t count, float phase) {
+    return SkDashPathEffect::Make({intervals, count}, phase).release();
+}
+
+SkPathEffect* skialin_bridge_PathEffect_MakeCorner(float radius) {
+    return SkCornerPathEffect::Make(radius).release();
+}
+
+SkPathEffect* skialin_bridge_PathEffect_MakeDiscrete(float segLength, float deviation, uint32_t seedAssist) {
+    return SkDiscretePathEffect::Make(segLength, deviation, seedAssist).release();
+}
+
+SkPathEffect* skialin_bridge_PathEffect_MakeTrim(float startT, float stopT, int32_t mode) {
+    auto trimMode = mode == 1 ? SkTrimPathEffect::Mode::kInverted : SkTrimPathEffect::Mode::kNormal;
+    return SkTrimPathEffect::Make(startT, stopT, trimMode).release();
+}
+
+SkPathEffect* skialin_bridge_PathEffect_MakeCompose(SkPathEffect* outer, SkPathEffect* inner) {
+    return SkPathEffect::MakeCompose(sk_ref_sp(outer), sk_ref_sp(inner)).release();
+}
+
+SkPathEffect* skialin_bridge_PathEffect_MakeSum(SkPathEffect* first, SkPathEffect* second) {
+    return SkPathEffect::MakeSum(sk_ref_sp(first), sk_ref_sp(second)).release();
+}
+
+void skialin_bridge_Paint_setPathEffect(SkPaint* paint, SkPathEffect* effect) {
+    paint->setPathEffect(sk_ref_sp(effect));
 }
 
 }  // extern "C"
