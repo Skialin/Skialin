@@ -18,7 +18,7 @@ pub mod surface;
 pub use bitmap::{AlphaType, Bitmap, ColorType};
 pub use canvas::{Canvas, ClipOp};
 pub use color::Color;
-pub use color_space::{CicpPrimaries, CicpTransferFn, ColorSpace};
+pub use color_space::{named_gamut, named_transfer_fn, CicpPrimaries, CicpTransferFn, ColorSpace};
 pub use data::Data;
 pub use image::Image;
 pub use matrix::Matrix;
