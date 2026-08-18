@@ -101,6 +101,10 @@ SkRect skialin_bridge_PathBuilder_computeBounds(const SkPathBuilder* builder) {
     return builder->computeBounds();
 }
 
+void skialin_bridge_Canvas_getTotalMatrix(const SkCanvas* canvas, SkMatrix* outMatrix) {
+    *outMatrix = canvas->getTotalMatrix();
+}
+
 SkPath* skialin_bridge_PathBuilder_snapshot(const SkPathBuilder* builder, const SkMatrix* matrix) {
     return new SkPath(builder->snapshot(matrix));
 }
@@ -1110,6 +1114,22 @@ void skialin_bridge_Paint_setImageFilter(SkPaint* paint, SkImageFilter* filter) 
 
 void skialin_bridge_Paint_setMaskFilter(SkPaint* paint, SkMaskFilter* filter) {
     paint->setMaskFilter(sk_ref_sp(filter));
+}
+
+SkShader* skialin_bridge_Paint_refShader(const SkPaint* paint) {
+    return paint->refShader().release();
+}
+
+SkColorFilter* skialin_bridge_Paint_refColorFilter(const SkPaint* paint) {
+    return paint->refColorFilter().release();
+}
+
+SkImageFilter* skialin_bridge_Paint_refImageFilter(const SkPaint* paint) {
+    return paint->refImageFilter().release();
+}
+
+SkMaskFilter* skialin_bridge_Paint_refMaskFilter(const SkPaint* paint) {
+    return paint->refMaskFilter().release();
 }
 
 }  // extern "C"

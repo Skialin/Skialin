@@ -159,3 +159,95 @@ pub extern "system" fn Java_org_skialin_PaintNative_nSetMaskFilter(_env: JNIEnv,
     let filter = (filter_ptr != 0).then(|| unsafe { borrow::<MaskFilter>(filter_ptr) });
     unsafe { borrow_mut::<Paint>(ptr).set_mask_filter(filter) };
 }
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nGetShader(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jlong {
+    match unsafe { borrow::<Paint>(ptr) }.shader() {
+        Some(shader) => box_ptr(shader),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nGetColorFilter(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jlong {
+    match unsafe { borrow::<Paint>(ptr) }.color_filter() {
+        Some(filter) => box_ptr(filter),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nGetImageFilter(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jlong {
+    match unsafe { borrow::<Paint>(ptr) }.image_filter() {
+        Some(filter) => box_ptr(filter),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nGetMaskFilter(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jlong {
+    match unsafe { borrow::<Paint>(ptr) }.mask_filter() {
+        Some(filter) => box_ptr(filter),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nReset(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) {
+    unsafe { borrow_mut::<Paint>(ptr) }.reset();
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nIsDither(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jboolean {
+    unsafe { borrow::<Paint>(ptr) }.is_dither() as jboolean
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nSetDither(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, dither: jboolean) {
+    unsafe { borrow_mut::<Paint>(ptr) }.set_dither(dither != 0);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nGetAlpha(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jint {
+    unsafe { borrow::<Paint>(ptr) }.alpha() as jint
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nSetAlpha(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, alpha: jint) {
+    unsafe { borrow_mut::<Paint>(ptr) }.set_alpha(alpha as u8);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nGetAlphaf(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jfloat {
+    unsafe { borrow::<Paint>(ptr) }.alphaf()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nSetAlphaf(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, alpha: jfloat) {
+    unsafe { borrow_mut::<Paint>(ptr) }.set_alphaf(alpha);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nSetARGB(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, a: jint, r: jint, g: jint, b: jint) {
+    unsafe { borrow_mut::<Paint>(ptr) }.set_argb(a as u8, r as u8, g as u8, b as u8);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nGetStrokeMiter(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jfloat {
+    unsafe { borrow::<Paint>(ptr) }.stroke_miter()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nSetStrokeMiter(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, miter_limit: jfloat) {
+    unsafe { borrow_mut::<Paint>(ptr) }.set_stroke_miter(miter_limit);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nNothingToDraw(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jboolean {
+    unsafe { borrow::<Paint>(ptr) }.nothing_to_draw() as jboolean
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nIsSrcOver(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jboolean {
+    unsafe { borrow::<Paint>(ptr) }.is_src_over() as jboolean
+}

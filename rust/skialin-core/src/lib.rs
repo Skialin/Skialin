@@ -38,7 +38,7 @@ pub mod tile_mode;
 pub mod typeface;
 
 pub use bitmap::{AlphaType, Bitmap};
-pub use canvas::{Canvas, ClipOp};
+pub use canvas::{Canvas, ClipOp, PointMode, SrcRectConstraint};
 pub use color::Color;
 pub use color_filter::ColorFilter;
 pub use color_space::{named_gamut, named_transfer_fn, CicpPrimaries, CicpTransferFn, ColorSpace};

@@ -58,6 +58,7 @@ extern "C" {
 SkPoint skialin_bridge_Matrix_mapPoint(const SkMatrix* matrix, SkPoint point);
 SkRect skialin_bridge_Matrix_mapRect(const SkMatrix* matrix, const SkRect* rect);
 SkRect skialin_bridge_PathBuilder_computeBounds(const SkPathBuilder* builder);
+void skialin_bridge_Canvas_getTotalMatrix(const SkCanvas* canvas, SkMatrix* outMatrix);
 
 /* Path: ref-owned by the caller. Free with skialin_bridge_Path_delete. */
 SkPath* skialin_bridge_PathBuilder_snapshot(const SkPathBuilder* builder, const SkMatrix* matrix);
@@ -520,5 +521,14 @@ SkMaskFilter* skialin_bridge_MaskFilter_MakeBlur(int32_t style, float sigma, boo
 void skialin_bridge_Paint_setColorFilter(SkPaint* paint, SkColorFilter* filter);
 void skialin_bridge_Paint_setImageFilter(SkPaint* paint, SkImageFilter* filter);
 void skialin_bridge_Paint_setMaskFilter(SkPaint* paint, SkMaskFilter* filter);
+
+/* Ref-owned by the caller; null if paint has none attached. Free with the
+ * matching type's unref (skialin_bridge_Shader_unref etc.). refShader/
+ * refColorFilter/refImageFilter/refMaskFilter return sk_sp<T> by value in
+ * the real API, which needs the sk_sp ownership seam bridged. */
+SkShader* skialin_bridge_Paint_refShader(const SkPaint* paint);
+SkColorFilter* skialin_bridge_Paint_refColorFilter(const SkPaint* paint);
+SkImageFilter* skialin_bridge_Paint_refImageFilter(const SkPaint* paint);
+SkMaskFilter* skialin_bridge_Paint_refMaskFilter(const SkPaint* paint);
 
 }  // extern "C"

@@ -41,6 +41,51 @@ class Canvas internal constructor(internal val ptr: Long) {
     fun clipPath(path: Path, op: ClipOp = ClipOp.INTERSECT) =
         CanvasNative.nClipPath(ptr, path.nativePtr, op.ordinal)
 
+    fun skew(sx: Float, sy: Float) = CanvasNative.nSkew(ptr, sx, sy)
+    fun resetMatrix() = CanvasNative.nResetMatrix(ptr)
+    fun setMatrix(matrix: Matrix33) = CanvasNative.nSetMatrix(ptr, matrix.values)
+    fun getTotalMatrix(): Matrix33 = Matrix33(CanvasNative.nTotalMatrix(ptr))
+
+    fun quickReject(rect: Rect): Boolean = CanvasNative.nQuickRejectRect(ptr, rect.left, rect.top, rect.right, rect.bottom)
+    fun quickReject(path: Path): Boolean = CanvasNative.nQuickRejectPath(ptr, path.nativePtr)
+
+    fun drawRoundRect(rect: Rect, rx: Float, ry: Float, paint: Paint) =
+        CanvasNative.nDrawRoundRect(ptr, rect.left, rect.top, rect.right, rect.bottom, rx, ry, paint.nativePtr)
+
+    fun drawArc(oval: Rect, startAngle: Float, sweepAngle: Float, useCenter: Boolean, paint: Paint) =
+        CanvasNative.nDrawArc(ptr, oval.left, oval.top, oval.right, oval.bottom, startAngle, sweepAngle, useCenter, paint.nativePtr)
+
+    fun drawPoints(mode: PointMode, points: Array<Point>, paint: Paint) {
+        val flat = FloatArray(points.size * 2)
+        points.forEachIndexed { i, p -> flat[i * 2] = p.x; flat[i * 2 + 1] = p.y }
+        CanvasNative.nDrawPoints(ptr, mode.ordinal, flat, paint.nativePtr)
+    }
+
+    fun drawImage(
+        image: Image, x: Float, y: Float, sampling: SamplingOptions = SamplingOptions.NEAREST, paint: Paint? = null,
+    ) = CanvasNative.nDrawImage(
+        ptr, image.nativePtr, x, y, sampling.maxAniso, sampling.useCubic, sampling.cubicB ?: 0f, sampling.cubicC ?: 0f,
+        sampling.filter.ordinal, sampling.mipmap.ordinal, paint?.nativePtr ?: 0L,
+    )
+
+    /** [src] defaults to the whole image when `null`. */
+    fun drawImageRect(
+        image: Image, dst: Rect, src: Rect? = null, sampling: SamplingOptions = SamplingOptions.NEAREST,
+        paint: Paint? = null, constraint: SrcRectConstraint = SrcRectConstraint.STRICT,
+    ) = CanvasNative.nDrawImageRect(
+        ptr, image.nativePtr, src?.let { floatArrayOf(it.left, it.top, it.right, it.bottom) },
+        dst.left, dst.top, dst.right, dst.bottom,
+        sampling.maxAniso, sampling.useCubic, sampling.cubicB ?: 0f, sampling.cubicC ?: 0f, sampling.filter.ordinal, sampling.mipmap.ordinal,
+        paint?.nativePtr ?: 0L, constraint.ordinal,
+    )
+
+    /**
+     * Saves the canvas state, then redirects drawing to a new layer. [bounds], if given, is
+     * a hint for the layer's extent. Returns the new save count, for [restoreToCount].
+     */
+    fun saveLayer(bounds: Rect? = null, paint: Paint? = null): Int =
+        CanvasNative.nSaveLayer(ptr, bounds?.let { floatArrayOf(it.left, it.top, it.right, it.bottom) }, paint?.nativePtr ?: 0L)
+
     /** Runs [block] between [save] and [restore]. */
     inline fun withSave(block: Canvas.() -> Unit) {
         save()
@@ -74,4 +119,24 @@ private object CanvasNative {
     external fun nRotate(ptr: Long, degrees: Float)
     external fun nClipRect(ptr: Long, left: Float, top: Float, right: Float, bottom: Float, op: Int)
     external fun nClipPath(ptr: Long, pathPtr: Long, op: Int)
+
+    external fun nSkew(ptr: Long, sx: Float, sy: Float)
+    external fun nResetMatrix(ptr: Long)
+    external fun nSetMatrix(ptr: Long, matrix: FloatArray)
+    external fun nTotalMatrix(ptr: Long): FloatArray
+    external fun nQuickRejectRect(ptr: Long, left: Float, top: Float, right: Float, bottom: Float): Boolean
+    external fun nQuickRejectPath(ptr: Long, pathPtr: Long): Boolean
+    external fun nDrawRoundRect(ptr: Long, left: Float, top: Float, right: Float, bottom: Float, rx: Float, ry: Float, paintPtr: Long)
+    external fun nDrawArc(ptr: Long, left: Float, top: Float, right: Float, bottom: Float, startAngle: Float, sweepAngle: Float, useCenter: Boolean, paintPtr: Long)
+    external fun nDrawPoints(ptr: Long, mode: Int, points: FloatArray, paintPtr: Long)
+    external fun nDrawImage(
+        ptr: Long, imagePtr: Long, x: Float, y: Float, maxAniso: Int, useCubic: Boolean, cubicB: Float, cubicC: Float,
+        filter: Int, mipmap: Int, paintPtr: Long,
+    )
+    external fun nDrawImageRect(
+        ptr: Long, imagePtr: Long, src: FloatArray?, dstLeft: Float, dstTop: Float, dstRight: Float, dstBottom: Float,
+        maxAniso: Int, useCubic: Boolean, cubicB: Float, cubicC: Float, filter: Int, mipmap: Int,
+        paintPtr: Long, constraint: Int,
+    )
+    external fun nSaveLayer(ptr: Long, bounds: FloatArray?, paintPtr: Long): Int
 }

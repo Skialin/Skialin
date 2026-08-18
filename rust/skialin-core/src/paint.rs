@@ -212,6 +212,80 @@ impl Paint {
         unsafe { sys::skialin_bridge_Paint_setMaskFilter(&mut *self.0, ptr) };
         self
     }
+
+    pub fn shader(&self) -> Option<crate::Shader> {
+        unsafe { crate::Shader::from_raw(sys::skialin_bridge_Paint_refShader(&*self.0)) }
+    }
+
+    pub fn color_filter(&self) -> Option<crate::ColorFilter> {
+        unsafe { crate::ColorFilter::from_raw(sys::skialin_bridge_Paint_refColorFilter(&*self.0)) }
+    }
+
+    pub fn image_filter(&self) -> Option<crate::ImageFilter> {
+        unsafe { crate::ImageFilter::from_raw(sys::skialin_bridge_Paint_refImageFilter(&*self.0)) }
+    }
+
+    pub fn mask_filter(&self) -> Option<crate::MaskFilter> {
+        unsafe { crate::MaskFilter::from_raw(sys::skialin_bridge_Paint_refMaskFilter(&*self.0)) }
+    }
+
+    /// Resets this paint to its default (freshly-constructed) state.
+    pub fn reset(&mut self) -> &mut Self {
+        unsafe { self.0.reset() };
+        self
+    }
+
+    pub fn is_dither(&self) -> bool {
+        unsafe { self.0.isDither() }
+    }
+
+    pub fn set_dither(&mut self, dither: bool) -> &mut Self {
+        unsafe { self.0.setDither(dither) };
+        self
+    }
+
+    pub fn alpha(&self) -> u8 {
+        unsafe { self.0.getAlpha() }
+    }
+
+    pub fn set_alpha(&mut self, alpha: u8) -> &mut Self {
+        unsafe { self.0.setAlpha(alpha.into()) };
+        self
+    }
+
+    pub fn alphaf(&self) -> f32 {
+        unsafe { self.0.getAlphaf() }
+    }
+
+    pub fn set_alphaf(&mut self, alpha: f32) -> &mut Self {
+        unsafe { self.0.setAlphaf(alpha) };
+        self
+    }
+
+    pub fn set_argb(&mut self, a: u8, r: u8, g: u8, b: u8) -> &mut Self {
+        unsafe { self.0.setARGB(a.into(), r.into(), g.into(), b.into()) };
+        self
+    }
+
+    pub fn stroke_miter(&self) -> f32 {
+        unsafe { self.0.getStrokeMiter() }
+    }
+
+    pub fn set_stroke_miter(&mut self, miter_limit: f32) -> &mut Self {
+        unsafe { self.0.setStrokeMiter(miter_limit) };
+        self
+    }
+
+    /// `true` if this paint is guaranteed to draw nothing (e.g. a fully
+    /// transparent color with default blend mode).
+    pub fn nothing_to_draw(&self) -> bool {
+        unsafe { self.0.nothingToDraw() }
+    }
+
+    /// `true` if this paint's blend mode is the default `SrcOver`.
+    pub fn is_src_over(&self) -> bool {
+        unsafe { self.0.isSrcOver() }
+    }
 }
 
 impl Default for Paint {
