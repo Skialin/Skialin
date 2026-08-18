@@ -1,10 +1,17 @@
-use jni::sys::{jboolean, jfloat, jint, jlong};
+use jni::objects::JByteBuffer;
+use jni::sys::{jboolean, jfloat, jint, jlong, jobject};
 use jni::JNIEnv;
 
 use skialin_core::{ImageInfo, Pixmap};
 
 use crate::color_type::{alpha_type_to_ordinal, color_type_to_ordinal};
 use crate::util::{borrow, box_ptr, drop_ptr};
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PixmapNative_nBufferAddress(env: JNIEnv, _class: jni::objects::JClass, buffer: jobject) -> jlong {
+    let buffer = unsafe { JByteBuffer::from_raw(buffer) };
+    env.get_direct_buffer_address(&buffer).expect("get_direct_buffer_address") as jlong
+}
 
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_PixmapNative_nMake(_env: JNIEnv, _class: jni::objects::JClass, info_ptr: jlong, addr: jlong, row_bytes: jlong) -> jlong {
