@@ -119,6 +119,30 @@ SkImage* skialin_bridge_Bitmap_asImage(const SkBitmap* bitmap) {
     return SkImages::RasterFromBitmap(*bitmap).release();
 }
 
+int32_t skialin_bridge_Image_width(const SkImage* image) {
+    return image->width();
+}
+
+int32_t skialin_bridge_Image_height(const SkImage* image) {
+    return image->height();
+}
+
+uint32_t skialin_bridge_Image_uniqueID(const SkImage* image) {
+    return image->uniqueID();
+}
+
+SkAlphaType skialin_bridge_Image_alphaType(const SkImage* image) {
+    return image->alphaType();
+}
+
+SkColorType skialin_bridge_Image_colorType(const SkImage* image) {
+    return image->colorType();
+}
+
+SkColorSpace* skialin_bridge_Image_colorSpace(const SkImage* image) {
+    return image->colorSpace();
+}
+
 SkImageInfo* skialin_bridge_Image_imageInfo(const SkImage* image) {
     return new SkImageInfo(image->imageInfo());
 }

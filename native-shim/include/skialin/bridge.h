@@ -63,6 +63,17 @@ void skialin_bridge_Image_unref(SkImage* image);
 SkImage* skialin_bridge_Image_MakeFromEncoded(const uint8_t* bytes, size_t length);
 SkData* skialin_bridge_Image_encodeToData(const SkImage* image);
 
+/* SkImage is abstract (pure virtual methods), so bindgen generates no
+ * instance methods for it at all, not even the concrete inline ones: every
+ * accessor is routed through the bridge. */
+int32_t skialin_bridge_Image_width(const SkImage* image);
+int32_t skialin_bridge_Image_height(const SkImage* image);
+uint32_t skialin_bridge_Image_uniqueID(const SkImage* image);
+SkAlphaType skialin_bridge_Image_alphaType(const SkImage* image);
+SkColorType skialin_bridge_Image_colorType(const SkImage* image);
+/* Borrowed; null if this Image has no color space. */
+SkColorSpace* skialin_bridge_Image_colorSpace(const SkImage* image);
+
 /* Owned by the caller; free with skialin_bridge_ImageInfo_delete. */
 SkImageInfo* skialin_bridge_Image_imageInfo(const SkImage* image);
 bool skialin_bridge_Image_isAlphaOnly(const SkImage* image);
