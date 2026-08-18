@@ -37,3 +37,41 @@ impl From<sys::SkRect> for Rect {
         Rect { left: r.fLeft, top: r.fTop, right: r.fRight, bottom: r.fBottom }
     }
 }
+
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub struct IRect {
+    pub left: i32,
+    pub top: i32,
+    pub right: i32,
+    pub bottom: i32,
+}
+
+impl IRect {
+    pub const fn new(left: i32, top: i32, right: i32, bottom: i32) -> Self {
+        IRect { left, top, right, bottom }
+    }
+
+    pub const fn from_wh(width: i32, height: i32) -> Self {
+        IRect::new(0, 0, width, height)
+    }
+
+    pub fn width(&self) -> i32 {
+        self.right - self.left
+    }
+
+    pub fn height(&self) -> i32 {
+        self.bottom - self.top
+    }
+}
+
+impl From<IRect> for sys::SkIRect {
+    fn from(r: IRect) -> Self {
+        sys::SkIRect { fLeft: r.left, fTop: r.top, fRight: r.right, fBottom: r.bottom }
+    }
+}
+
+impl From<sys::SkIRect> for IRect {
+    fn from(r: sys::SkIRect) -> Self {
+        IRect { left: r.fLeft, top: r.fTop, right: r.fRight, bottom: r.fBottom }
+    }
+}
