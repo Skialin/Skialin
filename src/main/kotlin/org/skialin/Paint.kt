@@ -31,6 +31,10 @@ class Paint : Managed(PaintNative.nMake(), PaintNative::nRelease) {
     fun setBlendMode(mode: BlendMode) {
         PaintNative.nSetBlendMode(nativePtr, mode.ordinal)
     }
+
+    fun setShader(shader: Shader?) {
+        PaintNative.nSetShader(nativePtr, shader?.nativePtr ?: 0L)
+    }
 }
 
 private object PaintNative {
@@ -53,4 +57,5 @@ private object PaintNative {
     external fun nGetStrokeJoin(ptr: Long): Int
     external fun nSetStrokeJoin(ptr: Long, join: Int)
     external fun nSetBlendMode(ptr: Long, mode: Int)
+    external fun nSetShader(ptr: Long, shaderPtr: Long)
 }
