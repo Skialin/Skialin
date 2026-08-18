@@ -86,6 +86,8 @@ fn main() {
         .files(pathops_sources.iter().map(|f| pathops_dir.join(f)))
         .include(&skia_dir)
         .include(&shim_include)
+        .include(skia_dir.join("include/third_party/vulkan"))
+        .define("SK_USE_INTERNAL_VULKAN_HEADERS", None)
         .warnings(false)
         .compile("skialin_bridge");
 
@@ -97,10 +99,13 @@ fn main() {
         .clang_arg("-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH")
         .clang_arg(format!("-I{}", skia_dir.display()))
         .clang_arg(format!("-I{}", shim_include.display()))
+        .clang_arg(format!("-I{}", skia_dir.join("include/third_party/vulkan").display()))
+        .clang_arg("-DSK_USE_INTERNAL_VULKAN_HEADERS")
         .allowlist_type("Sk.*")
         .allowlist_function("Sk.*")
         .allowlist_function("skialin_bridge_.*")
         .allowlist_var("Sk.*")
+        .allowlist_var("VK_.*")
         .opaque_type("std::.*")
         .layout_tests(false)
         .derive_default(true)

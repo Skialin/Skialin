@@ -8,6 +8,9 @@ license.workspace = true
 [dependencies]
 skialin-sys = { path = "../skialin-sys" }
 
+[dev-dependencies]
+ash = "0.38"
+
 [target.'cfg(windows)'.dev-dependencies]
 windows-sys = { version = "0.59", features = [
     "Win32_Foundation",

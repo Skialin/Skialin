@@ -16,6 +16,7 @@
 #include "include/core/SkSurfaceProps.h"
 #include "include/core/SkTileMode.h"
 #include "include/gpu/ganesh/gl/GrGLAssembleInterface.h"
+#include "include/gpu/vk/VulkanBackendContext.h"
 
 class SkSurface;
 class SkCanvas;
@@ -738,6 +739,23 @@ GrDirectContext* skialin_bridge_DirectContext_MakeGLAssembled(void* ctx, GrGLGet
 void skialin_bridge_DirectContext_unref(GrDirectContext* context);
 void skialin_bridge_DirectContext_flush(GrDirectContext* context);
 void skialin_bridge_DirectContext_submit(GrDirectContext* context, bool syncCpu);
+
+/* DirectContext (GrDirectContext, Ganesh + Vulkan). The instance/device/
+ * queue are the caller's to create and keep alive for as long as any
+ * GrDirectContext, Surface, or Image derived from this call is alive.
+ * skgpu::VulkanBackendContext::fGetProc is a std::function, so it can't
+ * cross the FFI boundary directly; getProc/getProcCtx build one from a
+ * plain resolver instead, matching vkGetInstanceProcAddr/
+ * vkGetDeviceProcAddr's own (name, instance, device) shape. The memory
+ * allocator is Skia's own VMA-backed default (VulkanMemoryAllocators::Make)
+ * -- a caller-supplied allocator isn't exposed here yet. Ref-owned; free
+ * with skialin_bridge_DirectContext_unref. Null on failure. */
+typedef PFN_vkVoidFunction (*SkialinVulkanGetProc)(void* ctx, const char* name, VkInstance instance, VkDevice device);
+
+GrDirectContext* skialin_bridge_DirectContext_MakeVulkan(
+    VkInstance instance, VkPhysicalDevice physicalDevice, VkDevice device, VkQueue queue,
+    uint32_t graphicsQueueIndex, uint32_t maxAPIVersion, void* getProcCtx, SkialinVulkanGetProc getProc,
+    bool protectedContext);
 
 /* Direct wrapper around SkSurfaces::RenderTarget (SkSurfaceGanesh.h); params
  * map 1:1 to the real signature. surfaceProps may be null. Ref-owned; free

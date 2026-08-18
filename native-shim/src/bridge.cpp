@@ -54,6 +54,9 @@
 #include "include/gpu/ganesh/GrTypes.h"
 #include "include/gpu/ganesh/SkSurfaceGanesh.h"
 #include "include/gpu/ganesh/gl/GrGLDirectContext.h"
+#include "include/gpu/ganesh/vk/GrVkDirectContext.h"
+#include "src/gpu/GpuTypesPriv.h"
+#include "src/gpu/vk/vulkanmemoryallocator/VulkanMemoryAllocatorPriv.h"
 
 namespace {
 
@@ -1598,6 +1601,25 @@ void skialin_bridge_DirectContext_flush(GrDirectContext* context) {
 
 void skialin_bridge_DirectContext_submit(GrDirectContext* context, bool syncCpu) {
     context->submit(syncCpu ? GrSyncCpu::kYes : GrSyncCpu::kNo);
+}
+
+GrDirectContext* skialin_bridge_DirectContext_MakeVulkan(
+    VkInstance instance, VkPhysicalDevice physicalDevice, VkDevice device, VkQueue queue,
+    uint32_t graphicsQueueIndex, uint32_t maxAPIVersion, void* getProcCtx, SkialinVulkanGetProc getProc,
+    bool protectedContext) {
+    skgpu::VulkanBackendContext backendContext;
+    backendContext.fInstance = instance;
+    backendContext.fPhysicalDevice = physicalDevice;
+    backendContext.fDevice = device;
+    backendContext.fQueue = queue;
+    backendContext.fGraphicsQueueIndex = graphicsQueueIndex;
+    backendContext.fMaxAPIVersion = maxAPIVersion;
+    backendContext.fProtectedContext = protectedContext ? skgpu::Protected::kYes : skgpu::Protected::kNo;
+    backendContext.fGetProc = [getProcCtx, getProc](const char* name, VkInstance inst, VkDevice dev) {
+        return getProc(getProcCtx, name, inst, dev);
+    };
+    backendContext.fMemoryAllocator = skgpu::VulkanMemoryAllocators::Make(backendContext, skgpu::ThreadSafe::kNo);
+    return GrDirectContexts::MakeVulkan(backendContext).release();
 }
 
 SkSurface* skialin_bridge_Surface_MakeRenderTarget(
