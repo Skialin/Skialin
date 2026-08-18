@@ -21,5 +21,6 @@
 #include "include/core/SkBitmap.h"
 #include "include/core/SkImage.h"
 #include "include/core/SkData.h"
+#include "include/core/SkColorSpace.h"
 
 #include "skialin/bridge.h"
