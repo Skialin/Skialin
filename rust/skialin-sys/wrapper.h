@@ -22,5 +22,9 @@
 #include "include/core/SkImage.h"
 #include "include/core/SkData.h"
 #include "include/core/SkColorSpace.h"
+#include "include/core/SkPixmap.h"
+#include "include/core/SkShader.h"
+#include "include/core/SkSamplingOptions.h"
+#include "include/core/SkTileMode.h"
 
 #include "skialin/bridge.h"
