@@ -59,5 +59,14 @@ SkImage* skialin_bridge_Bitmap_asImage(const SkBitmap* bitmap);
 
 /* Data: ref-owned by the caller. Free with skialin_bridge_Data_unref. */
 void skialin_bridge_Data_unref(SkData* data);
+SkData* skialin_bridge_Data_makeEmpty(void);
+SkData* skialin_bridge_Data_makeWithCopy(const void* data, size_t length);
+SkData* skialin_bridge_Data_makeUninitialized(size_t length);
+SkData* skialin_bridge_Data_makeZeroInitialized(size_t length);
+/* Null if the file can't be opened. */
+SkData* skialin_bridge_Data_makeFromFileName(const char* path);
+/* Null if offset+length is out of range. */
+SkData* skialin_bridge_Data_copySubset(const SkData* data, size_t offset, size_t length);
+SkData* skialin_bridge_Data_shareSubset(const SkData* data, size_t offset, size_t length);
 
 }  // extern "C"
