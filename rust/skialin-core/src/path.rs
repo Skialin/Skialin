@@ -1,0 +1,140 @@
+use crate::{sys, Matrix, Point, Rect};
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum PathDirection {
+    Clockwise,
+    CounterClockwise,
+}
+
+impl From<PathDirection> for sys::SkPathDirection {
+    fn from(direction: PathDirection) -> Self {
+        match direction {
+            PathDirection::Clockwise => sys::SkPathDirection_kCW,
+            PathDirection::CounterClockwise => sys::SkPathDirection_kCCW,
+        }
+    }
+}
+
+/// An immutable, drawable path snapshot. Produced from a [`PathBuilder`].
+pub struct Path(pub(crate) sys::SkPath);
+
+impl Path {
+    pub fn is_empty(&self) -> bool {
+        unsafe { self.0.isEmpty() }
+    }
+
+    pub fn bounds(&self) -> Rect {
+        unsafe { *self.0.getBounds() }.into()
+    }
+
+    pub fn contains(&self, point: Point) -> bool {
+        unsafe { self.0.contains(point.into()) }
+    }
+}
+
+impl Drop for Path {
+    fn drop(&mut self) {
+        unsafe { self.0.destruct() };
+    }
+}
+
+/// Mutable path construction, mirroring Skia's `SkPathBuilder`. Call
+/// [`PathBuilder::snapshot`] to obtain a drawable [`Path`] without
+/// consuming the builder, or [`PathBuilder::detach`] to take it and reset.
+pub struct PathBuilder(sys::SkPathBuilder);
+
+impl PathBuilder {
+    pub fn new() -> Self {
+        PathBuilder(unsafe { sys::SkPathBuilder::new() })
+    }
+
+    pub fn move_to(&mut self, point: Point) -> &mut Self {
+        unsafe { self.0.moveTo(point.into()) };
+        self
+    }
+
+    pub fn line_to(&mut self, point: Point) -> &mut Self {
+        unsafe { self.0.lineTo(point.into()) };
+        self
+    }
+
+    pub fn quad_to(&mut self, p1: Point, p2: Point) -> &mut Self {
+        unsafe { self.0.quadTo(p1.into(), p2.into()) };
+        self
+    }
+
+    pub fn cubic_to(&mut self, p1: Point, p2: Point, p3: Point) -> &mut Self {
+        unsafe { self.0.cubicTo(p1.into(), p2.into(), p3.into()) };
+        self
+    }
+
+    pub fn arc_to(&mut self, oval: Rect, start_angle_deg: f32, sweep_angle_deg: f32, force_move_to: bool) -> &mut Self {
+        let sk_rect: sys::SkRect = oval.into();
+        unsafe { self.0.arcTo(&sk_rect, start_angle_deg, sweep_angle_deg, force_move_to) };
+        self
+    }
+
+    pub fn close(&mut self) -> &mut Self {
+        unsafe { self.0.close() };
+        self
+    }
+
+    pub fn add_rect(&mut self, rect: Rect, direction: PathDirection) -> &mut Self {
+        let sk_rect: sys::SkRect = rect.into();
+        unsafe { self.0.addRect(&sk_rect, direction.into(), 0) };
+        self
+    }
+
+    pub fn add_oval(&mut self, oval: Rect, direction: PathDirection) -> &mut Self {
+        let sk_rect: sys::SkRect = oval.into();
+        unsafe { self.0.addOval(&sk_rect, direction.into(), 1) };
+        self
+    }
+
+    pub fn add_circle(&mut self, center: Point, radius: f32, direction: PathDirection) -> &mut Self {
+        unsafe { self.0.addCircle(center.into(), radius, direction.into()) };
+        self
+    }
+
+    pub fn offset(&mut self, dx: f32, dy: f32) -> &mut Self {
+        unsafe { self.0.offset(dx, dy) };
+        self
+    }
+
+    pub fn is_empty(&self) -> bool {
+        unsafe { self.0.isEmpty() }
+    }
+
+    pub fn bounds(&self) -> Rect {
+        unsafe { self.0.computeBounds() }.into()
+    }
+
+    /// Snapshots the current contents into a drawable [`Path`] without
+    /// consuming the builder.
+    pub fn snapshot(&self) -> Path {
+        Path(unsafe { self.0.snapshot(std::ptr::null()) })
+    }
+
+    /// Snapshots and applies `matrix`, without consuming the builder.
+    pub fn snapshot_with_matrix(&self, matrix: &Matrix) -> Path {
+        Path(unsafe { self.0.snapshot(&matrix.0) })
+    }
+
+    /// Takes the current contents into a drawable [`Path`], resetting the
+    /// builder to empty.
+    pub fn detach(&mut self) -> Path {
+        Path(unsafe { self.0.detach(std::ptr::null()) })
+    }
+}
+
+impl Default for PathBuilder {
+    fn default() -> Self {
+        PathBuilder::new()
+    }
+}
+
+impl Drop for PathBuilder {
+    fn drop(&mut self) {
+        unsafe { self.0.destruct() };
+    }
+}

@@ -10,3 +10,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 skialin-core = { path = "../skialin-core" }
+jni = "0.21"

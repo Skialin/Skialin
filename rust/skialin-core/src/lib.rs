@@ -11,8 +11,8 @@ pub mod point;
 pub mod rect;
 pub mod surface;
 
-pub use bitmap::Bitmap;
-pub use canvas::Canvas;
+pub use bitmap::{AlphaType, Bitmap, ColorType};
+pub use canvas::{Canvas, ClipOp};
 pub use color::Color;
 pub use image::Image;
 pub use matrix::Matrix;
