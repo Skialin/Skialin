@@ -1,7 +1,7 @@
 use jni::sys::{jfloat, jint, jlong, jstring};
 use jni::JNIEnv;
 
-use skialin_core::{ParagraphStyle, TextAlign, TextDirection, TextHeightBehavior, TextStyle};
+use skialin_core::{ParagraphStyle, StrutStyle, TextAlign, TextDirection, TextHeightBehavior, TextStyle};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 
@@ -86,4 +86,15 @@ pub extern "system" fn Java_org_skialin_ParagraphStyleNative_nTextStyle(_env: JN
 pub extern "system" fn Java_org_skialin_ParagraphStyleNative_nSetTextStyle(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, style_ptr: jlong) {
     let style = unsafe { borrow::<TextStyle>(style_ptr) };
     unsafe { borrow_mut::<ParagraphStyle>(ptr) }.set_text_style(style);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_ParagraphStyleNative_nStrutStyle(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jlong {
+    box_ptr(unsafe { borrow::<ParagraphStyle>(ptr) }.strut_style())
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_ParagraphStyleNative_nSetStrutStyle(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, strut_ptr: jlong) {
+    let strut = unsafe { borrow::<StrutStyle>(strut_ptr) };
+    unsafe { borrow_mut::<ParagraphStyle>(ptr) }.set_strut_style(strut);
 }

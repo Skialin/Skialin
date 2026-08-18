@@ -1,7 +1,7 @@
-use jni::sys::jlong;
+use jni::sys::{jfloat, jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{FontCollection, ParagraphBuilder, ParagraphStyle, TextStyle};
+use skialin_core::{FontCollection, ParagraphBuilder, ParagraphStyle, PlaceholderAlignment, PlaceholderBaseline, PlaceholderStyle, TextStyle};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 
@@ -32,6 +32,47 @@ pub extern "system" fn Java_org_skialin_ParagraphBuilderNative_nPop(_env: JNIEnv
 pub extern "system" fn Java_org_skialin_ParagraphBuilderNative_nAddText<'l>(mut env: JNIEnv<'l>, _class: jni::objects::JClass<'l>, ptr: jlong, text: jni::objects::JString<'l>) {
     let text: String = env.get_string(&text).expect("get_string").into();
     unsafe { borrow_mut::<ParagraphBuilder>(ptr) }.add_text(&text);
+}
+
+fn placeholder_alignment_from_ordinal(ordinal: jint) -> PlaceholderAlignment {
+    match ordinal {
+        1 => PlaceholderAlignment::AboveBaseline,
+        2 => PlaceholderAlignment::BelowBaseline,
+        3 => PlaceholderAlignment::Top,
+        4 => PlaceholderAlignment::Bottom,
+        5 => PlaceholderAlignment::Middle,
+        _ => PlaceholderAlignment::Baseline,
+    }
+}
+
+fn placeholder_baseline_from_ordinal(ordinal: jint) -> PlaceholderBaseline {
+    if ordinal == 1 {
+        PlaceholderBaseline::Ideographic
+    } else {
+        PlaceholderBaseline::Alphabetic
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_ParagraphBuilderNative_nAddPlaceholder(
+    _env: JNIEnv,
+    _class: jni::objects::JClass,
+    ptr: jlong,
+    width: jfloat,
+    height: jfloat,
+    alignment: jint,
+    baseline: jint,
+    baseline_offset: jfloat,
+) {
+    let style = PlaceholderStyle {
+        width,
+        height,
+        alignment: placeholder_alignment_from_ordinal(alignment),
+        baseline: placeholder_baseline_from_ordinal(baseline),
+        baseline_offset,
+    };
+    unsafe { borrow_mut::<ParagraphBuilder>(ptr) }.add_placeholder(style);
 }
 
 #[no_mangle]

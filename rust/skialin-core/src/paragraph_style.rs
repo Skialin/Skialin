@@ -1,4 +1,4 @@
-use crate::{sys, TextStyle};
+use crate::{sys, StrutStyle, TextStyle};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TextDirection {
@@ -142,6 +142,17 @@ impl ParagraphStyle {
     /// `style` is copied, not consumed: it stays independently valid and closeable afterward.
     pub fn set_text_style(&mut self, style: &TextStyle) {
         unsafe { sys::skialin_bridge_ParagraphStyle_setTextStyle(self.0, style.0) };
+    }
+
+    /// The "strut": an optional synthetic line-height override independent
+    /// of any actual glyph in the line.
+    pub fn strut_style(&self) -> StrutStyle {
+        unsafe { StrutStyle::from_raw(sys::skialin_bridge_ParagraphStyle_getStrutStyle(self.0)) }
+    }
+
+    /// `strut_style` is copied, not consumed: it stays independently valid and closeable afterward.
+    pub fn set_strut_style(&mut self, strut_style: &StrutStyle) {
+        unsafe { sys::skialin_bridge_ParagraphStyle_setStrutStyle(self.0, strut_style.0) };
     }
 }
 

@@ -48,6 +48,11 @@ class ParagraphStyle internal constructor(ptr: Long) : Managed(ptr, ParagraphSty
     var textStyle: TextStyle
         get() = TextStyle(ParagraphStyleNative.nTextStyle(nativePtr))
         set(value) = ParagraphStyleNative.nSetTextStyle(nativePtr, value.nativePtr)
+
+    /** The "strut": an optional synthetic line-height override independent of any actual glyph in the line. */
+    var strutStyle: StrutStyle
+        get() = StrutStyle(ParagraphStyleNative.nStrutStyle(nativePtr))
+        set(value) = ParagraphStyleNative.nSetStrutStyle(nativePtr, value.nativePtr)
 }
 
 private object ParagraphStyleNative {
@@ -71,4 +76,6 @@ private object ParagraphStyleNative {
     external fun nSetTextHeightBehavior(ptr: Long, behavior: Int)
     external fun nTextStyle(ptr: Long): Long
     external fun nSetTextStyle(ptr: Long, stylePtr: Long)
+    external fun nStrutStyle(ptr: Long): Long
+    external fun nSetStrutStyle(ptr: Long, strutPtr: Long)
 }

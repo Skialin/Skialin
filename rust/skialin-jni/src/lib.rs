@@ -1,6 +1,7 @@
 mod bitmap;
 mod canvas;
 mod color_filter;
+mod color_matrix;
 mod color_space;
 mod color_type;
 mod data;
@@ -24,6 +25,7 @@ mod pixmap;
 mod rrect;
 mod runtime_effect;
 mod shader;
+mod strut_style;
 mod surface;
 mod text_blob;
 mod text_style;

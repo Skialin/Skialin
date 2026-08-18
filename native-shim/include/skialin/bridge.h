@@ -47,6 +47,7 @@ namespace skia {
 namespace textlayout {
 class TextStyle;
 struct ParagraphStyle;
+struct StrutStyle;
 class FontCollection;
 class ParagraphBuilder;
 class Paragraph;
@@ -535,6 +536,48 @@ skia::textlayout::TextStyle* skialin_bridge_ParagraphStyle_getTextStyle(const sk
 /* style is copied, not consumed; the caller retains ownership of it. */
 void skialin_bridge_ParagraphStyle_setTextStyle(skia::textlayout::ParagraphStyle* paragraphStyle, const skia::textlayout::TextStyle* style);
 
+/* StrutStyle (skia::textlayout::StrutStyle): heap-allocated with `new`/
+ * `delete`, same rationale as TextStyle (holds a non-trivial
+ * std::vector<SkString> font-families member). The "strut" is an optional
+ * synthetic line-height override independent of any actual glyph in the
+ * line. */
+skia::textlayout::StrutStyle* skialin_bridge_StrutStyle_new(void);
+void skialin_bridge_StrutStyle_delete(skia::textlayout::StrutStyle* style);
+SkData* skialin_bridge_StrutStyle_fontFamily(const skia::textlayout::StrutStyle* style, size_t index);
+size_t skialin_bridge_StrutStyle_countFontFamilies(const skia::textlayout::StrutStyle* style);
+void skialin_bridge_StrutStyle_setFontFamilies(skia::textlayout::StrutStyle* style, const char* const* families, const size_t* lengths, size_t count);
+void skialin_bridge_StrutStyle_getFontStyle(const skia::textlayout::StrutStyle* style, int32_t* weight, int32_t* width, int32_t* slant);
+void skialin_bridge_StrutStyle_setFontStyle(skia::textlayout::StrutStyle* style, int32_t weight, int32_t width, int32_t slant);
+float skialin_bridge_StrutStyle_getFontSize(const skia::textlayout::StrutStyle* style);
+void skialin_bridge_StrutStyle_setFontSize(skia::textlayout::StrutStyle* style, float size);
+float skialin_bridge_StrutStyle_getHeight(const skia::textlayout::StrutStyle* style);
+void skialin_bridge_StrutStyle_setHeight(skia::textlayout::StrutStyle* style, float height);
+float skialin_bridge_StrutStyle_getLeading(const skia::textlayout::StrutStyle* style);
+void skialin_bridge_StrutStyle_setLeading(skia::textlayout::StrutStyle* style, float leading);
+bool skialin_bridge_StrutStyle_getStrutEnabled(const skia::textlayout::StrutStyle* style);
+void skialin_bridge_StrutStyle_setStrutEnabled(skia::textlayout::StrutStyle* style, bool enabled);
+bool skialin_bridge_StrutStyle_getForceStrutHeight(const skia::textlayout::StrutStyle* style);
+void skialin_bridge_StrutStyle_setForceStrutHeight(skia::textlayout::StrutStyle* style, bool force);
+bool skialin_bridge_StrutStyle_getHeightOverride(const skia::textlayout::StrutStyle* style);
+void skialin_bridge_StrutStyle_setHeightOverride(skia::textlayout::StrutStyle* style, bool heightOverride);
+bool skialin_bridge_StrutStyle_getHalfLeading(const skia::textlayout::StrutStyle* style);
+void skialin_bridge_StrutStyle_setHalfLeading(skia::textlayout::StrutStyle* style, bool halfLeading);
+
+/* Owned by the caller; free with skialin_bridge_StrutStyle_delete. */
+skia::textlayout::StrutStyle* skialin_bridge_ParagraphStyle_getStrutStyle(const skia::textlayout::ParagraphStyle* style);
+/* strutStyle is copied, not consumed; the caller retains ownership of it. */
+void skialin_bridge_ParagraphStyle_setStrutStyle(skia::textlayout::ParagraphStyle* paragraphStyle, const skia::textlayout::StrutStyle* strutStyle);
+
+/* PlaceholderStyle: a plain value struct (width, height, alignment,
+ * baseline, baselineOffset), passed as 5 flat scalars rather than needing
+ * its own opaque type. alignment: 0 baseline, 1 above-baseline,
+ * 2 below-baseline, 3 top, 4 bottom, 5 middle (matches
+ * PlaceholderAlignment's declaration order). baseline: 0 alphabetic,
+ * 1 ideographic (matches TextBaseline's declaration order). Reserves space
+ * in the paragraph for the caller to draw a custom inline object into. */
+void skialin_bridge_ParagraphBuilder_addPlaceholder(
+    skia::textlayout::ParagraphBuilder* builder, float width, float height, int32_t alignment, int32_t baseline, float baselineOffset);
+
 /* FontCollection: ref-owned by the caller. Free with
  * skialin_bridge_FontCollection_unref. Resolves families named in TextStyle
  * to a Typeface during layout; setDefaultFontManager is the minimum needed
@@ -603,6 +646,19 @@ SkColorFilter* skialin_bridge_ColorFilter_Blend(uint32_t argb, SkBlendMode mode)
 SkColorFilter* skialin_bridge_ColorFilter_Matrix(const float* rowMajor20, bool clamp);
 SkColorFilter* skialin_bridge_ColorFilter_Compose(SkColorFilter* outer, SkColorFilter* inner);
 SkColorFilter* skialin_bridge_ColorFilter_Lerp(float t, SkColorFilter* dst, SkColorFilter* src);
+
+/* ColorMatrix (SkColorMatrix): operates in place on a caller-owned 20-float
+ * row-major buffer (a 4x5 matrix), never heap-allocated. Safe because
+ * SkColorMatrix's only member is `std::array<float, 20>`, so it has
+ * identical layout to `float[20]` and can be reinterpreted in place --
+ * this mirrors the ColorFilter::Matrix bridge's rowMajor20 convention, and
+ * feeds directly into it. Not a full SkColorMatrix binding: RGBtoYUV/
+ * YUVtoRGB are not yet bound. */
+void skialin_bridge_ColorMatrix_setIdentity(float* mat20);
+void skialin_bridge_ColorMatrix_setScale(float* mat20, float rScale, float gScale, float bScale, float aScale);
+void skialin_bridge_ColorMatrix_postTranslate(float* mat20, float dr, float dg, float db, float da);
+void skialin_bridge_ColorMatrix_setConcat(float* outMat20, const float* aMat20, const float* bMat20);
+void skialin_bridge_ColorMatrix_setSaturation(float* mat20, float sat);
 
 /* ImageFilter: ref-owned by the caller. Free with skialin_bridge_ImageFilter_unref.
  * Routed entirely through the bridge for the same reason as SkColorFilter

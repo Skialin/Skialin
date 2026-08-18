@@ -27,6 +27,16 @@ class ParagraphBuilder(style: ParagraphStyle, fontCollection: FontCollection) :
         return this
     }
 
+    /**
+     * Reserves space for a custom inline object, drawn by the caller using the
+     * position/size reported by the paragraph's line metrics or placeholder rects
+     * API. Internally adds a single object replacement character (U+FFFC).
+     */
+    fun addPlaceholder(style: PlaceholderStyle): ParagraphBuilder {
+        ParagraphBuilderNative.nAddPlaceholder(nativePtr, style.width, style.height, style.alignment.ordinal, style.baseline.ordinal, style.baselineOffset)
+        return this
+    }
+
     /** Builds a [Paragraph] from the accumulated text and styles. This builder remains usable afterward. */
     fun build(): Paragraph = Paragraph(ParagraphBuilderNative.nBuild(nativePtr))
 }
@@ -41,5 +51,6 @@ private object ParagraphBuilderNative {
     external fun nPushStyle(ptr: Long, stylePtr: Long)
     external fun nPop(ptr: Long)
     external fun nAddText(ptr: Long, text: String)
+    external fun nAddPlaceholder(ptr: Long, width: Float, height: Float, alignment: Int, baseline: Int, baselineOffset: Float)
     external fun nBuild(ptr: Long): Long
 }

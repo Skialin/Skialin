@@ -44,6 +44,7 @@
 #include "include/pathops/SkPathOps.h"
 #include "include/core/SkM44.h"
 #include "include/core/SkVertices.h"
+#include "include/effects/SkColorMatrix.h"
 #include "include/core/SkString.h"
 #include "include/core/SkStream.h"
 #include "include/encode/SkPngEncoder.h"
@@ -915,6 +916,109 @@ void skialin_bridge_ParagraphStyle_setTextStyle(skia::textlayout::ParagraphStyle
     paragraphStyle->setTextStyle(*style);
 }
 
+using skia::textlayout::StrutStyle;
+
+skia::textlayout::StrutStyle* skialin_bridge_StrutStyle_new(void) {
+    return new StrutStyle();
+}
+
+void skialin_bridge_StrutStyle_delete(skia::textlayout::StrutStyle* style) {
+    delete style;
+}
+
+SkData* skialin_bridge_StrutStyle_fontFamily(const skia::textlayout::StrutStyle* style, size_t index) {
+    const SkString& name = style->getFontFamilies()[index];
+    return SkData::MakeWithCopy(name.c_str(), name.size()).release();
+}
+
+size_t skialin_bridge_StrutStyle_countFontFamilies(const skia::textlayout::StrutStyle* style) {
+    return style->getFontFamilies().size();
+}
+
+void skialin_bridge_StrutStyle_setFontFamilies(skia::textlayout::StrutStyle* style, const char* const* families, const size_t* lengths, size_t count) {
+    std::vector<SkString> result;
+    result.reserve(count);
+    for (size_t i = 0; i < count; ++i) {
+        result.emplace_back(families[i], lengths[i]);
+    }
+    style->setFontFamilies(std::move(result));
+}
+
+void skialin_bridge_StrutStyle_getFontStyle(const skia::textlayout::StrutStyle* style, int32_t* weight, int32_t* width, int32_t* slant) {
+    SkFontStyle fontStyle = style->getFontStyle();
+    *weight = fontStyle.weight();
+    *width = fontStyle.width();
+    *slant = fontStyle.slant();
+}
+
+void skialin_bridge_StrutStyle_setFontStyle(skia::textlayout::StrutStyle* style, int32_t weight, int32_t width, int32_t slant) {
+    style->setFontStyle(SkFontStyle(weight, width, static_cast<SkFontStyle::Slant>(slant)));
+}
+
+float skialin_bridge_StrutStyle_getFontSize(const skia::textlayout::StrutStyle* style) {
+    return style->getFontSize();
+}
+
+void skialin_bridge_StrutStyle_setFontSize(skia::textlayout::StrutStyle* style, float size) {
+    style->setFontSize(size);
+}
+
+float skialin_bridge_StrutStyle_getHeight(const skia::textlayout::StrutStyle* style) {
+    return style->getHeight();
+}
+
+void skialin_bridge_StrutStyle_setHeight(skia::textlayout::StrutStyle* style, float height) {
+    style->setHeight(height);
+}
+
+float skialin_bridge_StrutStyle_getLeading(const skia::textlayout::StrutStyle* style) {
+    return style->getLeading();
+}
+
+void skialin_bridge_StrutStyle_setLeading(skia::textlayout::StrutStyle* style, float leading) {
+    style->setLeading(leading);
+}
+
+bool skialin_bridge_StrutStyle_getStrutEnabled(const skia::textlayout::StrutStyle* style) {
+    return style->getStrutEnabled();
+}
+
+void skialin_bridge_StrutStyle_setStrutEnabled(skia::textlayout::StrutStyle* style, bool enabled) {
+    style->setStrutEnabled(enabled);
+}
+
+bool skialin_bridge_StrutStyle_getForceStrutHeight(const skia::textlayout::StrutStyle* style) {
+    return style->getForceStrutHeight();
+}
+
+void skialin_bridge_StrutStyle_setForceStrutHeight(skia::textlayout::StrutStyle* style, bool force) {
+    style->setForceStrutHeight(force);
+}
+
+bool skialin_bridge_StrutStyle_getHeightOverride(const skia::textlayout::StrutStyle* style) {
+    return style->getHeightOverride();
+}
+
+void skialin_bridge_StrutStyle_setHeightOverride(skia::textlayout::StrutStyle* style, bool heightOverride) {
+    style->setHeightOverride(heightOverride);
+}
+
+bool skialin_bridge_StrutStyle_getHalfLeading(const skia::textlayout::StrutStyle* style) {
+    return style->getHalfLeading();
+}
+
+void skialin_bridge_StrutStyle_setHalfLeading(skia::textlayout::StrutStyle* style, bool halfLeading) {
+    style->setHalfLeading(halfLeading);
+}
+
+skia::textlayout::StrutStyle* skialin_bridge_ParagraphStyle_getStrutStyle(const skia::textlayout::ParagraphStyle* style) {
+    return new StrutStyle(style->getStrutStyle());
+}
+
+void skialin_bridge_ParagraphStyle_setStrutStyle(skia::textlayout::ParagraphStyle* paragraphStyle, const skia::textlayout::StrutStyle* strutStyle) {
+    paragraphStyle->setStrutStyle(*strutStyle);
+}
+
 using skia::textlayout::FontCollection;
 using skia::textlayout::ParagraphBuilder;
 using skia::textlayout::Paragraph;
@@ -950,6 +1054,16 @@ void skialin_bridge_ParagraphBuilder_pop(skia::textlayout::ParagraphBuilder* bui
 
 void skialin_bridge_ParagraphBuilder_addText(skia::textlayout::ParagraphBuilder* builder, const char* text, size_t length) {
     builder->addText(text, length);
+}
+
+void skialin_bridge_ParagraphBuilder_addPlaceholder(
+    skia::textlayout::ParagraphBuilder* builder, float width, float height, int32_t alignment, int32_t baseline, float baselineOffset) {
+    skia::textlayout::PlaceholderStyle style(
+        width, height,
+        static_cast<skia::textlayout::PlaceholderAlignment>(alignment),
+        static_cast<skia::textlayout::TextBaseline>(baseline),
+        baselineOffset);
+    builder->addPlaceholder(style);
 }
 
 skia::textlayout::Paragraph* skialin_bridge_ParagraphBuilder_build(skia::textlayout::ParagraphBuilder* builder) {
@@ -1061,6 +1175,27 @@ SkColorFilter* skialin_bridge_ColorFilter_Compose(SkColorFilter* outer, SkColorF
 
 SkColorFilter* skialin_bridge_ColorFilter_Lerp(float t, SkColorFilter* dst, SkColorFilter* src) {
     return SkColorFilters::Lerp(t, sk_ref_sp(dst), sk_ref_sp(src)).release();
+}
+
+void skialin_bridge_ColorMatrix_setIdentity(float* mat20) {
+    reinterpret_cast<SkColorMatrix*>(mat20)->setIdentity();
+}
+
+void skialin_bridge_ColorMatrix_setScale(float* mat20, float rScale, float gScale, float bScale, float aScale) {
+    reinterpret_cast<SkColorMatrix*>(mat20)->setScale(rScale, gScale, bScale, aScale);
+}
+
+void skialin_bridge_ColorMatrix_postTranslate(float* mat20, float dr, float dg, float db, float da) {
+    reinterpret_cast<SkColorMatrix*>(mat20)->postTranslate(dr, dg, db, da);
+}
+
+void skialin_bridge_ColorMatrix_setConcat(float* outMat20, const float* aMat20, const float* bMat20) {
+    reinterpret_cast<SkColorMatrix*>(outMat20)->setConcat(
+        *reinterpret_cast<const SkColorMatrix*>(aMat20), *reinterpret_cast<const SkColorMatrix*>(bMat20));
+}
+
+void skialin_bridge_ColorMatrix_setSaturation(float* mat20, float sat) {
+    reinterpret_cast<SkColorMatrix*>(mat20)->setSaturation(sat);
 }
 
 void skialin_bridge_ImageFilter_unref(SkImageFilter* filter) {
