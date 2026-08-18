@@ -27,6 +27,7 @@ class SkPixmap;
 class SkShader;
 class SkPaint;
 class SkTypeface;
+class SkFontMgr;
 
 extern "C" {
 
@@ -223,5 +224,24 @@ uint16_t skialin_bridge_Typeface_unicharToGlyph(const SkTypeface* typeface, int3
 void skialin_bridge_Typeface_fontStyle(const SkTypeface* typeface, int32_t* weight, int32_t* width, int32_t* slant);
 /* UTF-8 bytes, no NUL terminator. Ref-owned by the caller; free with skialin_bridge_Data_unref. */
 SkData* skialin_bridge_Typeface_familyName(const SkTypeface* typeface);
+
+/* FontMgr: ref-owned by the caller. Free with skialin_bridge_FontMgr_unref.
+ * SkFontMgr is abstract (pure virtual methods), so it's routed entirely
+ * through the bridge, same as SkTypeface. RefSystem is the platform default
+ * (DirectWrite on Windows, the only platform this shim currently builds for). */
+void skialin_bridge_FontMgr_unref(SkFontMgr* mgr);
+SkFontMgr* skialin_bridge_FontMgr_RefSystem(void);
+SkFontMgr* skialin_bridge_FontMgr_RefEmpty(void);
+int32_t skialin_bridge_FontMgr_countFamilies(const SkFontMgr* mgr);
+/* UTF-8 bytes, no NUL terminator. Ref-owned by the caller. */
+SkData* skialin_bridge_FontMgr_familyName(const SkFontMgr* mgr, int32_t index);
+/* familyName may be null to request the default system family. Null result
+ * if no match is found. */
+SkTypeface* skialin_bridge_FontMgr_matchFamilyStyle(const SkFontMgr* mgr, const char* familyName, int32_t weight, int32_t width, int32_t slant);
+/* data is ref'd by the bridge, not consumed: it stays independently valid
+ * and closeable afterward. Null if the data isn't a recognized font format. */
+SkTypeface* skialin_bridge_FontMgr_makeFromData(const SkFontMgr* mgr, SkData* data, int32_t ttcIndex);
+/* Null if the file isn't found or isn't a recognized font format. */
+SkTypeface* skialin_bridge_FontMgr_makeFromFile(const SkFontMgr* mgr, const char* path, int32_t ttcIndex);
 
 }  // extern "C"

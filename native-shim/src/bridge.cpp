@@ -17,8 +17,11 @@
 #include "include/core/SkSamplingOptions.h"
 #include "include/core/SkTypeface.h"
 #include "include/core/SkFontStyle.h"
+#include "include/core/SkFontMgr.h"
 #include "include/core/SkString.h"
+#include "include/core/SkStream.h"
 #include "include/encode/SkPngEncoder.h"
+#include "include/ports/SkTypeface_win.h"
 #include "modules/skcms/skcms.h"
 
 namespace {
@@ -517,6 +520,41 @@ SkData* skialin_bridge_Typeface_familyName(const SkTypeface* typeface) {
     SkString name;
     typeface->getFamilyName(&name);
     return SkData::MakeWithCopy(name.c_str(), name.size()).release();
+}
+
+void skialin_bridge_FontMgr_unref(SkFontMgr* mgr) {
+    SkSafeUnref(mgr);
+}
+
+SkFontMgr* skialin_bridge_FontMgr_RefSystem(void) {
+    return SkFontMgr_New_DirectWrite().release();
+}
+
+SkFontMgr* skialin_bridge_FontMgr_RefEmpty(void) {
+    return SkFontMgr::RefEmpty().release();
+}
+
+int32_t skialin_bridge_FontMgr_countFamilies(const SkFontMgr* mgr) {
+    return mgr->countFamilies();
+}
+
+SkData* skialin_bridge_FontMgr_familyName(const SkFontMgr* mgr, int32_t index) {
+    SkString name;
+    mgr->getFamilyName(index, &name);
+    return SkData::MakeWithCopy(name.c_str(), name.size()).release();
+}
+
+SkTypeface* skialin_bridge_FontMgr_matchFamilyStyle(const SkFontMgr* mgr, const char* familyName, int32_t weight, int32_t width, int32_t slant) {
+    SkFontStyle style(weight, width, static_cast<SkFontStyle::Slant>(slant));
+    return mgr->matchFamilyStyle(familyName, style).release();
+}
+
+SkTypeface* skialin_bridge_FontMgr_makeFromData(const SkFontMgr* mgr, SkData* data, int32_t ttcIndex) {
+    return mgr->makeFromData(sk_ref_sp(data), ttcIndex).release();
+}
+
+SkTypeface* skialin_bridge_FontMgr_makeFromFile(const SkFontMgr* mgr, const char* path, int32_t ttcIndex) {
+    return mgr->makeFromFile(path, ttcIndex).release();
 }
 
 }  // extern "C"
