@@ -11,6 +11,9 @@
 #include "include/core/SkPath.h"
 #include "include/core/SkPathBuilder.h"
 #include "include/core/SkColorSpace.h"
+#include "include/core/SkPixmap.h"
+#include "include/core/SkPaint.h"
+#include "include/core/SkShader.h"
 #include "include/encode/SkPngEncoder.h"
 #include "modules/skcms/skcms.h"
 
@@ -281,6 +284,30 @@ SkPixmap* skialin_bridge_Pixmap_extractSubset(const SkPixmap* pixmap, int32_t le
         return nullptr;
     }
     return subset.release();
+}
+
+void skialin_bridge_Shader_unref(SkShader* shader) {
+    SkSafeUnref(shader);
+}
+
+SkShader* skialin_bridge_Shader_makeEmpty(void) {
+    return SkShaders::Empty().release();
+}
+
+SkShader* skialin_bridge_Shader_makeColor(uint32_t argb) {
+    return SkShaders::Color(argb).release();
+}
+
+SkShader* skialin_bridge_Shader_makeWithLocalMatrix(const SkShader* shader, const SkMatrix* localMatrix) {
+    return shader->makeWithLocalMatrix(*localMatrix).release();
+}
+
+bool skialin_bridge_Shader_isOpaque(const SkShader* shader) {
+    return shader->isOpaque();
+}
+
+void skialin_bridge_Paint_setShader(SkPaint* paint, SkShader* shader) {
+    paint->setShader(sk_ref_sp(shader));
 }
 
 }  // extern "C"

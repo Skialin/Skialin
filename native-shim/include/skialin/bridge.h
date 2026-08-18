@@ -22,6 +22,8 @@ class SkPath;
 class SkPathBuilder;
 class SkColorSpace;
 class SkPixmap;
+class SkShader;
+class SkPaint;
 
 extern "C" {
 
@@ -120,5 +122,18 @@ void skialin_bridge_Pixmap_delete(SkPixmap* pixmap);
 SkColorSpace* skialin_bridge_Pixmap_refColorSpace(const SkPixmap* pixmap);
 /* Null if the intersection of pixmap and area is empty. */
 SkPixmap* skialin_bridge_Pixmap_extractSubset(const SkPixmap* pixmap, int32_t left, int32_t top, int32_t right, int32_t bottom);
+
+/* Shader: ref-owned by the caller. Free with skialin_bridge_Shader_unref.
+ * Routed entirely through the bridge, not direct bindgen calls: bindgen
+ * doesn't generate instance methods for SkShader (its SkFlattenable base
+ * defeats its vtable-layout inference). */
+void skialin_bridge_Shader_unref(SkShader* shader);
+SkShader* skialin_bridge_Shader_makeEmpty(void);
+SkShader* skialin_bridge_Shader_makeColor(uint32_t argb);
+SkShader* skialin_bridge_Shader_makeWithLocalMatrix(const SkShader* shader, const SkMatrix* localMatrix);
+bool skialin_bridge_Shader_isOpaque(const SkShader* shader);
+
+/* Attaches shader to paint; shader may be null to clear it. */
+void skialin_bridge_Paint_setShader(SkPaint* paint, SkShader* shader);
 
 }  // extern "C"
