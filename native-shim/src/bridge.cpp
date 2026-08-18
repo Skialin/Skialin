@@ -1,6 +1,7 @@
 #include "skialin/bridge.h"
 
 #include <cstring>
+#include <memory>
 
 #include "include/core/SkSurface.h"
 #include "include/core/SkCanvas.h"
@@ -260,6 +261,26 @@ SkColorSpace* skialin_bridge_ImageInfo_refColorSpace(const SkImageInfo* info) {
 
 bool skialin_bridge_ImageInfo_equals(const SkImageInfo* a, const SkImageInfo* b) {
     return *a == *b;
+}
+
+SkPixmap* skialin_bridge_Pixmap_make(const SkImageInfo* info, const void* addr, size_t rowBytes) {
+    return new SkPixmap(*info, addr, rowBytes);
+}
+
+void skialin_bridge_Pixmap_delete(SkPixmap* pixmap) {
+    delete pixmap;
+}
+
+SkColorSpace* skialin_bridge_Pixmap_refColorSpace(const SkPixmap* pixmap) {
+    return pixmap->refColorSpace().release();
+}
+
+SkPixmap* skialin_bridge_Pixmap_extractSubset(const SkPixmap* pixmap, int32_t left, int32_t top, int32_t right, int32_t bottom) {
+    auto subset = std::make_unique<SkPixmap>();
+    if (!pixmap->extractSubset(subset.get(), SkIRect::MakeLTRB(left, top, right, bottom))) {
+        return nullptr;
+    }
+    return subset.release();
 }
 
 }  // extern "C"

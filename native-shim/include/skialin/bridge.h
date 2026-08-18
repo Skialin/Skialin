@@ -21,6 +21,7 @@ class SkBitmap;
 class SkPath;
 class SkPathBuilder;
 class SkColorSpace;
+class SkPixmap;
 
 extern "C" {
 
@@ -108,5 +109,16 @@ SkColorSpace* skialin_bridge_ImageInfo_colorSpace(const SkImageInfo* info);
 /* Ref-owned by the caller; null if this ImageInfo has no color space. */
 SkColorSpace* skialin_bridge_ImageInfo_refColorSpace(const SkImageInfo* info);
 bool skialin_bridge_ImageInfo_equals(const SkImageInfo* a, const SkImageInfo* b);
+
+/* Pixmap: heap-allocated because SkPixmap holds a non-trivial SkImageInfo
+ * member by value; same by-value ABI hazard as SkPath/SkImageInfo. Owned by
+ * the caller; free with skialin_bridge_Pixmap_delete. Never owns the pixel
+ * memory itself: addr must outlive the Pixmap. */
+SkPixmap* skialin_bridge_Pixmap_make(const SkImageInfo* info, const void* addr, size_t rowBytes);
+void skialin_bridge_Pixmap_delete(SkPixmap* pixmap);
+/* Ref-owned by the caller; null if this Pixmap has no color space. */
+SkColorSpace* skialin_bridge_Pixmap_refColorSpace(const SkPixmap* pixmap);
+/* Null if the intersection of pixmap and area is empty. */
+SkPixmap* skialin_bridge_Pixmap_extractSubset(const SkPixmap* pixmap, int32_t left, int32_t top, int32_t right, int32_t bottom);
 
 }  // extern "C"
