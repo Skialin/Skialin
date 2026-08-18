@@ -1,7 +1,7 @@
 use jni::sys::{jboolean, jfloat, jfloatArray, jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{Canvas, ClipOp, Image, Matrix, Paint, Path, Point, PointMode, Rect, SamplingOptions, SrcRectConstraint, TextBlob};
+use skialin_core::{Canvas, ClipOp, Image, Matrix, Paint, Path, Point, PointMode, RRect, Rect, SamplingOptions, SrcRectConstraint, TextBlob};
 
 use crate::paint::blend_mode_from_ordinal;
 use crate::util::borrow;
@@ -328,6 +328,21 @@ pub extern "system" fn Java_org_skialin_CanvasNative_nDrawImageRect(
         paint,
         src_rect_constraint_from_ordinal(constraint),
     );
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nDrawRRect(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, rrect_ptr: jlong, paint_ptr: jlong) {
+    canvas_from_ptr(ptr).draw_rrect(unsafe { borrow::<RRect>(rrect_ptr) }, unsafe { borrow::<Paint>(paint_ptr) });
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nDrawDRRect(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, outer_ptr: jlong, inner_ptr: jlong, paint_ptr: jlong) {
+    canvas_from_ptr(ptr).draw_drrect(unsafe { borrow::<RRect>(outer_ptr) }, unsafe { borrow::<RRect>(inner_ptr) }, unsafe { borrow::<Paint>(paint_ptr) });
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nClipRRect(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, rrect_ptr: jlong, op: jint) {
+    canvas_from_ptr(ptr).clip_rrect(unsafe { borrow::<RRect>(rrect_ptr) }, clip_op_from_ordinal(op));
 }
 
 #[no_mangle]

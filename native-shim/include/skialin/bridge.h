@@ -34,7 +34,9 @@ class SkColorFilter;
 class SkImageFilter;
 class SkMaskFilter;
 class SkRuntimeEffect;
+class SkRRect;
 enum class SkBlendMode;
+enum class SkClipOp;
 enum SkBlurStyle : int;
 
 namespace skia {
@@ -264,6 +266,36 @@ SkShader* skialin_bridge_RuntimeEffect_makeShader(
 SkColorFilter* skialin_bridge_RuntimeEffect_makeColorFilter(
     const SkRuntimeEffect* effect, const uint8_t* uniforms, size_t uniformsLength,
     SkColorFilter* const* children, size_t childCount);
+
+/* RRect: heap-allocated with `new`/`delete`, same rationale as ImageInfo/
+ * Pixmap (a plain value class, but rect()/radii() etc. return non-trivial-
+ * sized values by value, which hits the gotcha #1 ABI hazard; routed
+ * entirely through the bridge for consistency since it's never visible to
+ * bindgen at all -- forward-declared only). radii8, where present, is 4
+ * corners * (x, y) in Corner enum order: upper-left, upper-right,
+ * lower-right, lower-left (matches SkRRect::Corner). type: 0 empty,
+ * 1 rect, 2 oval, 3 simple, 4 nine-patch, 5 complex (matches SkRRect::Type). */
+SkRRect* skialin_bridge_RRect_MakeRect(const SkRect* rect);
+SkRRect* skialin_bridge_RRect_MakeOval(const SkRect* oval);
+SkRRect* skialin_bridge_RRect_MakeRectXY(const SkRect* rect, float xRad, float yRad);
+SkRRect* skialin_bridge_RRect_MakeRectRadii(const SkRect* rect, const float* radii8);
+void skialin_bridge_RRect_delete(SkRRect* rrect);
+SkRRect* skialin_bridge_RRect_clone(const SkRRect* rrect);
+void skialin_bridge_RRect_rect(const SkRRect* rrect, SkRect* outRect);
+void skialin_bridge_RRect_radii(const SkRRect* rrect, float* outRadii8);
+int32_t skialin_bridge_RRect_type(const SkRRect* rrect);
+bool skialin_bridge_RRect_containsPoint(const SkRRect* rrect, SkPoint point);
+bool skialin_bridge_RRect_containsRect(const SkRRect* rrect, const SkRect* rect);
+bool skialin_bridge_RRect_isValid(const SkRRect* rrect);
+SkRRect* skialin_bridge_RRect_inset(const SkRRect* rrect, float dx, float dy);
+SkRRect* skialin_bridge_RRect_outset(const SkRRect* rrect, float dx, float dy);
+/* Null if the matrix doesn't preserve the rounded-rect shape (e.g. a skew). */
+SkRRect* skialin_bridge_RRect_transform(const SkRRect* rrect, const SkMatrix* matrix);
+
+/* Canvas draw/clip calls that need an SkRRect. paint may be null for clipRRect. */
+void skialin_bridge_Canvas_drawRRect(SkCanvas* canvas, const SkRRect* rrect, const SkPaint* paint);
+void skialin_bridge_Canvas_drawDRRect(SkCanvas* canvas, const SkRRect* outer, const SkRRect* inner, const SkPaint* paint);
+void skialin_bridge_Canvas_clipRRect(SkCanvas* canvas, const SkRRect* rrect, SkClipOp op);
 
 /* Typeface: ref-owned by the caller. Free with skialin_bridge_Typeface_unref.
  * SkTypeface has pure virtual methods (onGetFamilyName etc.), which defeats

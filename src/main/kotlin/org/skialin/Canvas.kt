@@ -79,6 +79,13 @@ class Canvas internal constructor(internal val ptr: Long) {
         paint?.nativePtr ?: 0L, constraint.ordinal,
     )
 
+    fun drawRRect(rrect: RRect, paint: Paint) = CanvasNative.nDrawRRect(ptr, rrect.nativePtr, paint.nativePtr)
+
+    /** Draws the ring between [outer] and [inner]; [inner] must be contained within [outer]. */
+    fun drawDRRect(outer: RRect, inner: RRect, paint: Paint) = CanvasNative.nDrawDRRect(ptr, outer.nativePtr, inner.nativePtr, paint.nativePtr)
+
+    fun clipRRect(rrect: RRect, op: ClipOp = ClipOp.INTERSECT) = CanvasNative.nClipRRect(ptr, rrect.nativePtr, op.ordinal)
+
     /**
      * Saves the canvas state, then redirects drawing to a new layer. [bounds], if given, is
      * a hint for the layer's extent. Returns the new save count, for [restoreToCount].
@@ -139,4 +146,7 @@ private object CanvasNative {
         paintPtr: Long, constraint: Int,
     )
     external fun nSaveLayer(ptr: Long, bounds: FloatArray?, paintPtr: Long): Int
+    external fun nDrawRRect(ptr: Long, rrectPtr: Long, paintPtr: Long)
+    external fun nDrawDRRect(ptr: Long, outerPtr: Long, innerPtr: Long, paintPtr: Long)
+    external fun nClipRRect(ptr: Long, rrectPtr: Long, op: Int)
 }

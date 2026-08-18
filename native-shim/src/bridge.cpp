@@ -34,6 +34,7 @@
 #include "include/effects/SkImageFilters.h"
 #include "include/effects/SkGradient.h"
 #include "include/effects/SkRuntimeEffect.h"
+#include "include/core/SkRRect.h"
 #include "include/core/SkString.h"
 #include "include/core/SkStream.h"
 #include "include/encode/SkPngEncoder.h"
@@ -1130,6 +1131,100 @@ SkImageFilter* skialin_bridge_Paint_refImageFilter(const SkPaint* paint) {
 
 SkMaskFilter* skialin_bridge_Paint_refMaskFilter(const SkPaint* paint) {
     return paint->refMaskFilter().release();
+}
+
+namespace {
+void radiiFromFlat(const float* radii8, SkVector out[4]) {
+    for (int i = 0; i < 4; ++i) {
+        out[i] = SkVector::Make(radii8[i * 2], radii8[i * 2 + 1]);
+    }
+}
+}  // namespace
+
+SkRRect* skialin_bridge_RRect_MakeRect(const SkRect* rect) {
+    return new SkRRect(SkRRect::MakeRect(*rect));
+}
+
+SkRRect* skialin_bridge_RRect_MakeOval(const SkRect* oval) {
+    return new SkRRect(SkRRect::MakeOval(*oval));
+}
+
+SkRRect* skialin_bridge_RRect_MakeRectXY(const SkRect* rect, float xRad, float yRad) {
+    return new SkRRect(SkRRect::MakeRectXY(*rect, xRad, yRad));
+}
+
+SkRRect* skialin_bridge_RRect_MakeRectRadii(const SkRect* rect, const float* radii8) {
+    SkVector radii[4];
+    radiiFromFlat(radii8, radii);
+    return new SkRRect(SkRRect::MakeRectRadii(*rect, radii));
+}
+
+void skialin_bridge_RRect_delete(SkRRect* rrect) {
+    delete rrect;
+}
+
+SkRRect* skialin_bridge_RRect_clone(const SkRRect* rrect) {
+    return new SkRRect(*rrect);
+}
+
+void skialin_bridge_RRect_rect(const SkRRect* rrect, SkRect* outRect) {
+    *outRect = rrect->rect();
+}
+
+void skialin_bridge_RRect_radii(const SkRRect* rrect, float* outRadii8) {
+    for (int i = 0; i < 4; ++i) {
+        SkVector v = rrect->radii(static_cast<SkRRect::Corner>(i));
+        outRadii8[i * 2] = v.x();
+        outRadii8[i * 2 + 1] = v.y();
+    }
+}
+
+int32_t skialin_bridge_RRect_type(const SkRRect* rrect) {
+    return static_cast<int32_t>(rrect->getType());
+}
+
+bool skialin_bridge_RRect_containsPoint(const SkRRect* rrect, SkPoint point) {
+    return rrect->contains(point);
+}
+
+bool skialin_bridge_RRect_containsRect(const SkRRect* rrect, const SkRect* rect) {
+    return rrect->contains(*rect);
+}
+
+bool skialin_bridge_RRect_isValid(const SkRRect* rrect) {
+    return rrect->isValid();
+}
+
+SkRRect* skialin_bridge_RRect_inset(const SkRRect* rrect, float dx, float dy) {
+    SkRRect* result = new SkRRect();
+    rrect->inset(dx, dy, result);
+    return result;
+}
+
+SkRRect* skialin_bridge_RRect_outset(const SkRRect* rrect, float dx, float dy) {
+    SkRRect* result = new SkRRect();
+    rrect->outset(dx, dy, result);
+    return result;
+}
+
+SkRRect* skialin_bridge_RRect_transform(const SkRRect* rrect, const SkMatrix* matrix) {
+    SkRRect result;
+    if (!rrect->transform(*matrix, &result)) {
+        return nullptr;
+    }
+    return new SkRRect(result);
+}
+
+void skialin_bridge_Canvas_drawRRect(SkCanvas* canvas, const SkRRect* rrect, const SkPaint* paint) {
+    canvas->drawRRect(*rrect, *paint);
+}
+
+void skialin_bridge_Canvas_drawDRRect(SkCanvas* canvas, const SkRRect* outer, const SkRRect* inner, const SkPaint* paint) {
+    canvas->drawDRRect(*outer, *inner, *paint);
+}
+
+void skialin_bridge_Canvas_clipRRect(SkCanvas* canvas, const SkRRect* rrect, SkClipOp op) {
+    canvas->clipRRect(*rrect, op);
 }
 
 }  // extern "C"

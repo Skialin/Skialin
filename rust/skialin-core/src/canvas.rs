@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::paint::BlendMode;
 use crate::path::Path;
-use crate::{sys, Color, Image, Matrix, Paint, Point, Rect, SamplingOptions, TextBlob};
+use crate::{sys, Color, Image, Matrix, Paint, Point, RRect, Rect, SamplingOptions, TextBlob};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum PointMode {
@@ -231,5 +231,18 @@ impl<'a> Canvas<'a> {
         let bounds_ptr = sk_bounds.as_ref().map_or(std::ptr::null(), |r| r as *const sys::SkRect);
         let paint_ptr = paint.map_or(std::ptr::null(), |p| &*p.0 as *const sys::SkPaint);
         unsafe { self.as_mut().saveLayer(bounds_ptr, paint_ptr) }
+    }
+
+    pub fn draw_rrect(&mut self, rrect: &RRect, paint: &Paint) {
+        unsafe { sys::skialin_bridge_Canvas_drawRRect(self.ptr, rrect.0, &*paint.0) };
+    }
+
+    /// Draws the ring between `outer` and `inner`; `inner` must be contained within `outer`.
+    pub fn draw_drrect(&mut self, outer: &RRect, inner: &RRect, paint: &Paint) {
+        unsafe { sys::skialin_bridge_Canvas_drawDRRect(self.ptr, outer.0, inner.0, &*paint.0) };
+    }
+
+    pub fn clip_rrect(&mut self, rrect: &RRect, op: ClipOp) {
+        unsafe { sys::skialin_bridge_Canvas_clipRRect(self.ptr, rrect.0, op.into()) };
     }
 }
