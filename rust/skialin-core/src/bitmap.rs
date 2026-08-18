@@ -1,23 +1,4 @@
-use crate::{sys, Color, Image};
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum ColorType {
-    Rgba8888,
-    Bgra8888,
-    Alpha8,
-    Gray8,
-}
-
-impl From<ColorType> for sys::SkColorType {
-    fn from(ct: ColorType) -> Self {
-        match ct {
-            ColorType::Rgba8888 => sys::SkColorType_kRGBA_8888_SkColorType,
-            ColorType::Bgra8888 => sys::SkColorType_kBGRA_8888_SkColorType,
-            ColorType::Alpha8 => sys::SkColorType_kAlpha_8_SkColorType,
-            ColorType::Gray8 => sys::SkColorType_kGray_8_SkColorType,
-        }
-    }
-}
+use crate::{sys, Color, Image, ImageInfo};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum AlphaType {
@@ -38,6 +19,17 @@ impl From<AlphaType> for sys::SkAlphaType {
     }
 }
 
+impl From<sys::SkAlphaType> for AlphaType {
+    fn from(at: sys::SkAlphaType) -> Self {
+        match at as u32 {
+            1 => AlphaType::Opaque,
+            2 => AlphaType::Premul,
+            3 => AlphaType::Unpremul,
+            _ => AlphaType::Unknown,
+        }
+    }
+}
+
 pub struct Bitmap(Box<sys::SkBitmap>);
 
 impl Bitmap {
@@ -45,9 +37,8 @@ impl Bitmap {
         Bitmap(crate::support::new_boxed(sys::SkBitmap_SkBitmap))
     }
 
-    pub fn alloc_pixels(&mut self, width: i32, height: i32, color_type: ColorType, alpha_type: AlphaType) {
-        let info = unsafe { sys::SkImageInfo_Make(width, height, color_type.into(), alpha_type.into()) };
-        unsafe { self.0.allocPixels1(&info) };
+    pub fn alloc_pixels(&mut self, info: &ImageInfo) {
+        unsafe { self.0.allocPixels1(info.0) };
     }
 
     pub fn width(&self) -> i32 {

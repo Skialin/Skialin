@@ -1,4 +1,4 @@
-use crate::{sys, Canvas, Image};
+use crate::{sys, Canvas, Image, ImageInfo};
 use std::marker::PhantomData;
 
 pub struct Surface(*mut sys::SkSurface);
@@ -6,6 +6,11 @@ pub struct Surface(*mut sys::SkSurface);
 impl Surface {
     pub fn new_raster_n32_premul(width: i32, height: i32) -> Option<Self> {
         let ptr = unsafe { sys::skialin_bridge_Surface_MakeRasterN32Premul(width, height) };
+        (!ptr.is_null()).then_some(Surface(ptr))
+    }
+
+    pub fn new_raster(info: &ImageInfo) -> Option<Self> {
+        let ptr = unsafe { sys::skialin_bridge_Surface_MakeRaster(info.0) };
         (!ptr.is_null()).then_some(Surface(ptr))
     }
 
