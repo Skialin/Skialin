@@ -93,4 +93,20 @@ void skialin_bridge_ColorSpace_gamutTransformTo(const SkColorSpace* src, const S
 SkData* skialin_bridge_ColorSpace_serialize(const SkColorSpace* cs);
 bool skialin_bridge_ColorSpace_equals(const SkColorSpace* a, const SkColorSpace* b);
 
+/* ImageInfo: heap-allocated because SkImageInfo holds a non-trivial
+ * sk_sp<SkColorSpace> member, so returning it by value from a bindgen-called
+ * method hits the same by-value ABI hazard as SkPath. Owned by the caller;
+ * free with skialin_bridge_ImageInfo_delete. colorSpace may be null. */
+SkImageInfo* skialin_bridge_ImageInfo_make(int32_t width, int32_t height, SkColorType colorType, SkAlphaType alphaType, SkColorSpace* colorSpace);
+void skialin_bridge_ImageInfo_delete(SkImageInfo* info);
+SkImageInfo* skialin_bridge_ImageInfo_makeWH(const SkImageInfo* info, int32_t width, int32_t height);
+SkImageInfo* skialin_bridge_ImageInfo_makeColorType(const SkImageInfo* info, SkColorType colorType);
+SkImageInfo* skialin_bridge_ImageInfo_makeAlphaType(const SkImageInfo* info, SkAlphaType alphaType);
+SkImageInfo* skialin_bridge_ImageInfo_makeColorSpace(const SkImageInfo* info, SkColorSpace* colorSpace);
+/* Borrowed; null if this ImageInfo has no color space. */
+SkColorSpace* skialin_bridge_ImageInfo_colorSpace(const SkImageInfo* info);
+/* Ref-owned by the caller; null if this ImageInfo has no color space. */
+SkColorSpace* skialin_bridge_ImageInfo_refColorSpace(const SkImageInfo* info);
+bool skialin_bridge_ImageInfo_equals(const SkImageInfo* a, const SkImageInfo* b);
+
 }  // extern "C"

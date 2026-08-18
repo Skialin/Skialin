@@ -226,4 +226,40 @@ bool skialin_bridge_ColorSpace_equals(const SkColorSpace* a, const SkColorSpace*
     return SkColorSpace::Equals(a, b);
 }
 
+SkImageInfo* skialin_bridge_ImageInfo_make(int32_t width, int32_t height, SkColorType colorType, SkAlphaType alphaType, SkColorSpace* colorSpace) {
+    return new SkImageInfo(SkImageInfo::Make(width, height, colorType, alphaType, sk_ref_sp(colorSpace)));
+}
+
+void skialin_bridge_ImageInfo_delete(SkImageInfo* info) {
+    delete info;
+}
+
+SkImageInfo* skialin_bridge_ImageInfo_makeWH(const SkImageInfo* info, int32_t width, int32_t height) {
+    return new SkImageInfo(info->makeWH(width, height));
+}
+
+SkImageInfo* skialin_bridge_ImageInfo_makeColorType(const SkImageInfo* info, SkColorType colorType) {
+    return new SkImageInfo(info->makeColorType(colorType));
+}
+
+SkImageInfo* skialin_bridge_ImageInfo_makeAlphaType(const SkImageInfo* info, SkAlphaType alphaType) {
+    return new SkImageInfo(info->makeAlphaType(alphaType));
+}
+
+SkImageInfo* skialin_bridge_ImageInfo_makeColorSpace(const SkImageInfo* info, SkColorSpace* colorSpace) {
+    return new SkImageInfo(info->makeColorSpace(sk_ref_sp(colorSpace)));
+}
+
+SkColorSpace* skialin_bridge_ImageInfo_colorSpace(const SkImageInfo* info) {
+    return info->colorSpace();
+}
+
+SkColorSpace* skialin_bridge_ImageInfo_refColorSpace(const SkImageInfo* info) {
+    return info->refColorSpace().release();
+}
+
+bool skialin_bridge_ImageInfo_equals(const SkImageInfo* a, const SkImageInfo* b) {
+    return *a == *b;
+}
+
 }  // extern "C"
