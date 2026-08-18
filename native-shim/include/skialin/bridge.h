@@ -33,6 +33,7 @@ class SkTextBlob;
 class SkColorFilter;
 class SkImageFilter;
 class SkMaskFilter;
+class SkRuntimeEffect;
 enum class SkBlendMode;
 enum SkBlurStyle : int;
 
@@ -241,6 +242,27 @@ SkShader* skialin_bridge_Shader_makeTwoPointConicalGradient(
 SkShader* skialin_bridge_Shader_makeSweepGradient(
     SkPoint center, float startAngle, float endAngle,
     const uint32_t* colors, const float* positions, size_t count, SkTileMode tileMode, const SkMatrix* localMatrix);
+
+/* RuntimeEffect: ref-owned by the caller. Free with
+ * skialin_bridge_RuntimeEffect_unref. Scoped to shader and color-filter
+ * effects (the two common cases); MakeForBlender/makeBlender are not yet
+ * bound. Uniforms are passed as a raw packed byte buffer matching the
+ * SkSL uniform block's layout (offsets from SkRuntimeEffect::uniforms(),
+ * not yet exposed here either -- callers must know their own layout).
+ * children are borrowed for the duration of the call (ref'd internally,
+ * not consumed). On failure, *outError is set to a UTF-8, non-NUL-terminated
+ * SkData describing the compile error (ref-owned by the caller, free with
+ * skialin_bridge_Data_unref); on success *outError is left untouched by
+ * the caller's responsibility to have zero-initialized it first. */
+SkRuntimeEffect* skialin_bridge_RuntimeEffect_MakeForShader(const char* sksl, size_t length, SkData** outError);
+SkRuntimeEffect* skialin_bridge_RuntimeEffect_MakeForColorFilter(const char* sksl, size_t length, SkData** outError);
+void skialin_bridge_RuntimeEffect_unref(SkRuntimeEffect* effect);
+SkShader* skialin_bridge_RuntimeEffect_makeShader(
+    const SkRuntimeEffect* effect, const uint8_t* uniforms, size_t uniformsLength,
+    SkShader* const* children, size_t childCount, const SkMatrix* localMatrix);
+SkColorFilter* skialin_bridge_RuntimeEffect_makeColorFilter(
+    const SkRuntimeEffect* effect, const uint8_t* uniforms, size_t uniformsLength,
+    SkColorFilter* const* children, size_t childCount);
 
 /* Typeface: ref-owned by the caller. Free with skialin_bridge_Typeface_unref.
  * SkTypeface has pure virtual methods (onGetFamilyName etc.), which defeats

@@ -33,6 +33,7 @@
 #include "include/core/SkBlurTypes.h"
 #include "include/effects/SkImageFilters.h"
 #include "include/effects/SkGradient.h"
+#include "include/effects/SkRuntimeEffect.h"
 #include "include/core/SkString.h"
 #include "include/core/SkStream.h"
 #include "include/encode/SkPngEncoder.h"
@@ -529,6 +530,52 @@ SkShader* skialin_bridge_Shader_makeSweepGradient(
     SkGradient::Colors gradColors(color4fs, positions ? SkSpan<const float>(positions, count) : SkSpan<const float>(), tileMode);
     SkGradient gradient(gradColors, {});
     return SkShaders::SweepGradient(center, startAngle, endAngle, gradient, localMatrix).release();
+}
+
+SkRuntimeEffect* skialin_bridge_RuntimeEffect_MakeForShader(const char* sksl, size_t length, SkData** outError) {
+    SkRuntimeEffect::Result result = SkRuntimeEffect::MakeForShader(SkString(sksl, length));
+    if (!result.effect) {
+        *outError = SkData::MakeWithCopy(result.errorText.c_str(), result.errorText.size()).release();
+        return nullptr;
+    }
+    return result.effect.release();
+}
+
+SkRuntimeEffect* skialin_bridge_RuntimeEffect_MakeForColorFilter(const char* sksl, size_t length, SkData** outError) {
+    SkRuntimeEffect::Result result = SkRuntimeEffect::MakeForColorFilter(SkString(sksl, length));
+    if (!result.effect) {
+        *outError = SkData::MakeWithCopy(result.errorText.c_str(), result.errorText.size()).release();
+        return nullptr;
+    }
+    return result.effect.release();
+}
+
+void skialin_bridge_RuntimeEffect_unref(SkRuntimeEffect* effect) {
+    SkSafeUnref(effect);
+}
+
+SkShader* skialin_bridge_RuntimeEffect_makeShader(
+    const SkRuntimeEffect* effect, const uint8_t* uniforms, size_t uniformsLength,
+    SkShader* const* children, size_t childCount, const SkMatrix* localMatrix) {
+    sk_sp<SkData> uniformData = SkData::MakeWithCopy(uniforms, uniformsLength);
+    std::vector<sk_sp<SkShader>> childRefs;
+    childRefs.reserve(childCount);
+    for (size_t i = 0; i < childCount; ++i) {
+        childRefs.push_back(sk_ref_sp(children[i]));
+    }
+    return effect->makeShader(uniformData, childRefs.data(), childCount, localMatrix).release();
+}
+
+SkColorFilter* skialin_bridge_RuntimeEffect_makeColorFilter(
+    const SkRuntimeEffect* effect, const uint8_t* uniforms, size_t uniformsLength,
+    SkColorFilter* const* children, size_t childCount) {
+    sk_sp<SkData> uniformData = SkData::MakeWithCopy(uniforms, uniformsLength);
+    std::vector<sk_sp<SkColorFilter>> childRefs;
+    childRefs.reserve(childCount);
+    for (size_t i = 0; i < childCount; ++i) {
+        childRefs.push_back(sk_ref_sp(children[i]));
+    }
+    return effect->makeColorFilter(uniformData, childRefs.data(), childCount).release();
 }
 
 void skialin_bridge_Typeface_unref(SkTypeface* typeface) {
