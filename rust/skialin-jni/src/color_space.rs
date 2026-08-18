@@ -18,38 +18,38 @@ fn write_floats(env: &JNIEnv, values: &[f32]) -> jfloatArray {
     array.into_raw()
 }
 
-fn cicp_primaries_from_ordinal(v: jint) -> CicpPrimaries {
+fn cicp_primaries_from_code(v: jint) -> CicpPrimaries {
     use CicpPrimaries::*;
     match v {
         1 => Rec709,
-        2 => Rec470SystemM,
-        3 => Rec470SystemBG,
-        4 => Rec601,
-        5 => SmpteSt240,
-        6 => GenericFilm,
-        7 => Rec2020,
-        8 => SmpteSt428_1,
-        9 => SmpteRp431_2,
-        _ => SmpteEg432_1,
+        5 => Rec470SystemBG,
+        6 => Rec601,
+        7 => SmpteSt240,
+        8 => GenericFilm,
+        9 => Rec2020,
+        10 => SmpteSt428_1,
+        11 => SmpteRp431_2,
+        12 => SmpteEg432_1,
+        _ => Rec470SystemM,
     }
 }
 
-fn cicp_transfer_fn_from_ordinal(v: jint) -> CicpTransferFn {
+fn cicp_transfer_fn_from_code(v: jint) -> CicpTransferFn {
     use CicpTransferFn::*;
     match v {
         1 => Rec709,
-        2 => Rec470SystemM,
-        3 => Rec470SystemBG,
-        4 => Rec601,
-        5 => SmpteSt240,
-        6 => Linear,
-        7 => Iec61966_2_4,
-        8 => Srgb,
-        9 => Rec2020_10bit,
-        10 => Rec2020_12bit,
-        11 => Pq,
-        12 => SmpteSt428_1,
-        _ => Hlg,
+        5 => Rec470SystemBG,
+        6 => Rec601,
+        7 => SmpteSt240,
+        8 => Linear,
+        11 => Iec61966_2_4,
+        13 => Srgb,
+        14 => Rec2020_10bit,
+        15 => Rec2020_12bit,
+        16 => Pq,
+        17 => SmpteSt428_1,
+        18 => Hlg,
+        _ => Rec470SystemM,
     }
 }
 
@@ -72,7 +72,7 @@ pub extern "system" fn Java_org_skialin_ColorSpaceNative_nMakeRGB(env: JNIEnv, _
 
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_ColorSpaceNative_nMakeCICP(_env: JNIEnv, _class: JClass, primaries: jint, transfer_fn: jint) -> jlong {
-    match ColorSpace::cicp(cicp_primaries_from_ordinal(primaries), cicp_transfer_fn_from_ordinal(transfer_fn)) {
+    match ColorSpace::cicp(cicp_primaries_from_code(primaries), cicp_transfer_fn_from_code(transfer_fn)) {
         Some(cs) => box_ptr(cs),
         None => 0,
     }
