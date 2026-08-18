@@ -1,0 +1,9 @@
+[package]
+name = "skialin-core"
+description = "Safe, idiomatic Rust wrapper around skialin-sys"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+skialin-sys = { path = "../skialin-sys" }

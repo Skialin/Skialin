@@ -1,0 +1,12 @@
+[package]
+name = "skialin-jni"
+description = "JNI entry points exposing skialin-core to the Kotlin/JVM side"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+skialin-core = { path = "../skialin-core" }
