@@ -14,10 +14,21 @@
 #include "include/core/SkPixmap.h"
 #include "include/core/SkPaint.h"
 #include "include/core/SkShader.h"
+#include "include/core/SkSamplingOptions.h"
 #include "include/encode/SkPngEncoder.h"
 #include "modules/skcms/skcms.h"
 
 namespace {
+
+SkSamplingOptions toSamplingOptions(int32_t maxAniso, bool useCubic, float cubicB, float cubicC, SkFilterMode filter, SkMipmapMode mipmap) {
+    if (maxAniso != 0) {
+        return SkSamplingOptions::Aniso(maxAniso);
+    }
+    if (useCubic) {
+        return SkSamplingOptions(SkCubicResampler{cubicB, cubicC});
+    }
+    return SkSamplingOptions(filter, mipmap);
+}
 
 skcms_TransferFunction toTransferFn(const float* fn7) {
     return skcms_TransferFunction{fn7[0], fn7[1], fn7[2], fn7[3], fn7[4], fn7[5], fn7[6]};
@@ -106,6 +117,124 @@ SkData* skialin_bridge_Image_encodeToData(const SkImage* image) {
 
 SkImage* skialin_bridge_Bitmap_asImage(const SkBitmap* bitmap) {
     return SkImages::RasterFromBitmap(*bitmap).release();
+}
+
+SkImageInfo* skialin_bridge_Image_imageInfo(const SkImage* image) {
+    return new SkImageInfo(image->imageInfo());
+}
+
+bool skialin_bridge_Image_isAlphaOnly(const SkImage* image) {
+    return image->isAlphaOnly();
+}
+
+bool skialin_bridge_Image_isOpaque(const SkImage* image) {
+    return image->isOpaque();
+}
+
+bool skialin_bridge_Image_isTextureBacked(const SkImage* image) {
+    return image->isTextureBacked();
+}
+
+bool skialin_bridge_Image_isLazyGenerated(const SkImage* image) {
+    return image->isLazyGenerated();
+}
+
+bool skialin_bridge_Image_hasMipmaps(const SkImage* image) {
+    return image->hasMipmaps();
+}
+
+bool skialin_bridge_Image_isProtected(const SkImage* image) {
+    return image->isProtected();
+}
+
+SkColorSpace* skialin_bridge_Image_refColorSpace(const SkImage* image) {
+    return image->refColorSpace().release();
+}
+
+SkShader* skialin_bridge_Image_makeShader(
+    const SkImage* image, SkTileMode tmx, SkTileMode tmy,
+    int32_t maxAniso, bool useCubic, float cubicB, float cubicC, SkFilterMode filter, SkMipmapMode mipmap,
+    const SkMatrix* localMatrix) {
+    auto sampling = toSamplingOptions(maxAniso, useCubic, cubicB, cubicC, filter, mipmap);
+    return image->makeShader(tmx, tmy, sampling, localMatrix).release();
+}
+
+SkShader* skialin_bridge_Image_makeRawShader(
+    const SkImage* image, SkTileMode tmx, SkTileMode tmy,
+    int32_t maxAniso, bool useCubic, float cubicB, float cubicC, SkFilterMode filter, SkMipmapMode mipmap,
+    const SkMatrix* localMatrix) {
+    auto sampling = toSamplingOptions(maxAniso, useCubic, cubicB, cubicC, filter, mipmap);
+    return image->makeRawShader(tmx, tmy, sampling, localMatrix).release();
+}
+
+bool skialin_bridge_Image_peekPixels(const SkImage* image, SkPixmap* pixmap) {
+    return image->peekPixels(pixmap);
+}
+
+bool skialin_bridge_Image_readPixels(const SkImage* image, const SkImageInfo* dstInfo, void* dstPixels, size_t dstRowBytes, int32_t srcX, int32_t srcY) {
+    return image->readPixels(*dstInfo, dstPixels, dstRowBytes, srcX, srcY);
+}
+
+bool skialin_bridge_Image_scalePixels(
+    const SkImage* image, SkPixmap* dst,
+    int32_t maxAniso, bool useCubic, float cubicB, float cubicC, SkFilterMode filter, SkMipmapMode mipmap) {
+    auto sampling = toSamplingOptions(maxAniso, useCubic, cubicB, cubicC, filter, mipmap);
+    return image->scalePixels(*dst, sampling);
+}
+
+SkImage* skialin_bridge_Image_makeScaled(
+    const SkImage* image, const SkImageInfo* info,
+    int32_t maxAniso, bool useCubic, float cubicB, float cubicC, SkFilterMode filter, SkMipmapMode mipmap) {
+    auto sampling = toSamplingOptions(maxAniso, useCubic, cubicB, cubicC, filter, mipmap);
+    return image->makeScaled(*info, sampling).release();
+}
+
+SkData* skialin_bridge_Image_refEncodedData(const SkImage* image) {
+    return const_cast<SkData*>(image->refEncodedData().release());
+}
+
+SkImage* skialin_bridge_Image_makeSubset(const SkImage* image, int32_t left, int32_t top, int32_t right, int32_t bottom, bool mipmapped) {
+    SkImage::RequiredProperties props{mipmapped};
+    return image->makeSubset(nullptr, SkIRect::MakeLTRB(left, top, right, bottom), props).release();
+}
+
+SkImage* skialin_bridge_Image_withDefaultMipmaps(const SkImage* image) {
+    return image->withDefaultMipmaps().release();
+}
+
+SkImage* skialin_bridge_Image_makeNonTextureImage(const SkImage* image) {
+    return image->makeNonTextureImage().release();
+}
+
+SkImage* skialin_bridge_Image_makeRasterImage(const SkImage* image, bool allowCaching) {
+    auto hint = allowCaching ? SkImage::kAllow_CachingHint : SkImage::kDisallow_CachingHint;
+    return image->makeRasterImage(nullptr, hint).release();
+}
+
+bool skialin_bridge_Image_asLegacyBitmap(const SkImage* image, SkBitmap* bitmap) {
+    return image->asLegacyBitmap(bitmap);
+}
+
+SkImage* skialin_bridge_Image_makeColorSpace(const SkImage* image, SkColorSpace* targetColorSpace, bool mipmapped) {
+    SkImage::RequiredProperties props{mipmapped};
+    return image->makeColorSpace(nullptr, sk_ref_sp(targetColorSpace), props).release();
+}
+
+SkImage* skialin_bridge_Image_makeColorTypeAndColorSpace(const SkImage* image, SkColorType targetColorType, SkColorSpace* targetColorSpace, bool mipmapped) {
+    SkImage::RequiredProperties props{mipmapped};
+    return image->makeColorTypeAndColorSpace(nullptr, targetColorType, sk_ref_sp(targetColorSpace), props).release();
+}
+
+SkImage* skialin_bridge_Image_reinterpretColorSpace(const SkImage* image, SkColorSpace* newColorSpace) {
+    return image->reinterpretColorSpace(sk_ref_sp(newColorSpace)).release();
+}
+
+SkImage* skialin_bridge_Image_RasterFromPixmapCopy(const SkPixmap* pixmap) {
+    return SkImages::RasterFromPixmapCopy(*pixmap).release();
+}
+
+SkImage* skialin_bridge_Image_RasterFromData(const SkImageInfo* info, SkData* pixels, size_t rowBytes) {
+    return SkImages::RasterFromData(*info, sk_ref_sp(pixels), rowBytes).release();
 }
 
 void skialin_bridge_Data_unref(SkData* data) {

@@ -12,6 +12,8 @@
 #include "include/core/SkMatrix.h"
 #include "include/core/SkPoint.h"
 #include "include/core/SkRect.h"
+#include "include/core/SkSamplingOptions.h"
+#include "include/core/SkTileMode.h"
 
 class SkSurface;
 class SkCanvas;
@@ -53,10 +55,63 @@ SkCanvas* skialin_bridge_Surface_getCanvas(SkSurface* surface);
 /* Ref-owned by the caller. Free with skialin_bridge_Image_unref. */
 SkImage* skialin_bridge_Surface_makeImageSnapshot(SkSurface* surface);
 
-/* Image: ref-owned by the caller. Free with skialin_bridge_Image_unref. */
+/* Image: ref-owned by the caller. Free with skialin_bridge_Image_unref.
+ * SkSamplingOptions has no sk_sp members so is passed as 6 flat scalars
+ * (maxAniso, useCubic, cubicB, cubicC, filter, mipmap) rather than needing
+ * its own opaque type. */
 void skialin_bridge_Image_unref(SkImage* image);
 SkImage* skialin_bridge_Image_MakeFromEncoded(const uint8_t* bytes, size_t length);
 SkData* skialin_bridge_Image_encodeToData(const SkImage* image);
+
+/* Owned by the caller; free with skialin_bridge_ImageInfo_delete. */
+SkImageInfo* skialin_bridge_Image_imageInfo(const SkImage* image);
+bool skialin_bridge_Image_isAlphaOnly(const SkImage* image);
+bool skialin_bridge_Image_isOpaque(const SkImage* image);
+bool skialin_bridge_Image_isTextureBacked(const SkImage* image);
+bool skialin_bridge_Image_isLazyGenerated(const SkImage* image);
+bool skialin_bridge_Image_hasMipmaps(const SkImage* image);
+bool skialin_bridge_Image_isProtected(const SkImage* image);
+/* Ref-owned by the caller; null if this Image has no color space. */
+SkColorSpace* skialin_bridge_Image_refColorSpace(const SkImage* image);
+
+SkShader* skialin_bridge_Image_makeShader(
+    const SkImage* image, SkTileMode tmx, SkTileMode tmy,
+    int32_t maxAniso, bool useCubic, float cubicB, float cubicC, SkFilterMode filter, SkMipmapMode mipmap,
+    const SkMatrix* localMatrix);
+SkShader* skialin_bridge_Image_makeRawShader(
+    const SkImage* image, SkTileMode tmx, SkTileMode tmy,
+    int32_t maxAniso, bool useCubic, float cubicB, float cubicC, SkFilterMode filter, SkMipmapMode mipmap,
+    const SkMatrix* localMatrix);
+
+/* True and fills pixmap if the image has direct pixel access. */
+bool skialin_bridge_Image_peekPixels(const SkImage* image, SkPixmap* pixmap);
+bool skialin_bridge_Image_readPixels(const SkImage* image, const SkImageInfo* dstInfo, void* dstPixels, size_t dstRowBytes, int32_t srcX, int32_t srcY);
+bool skialin_bridge_Image_scalePixels(
+    const SkImage* image, SkPixmap* dst,
+    int32_t maxAniso, bool useCubic, float cubicB, float cubicC, SkFilterMode filter, SkMipmapMode mipmap);
+/* Null if the requested ColorInfo/dimensions are unsupported. */
+SkImage* skialin_bridge_Image_makeScaled(
+    const SkImage* image, const SkImageInfo* info,
+    int32_t maxAniso, bool useCubic, float cubicB, float cubicC, SkFilterMode filter, SkMipmapMode mipmap);
+
+/* Null if this Image wasn't created from an encoded stream. */
+SkData* skialin_bridge_Image_refEncodedData(const SkImage* image);
+/* Null if subset is empty, out of bounds, or pixels can't be read. */
+SkImage* skialin_bridge_Image_makeSubset(const SkImage* image, int32_t left, int32_t top, int32_t right, int32_t bottom, bool mipmapped);
+SkImage* skialin_bridge_Image_withDefaultMipmaps(const SkImage* image);
+/* Null on failure (texture-backed image whose GPU readback fails). */
+SkImage* skialin_bridge_Image_makeNonTextureImage(const SkImage* image);
+SkImage* skialin_bridge_Image_makeRasterImage(const SkImage* image, bool allowCaching);
+bool skialin_bridge_Image_asLegacyBitmap(const SkImage* image, SkBitmap* bitmap);
+/* Null if the requested ColorType/ColorSpace is unsupported. */
+SkImage* skialin_bridge_Image_makeColorSpace(const SkImage* image, SkColorSpace* targetColorSpace, bool mipmapped);
+SkImage* skialin_bridge_Image_makeColorTypeAndColorSpace(const SkImage* image, SkColorType targetColorType, SkColorSpace* targetColorSpace, bool mipmapped);
+SkImage* skialin_bridge_Image_reinterpretColorSpace(const SkImage* image, SkColorSpace* newColorSpace);
+
+/* Factories, ref-owned by the caller. */
+SkImage* skialin_bridge_Image_RasterFromPixmapCopy(const SkPixmap* pixmap);
+/* pixels' bytes become this Image's pixel storage (no copy); pixels is ref'd. */
+SkImage* skialin_bridge_Image_RasterFromData(const SkImageInfo* info, SkData* pixels, size_t rowBytes);
 
 /* Bitmap -> Image conversion; result is ref-owned by the caller. */
 SkImage* skialin_bridge_Bitmap_asImage(const SkBitmap* bitmap);
