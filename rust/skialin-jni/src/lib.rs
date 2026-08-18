@@ -9,5 +9,6 @@ mod matrix;
 mod paint;
 mod path;
 mod pixmap;
+mod shader;
 mod surface;
 mod util;
