@@ -21,6 +21,26 @@ class Surface private constructor(ptr: Long) : Managed(ptr, SurfaceNative::nRele
             val ptr = SurfaceNative.nMakeRaster(info.nativePtr)
             return if (ptr == 0L) null else Surface(ptr)
         }
+
+        /**
+         * Direct wrapper around `SkSurfaces::RenderTarget`; every parameter
+         * maps 1:1 onto that function's real signature. Must be called on
+         * the thread [context]'s GL context is current on.
+         */
+        fun makeRenderTarget(
+            context: DirectContext,
+            budgeted: Boolean,
+            info: ImageInfo,
+            sampleCount: Int,
+            surfaceOrigin: SurfaceOrigin,
+            shouldCreateWithMips: Boolean,
+            isProtected: Boolean,
+        ): Surface? {
+            val ptr = SurfaceNative.nMakeRenderTarget(
+                context.nativePtr, budgeted, info.nativePtr, sampleCount, surfaceOrigin.ordinal, shouldCreateWithMips, isProtected,
+            )
+            return if (ptr == 0L) null else Surface(ptr)
+        }
     }
 }
 
@@ -31,6 +51,15 @@ private object SurfaceNative {
 
     external fun nMakeRasterN32Premul(width: Int, height: Int): Long
     external fun nMakeRaster(infoPtr: Long): Long
+    external fun nMakeRenderTarget(
+        contextPtr: Long,
+        budgeted: Boolean,
+        infoPtr: Long,
+        sampleCount: Int,
+        surfaceOrigin: Int,
+        shouldCreateWithMips: Boolean,
+        isProtected: Boolean,
+    ): Long
     external fun nRelease(ptr: Long)
     external fun nGetCanvas(ptr: Long): Long
     external fun nMakeImageSnapshot(ptr: Long): Long

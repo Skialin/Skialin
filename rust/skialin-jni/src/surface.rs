@@ -1,7 +1,7 @@
-use jni::sys::{jint, jlong};
+use jni::sys::{jboolean, jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{ImageInfo, Surface};
+use skialin_core::{DirectContext, ImageInfo, Surface, SurfaceOrigin};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 
@@ -22,6 +22,35 @@ pub extern "system" fn Java_org_skialin_SurfaceNative_nMakeRasterN32Premul(
 pub extern "system" fn Java_org_skialin_SurfaceNative_nMakeRaster(_env: JNIEnv, _class: jni::objects::JClass, info_ptr: jlong) -> jlong {
     let info = unsafe { borrow::<ImageInfo>(info_ptr) };
     match Surface::new_raster(info) {
+        Some(surface) => box_ptr(surface),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_SurfaceNative_nMakeRenderTarget(
+    _env: JNIEnv,
+    _class: jni::objects::JClass,
+    context_ptr: jlong,
+    budgeted: jboolean,
+    info_ptr: jlong,
+    sample_count: jint,
+    surface_origin: jint,
+    should_create_with_mips: jboolean,
+    is_protected: jboolean,
+) -> jlong {
+    let context = unsafe { borrow_mut::<DirectContext>(context_ptr) };
+    let info = unsafe { borrow::<ImageInfo>(info_ptr) };
+    let origin = if surface_origin == 0 { SurfaceOrigin::TopLeft } else { SurfaceOrigin::BottomLeft };
+    match Surface::new_render_target(
+        context,
+        budgeted != 0,
+        info,
+        sample_count,
+        origin,
+        should_create_with_mips != 0,
+        is_protected != 0,
+    ) {
         Some(surface) => box_ptr(surface),
         None => 0,
     }

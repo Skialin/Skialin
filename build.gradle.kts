@@ -9,8 +9,19 @@ repositories {
     mavenCentral()
 }
 
+val lwjglVersion = "3.3.4"
+val lwjglNatives = "natives-windows"
+
 dependencies {
     testImplementation(kotlin("test"))
+
+    testImplementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
+    testImplementation("org.lwjgl", "lwjgl")
+    testImplementation("org.lwjgl", "lwjgl-glfw")
+    testImplementation("org.lwjgl", "lwjgl-opengl")
+    testRuntimeOnly("org.lwjgl", "lwjgl", classifier = lwjglNatives)
+    testRuntimeOnly("org.lwjgl", "lwjgl-glfw", classifier = lwjglNatives)
+    testRuntimeOnly("org.lwjgl", "lwjgl-opengl", classifier = lwjglNatives)
 }
 
 kotlin {

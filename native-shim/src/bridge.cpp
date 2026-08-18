@@ -50,6 +50,12 @@
 #include "include/encode/SkPngEncoder.h"
 #include "include/ports/SkTypeface_win.h"
 #include "modules/skcms/skcms.h"
+#include "include/gpu/ganesh/GrDirectContext.h"
+#include "include/gpu/ganesh/GrTypes.h"
+#include "include/gpu/ganesh/SkSurfaceGanesh.h"
+#include "include/gpu/ganesh/gl/GrGLInterface.h"
+#include "include/gpu/ganesh/gl/GrGLDirectContext.h"
+#include "include/gpu/ganesh/gl/win/GrGLMakeWinInterface.h"
 
 namespace {
 
@@ -1534,6 +1540,34 @@ void skialin_bridge_Canvas_drawVertices(SkCanvas* canvas, const SkVertices* vert
 
 void skialin_bridge_Canvas_concat44(SkCanvas* canvas, const SkM44* matrix) {
     canvas->concat(*matrix);
+}
+
+GrDirectContext* skialin_bridge_DirectContext_MakeGL(void) {
+    sk_sp<const GrGLInterface> interface = GrGLInterfaces::MakeWin();
+    if (!interface) {
+        return nullptr;
+    }
+    return GrDirectContexts::MakeGL(std::move(interface)).release();
+}
+
+void skialin_bridge_DirectContext_unref(GrDirectContext* context) {
+    SkSafeUnref(context);
+}
+
+void skialin_bridge_DirectContext_flush(GrDirectContext* context) {
+    context->flush();
+}
+
+void skialin_bridge_DirectContext_submit(GrDirectContext* context, bool syncCpu) {
+    context->submit(syncCpu ? GrSyncCpu::kYes : GrSyncCpu::kNo);
+}
+
+SkSurface* skialin_bridge_Surface_MakeRenderTarget(
+    GrDirectContext* context, skgpu::Budgeted budgeted, const SkImageInfo* info,
+    int32_t sampleCount, GrSurfaceOrigin surfaceOrigin, const SkSurfaceProps* surfaceProps,
+    bool shouldCreateWithMips, bool isProtected) {
+    return SkSurfaces::RenderTarget(context, budgeted, *info, sampleCount, surfaceOrigin, surfaceProps, shouldCreateWithMips, isProtected)
+        .release();
 }
 
 }  // extern "C"

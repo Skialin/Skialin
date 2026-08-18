@@ -5,6 +5,7 @@ mod color_matrix;
 mod color_space;
 mod color_type;
 mod data;
+mod direct_context;
 mod font;
 mod font_collection;
 mod font_mgr;

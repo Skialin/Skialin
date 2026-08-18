@@ -7,3 +7,12 @@ license.workspace = true
 
 [dependencies]
 skialin-sys = { path = "../skialin-sys" }
+
+[dev-dependencies]
+windows-sys = { version = "0.59", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_Graphics_OpenGL",
+    "Win32_System_LibraryLoader",
+    "Win32_UI_WindowsAndMessaging",
+] }

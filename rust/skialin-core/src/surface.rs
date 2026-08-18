@@ -1,4 +1,4 @@
-use crate::{sys, Canvas, Image, ImageInfo};
+use crate::{sys, Canvas, DirectContext, Image, ImageInfo, SurfaceOrigin};
 use std::marker::PhantomData;
 
 pub struct Surface(*mut sys::SkSurface);
@@ -11,6 +11,35 @@ impl Surface {
 
     pub fn new_raster(info: &ImageInfo) -> Option<Self> {
         let ptr = unsafe { sys::skialin_bridge_Surface_MakeRaster(info.0) };
+        (!ptr.is_null()).then_some(Surface(ptr))
+    }
+
+    /// Direct wrapper around `SkSurfaces::RenderTarget`; every parameter maps
+    /// 1:1 onto that function's real signature. Must be called on the thread
+    /// `context`'s GL context is current on. `surface_props` is not yet
+    /// bound and always passed as null.
+    #[allow(clippy::too_many_arguments)]
+    pub fn new_render_target(
+        context: &mut DirectContext,
+        budgeted: bool,
+        info: &ImageInfo,
+        sample_count: i32,
+        surface_origin: SurfaceOrigin,
+        should_create_with_mips: bool,
+        is_protected: bool,
+    ) -> Option<Self> {
+        let ptr = unsafe {
+            sys::skialin_bridge_Surface_MakeRenderTarget(
+                context.0,
+                budgeted,
+                info.0,
+                sample_count,
+                surface_origin.into(),
+                std::ptr::null(),
+                should_create_with_mips,
+                is_protected,
+            )
+        };
         (!ptr.is_null()).then_some(Surface(ptr))
     }
 
