@@ -2,6 +2,7 @@
 #include "include/core/SkCanvas.h"
 #include "include/core/SkColorSpace.h"
 #include "include/core/SkData.h"
+#include "include/core/SkFont.h"
 #include "include/core/SkImageInfo.h"
 #include "include/core/SkImage.h"
 #include "include/core/SkMatrix.h"
@@ -117,6 +118,24 @@ SKIALIN_NOINLINE void touch(const SkPixmap& pixmap) {
     (void)pixmap.getColor(0, 0);
     (void)pixmap.getAlphaf(0, 0);
     (void)pixmap.writable_addr();
+}
+
+SKIALIN_NOINLINE void touch(const SkFont& font) {
+    (void)font.getSize();
+    (void)font.getScaleX();
+    (void)font.getSkewX();
+    (void)font.getEdging();
+    (void)font.getHinting();
+    (void)font.isSubpixel();
+    (void)font.isEmbolden();
+    (void)font.isLinearMetrics();
+    (void)font.isForceAutoHinting();
+    (void)font.isEmbeddedBitmaps();
+    (void)font.isBaselineSnap();
+    (void)font.getSpacing();
+    (void)font.countText(nullptr, 0, SkTextEncoding::kUTF8);
+    (void)font.measureText(nullptr, 0, SkTextEncoding::kUTF8);
+    font.getWidths({}, {});
 }
 
 }  // namespace skialin_force_link

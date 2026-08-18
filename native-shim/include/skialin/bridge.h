@@ -28,6 +28,7 @@ class SkShader;
 class SkPaint;
 class SkTypeface;
 class SkFontMgr;
+class SkFont;
 
 extern "C" {
 
@@ -243,5 +244,27 @@ SkTypeface* skialin_bridge_FontMgr_matchFamilyStyle(const SkFontMgr* mgr, const 
 SkTypeface* skialin_bridge_FontMgr_makeFromData(const SkFontMgr* mgr, SkData* data, int32_t ttcIndex);
 /* Null if the file isn't found or isn't a recognized font format. */
 SkTypeface* skialin_bridge_FontMgr_makeFromFile(const SkFontMgr* mgr, const char* path, int32_t ttcIndex);
+
+/* Font: heap-allocated with `new`/`delete`, not ref-counted itself (it holds
+ * a strong sk_sp ref to its Typeface internally). SkFont carries
+ * `sk_is_trivially_relocatable = std::true_type`, so unlike SkPathBuilder
+ * (gotcha #2) there's no in-place-construction requirement; a plain `new`
+ * is safe. Only the two seams that cross the sk_sp ownership boundary
+ * (construction with a typeface, and refTypeface/setTypeface) are bridged;
+ * every other accessor's raw bindgen symbol (SkFont_getSize, SkFont_setSize,
+ * etc.) is called directly from skialin-core since bindgen exposes them as
+ * free functions even though it doesn't generate an `impl SkFont` block
+ * (SkFont's non-trivial sk_sp<SkTypeface> member trips the same inference
+ * gap that produces gotcha #2/#4, but only for the impl-block sugar; the
+ * plain extern symbols are still emitted and are safe to call: their
+ * signatures are all scalar/void returns with by-value SkSpan/SkPoint
+ * parameters, which is only unsafe for by-value *returns* per gotcha #1). */
+SkFont* skialin_bridge_Font_MakeDefault(void);
+SkFont* skialin_bridge_Font_MakeWithTypeface(SkTypeface* typeface, float size);
+void skialin_bridge_Font_delete(SkFont* font);
+/* Ref-owned by the caller; null if this Font has no typeface. Free with skialin_bridge_Typeface_unref. */
+SkTypeface* skialin_bridge_Font_refTypeface(const SkFont* font);
+/* typeface may be null to clear it; ref'd by the bridge, not consumed. */
+void skialin_bridge_Font_setTypeface(SkFont* font, SkTypeface* typeface);
 
 }  // extern "C"

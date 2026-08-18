@@ -7,6 +7,7 @@ pub mod color_space;
 pub mod color_type;
 pub mod data;
 pub mod filter_mode;
+pub mod font;
 pub mod font_mgr;
 pub mod font_style;
 pub mod image;
@@ -33,6 +34,7 @@ pub use color_space::{named_gamut, named_transfer_fn, CicpPrimaries, CicpTransfe
 pub use color_type::ColorType;
 pub use data::Data;
 pub use filter_mode::FilterMode;
+pub use font::{Edging, Font, FontMetrics, Hinting, TextEncoding};
 pub use font_mgr::FontMgr;
 pub use font_style::{FontStyle, Slant};
 pub use image::Image;

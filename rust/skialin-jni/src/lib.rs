@@ -3,6 +3,7 @@ mod canvas;
 mod color_space;
 mod color_type;
 mod data;
+mod font;
 mod font_mgr;
 mod image;
 mod image_info;

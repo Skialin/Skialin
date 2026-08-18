@@ -18,6 +18,7 @@
 #include "include/core/SkTypeface.h"
 #include "include/core/SkFontStyle.h"
 #include "include/core/SkFontMgr.h"
+#include "include/core/SkFont.h"
 #include "include/core/SkString.h"
 #include "include/core/SkStream.h"
 #include "include/encode/SkPngEncoder.h"
@@ -555,6 +556,26 @@ SkTypeface* skialin_bridge_FontMgr_makeFromData(const SkFontMgr* mgr, SkData* da
 
 SkTypeface* skialin_bridge_FontMgr_makeFromFile(const SkFontMgr* mgr, const char* path, int32_t ttcIndex) {
     return mgr->makeFromFile(path, ttcIndex).release();
+}
+
+SkFont* skialin_bridge_Font_MakeDefault(void) {
+    return new SkFont();
+}
+
+SkFont* skialin_bridge_Font_MakeWithTypeface(SkTypeface* typeface, float size) {
+    return new SkFont(sk_ref_sp(typeface), size);
+}
+
+void skialin_bridge_Font_delete(SkFont* font) {
+    delete font;
+}
+
+SkTypeface* skialin_bridge_Font_refTypeface(const SkFont* font) {
+    return font->refTypeface().release();
+}
+
+void skialin_bridge_Font_setTypeface(SkFont* font, SkTypeface* typeface) {
+    font->setTypeface(sk_ref_sp(typeface));
 }
 
 }  // extern "C"
