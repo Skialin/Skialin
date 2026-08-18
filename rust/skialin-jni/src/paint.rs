@@ -1,7 +1,7 @@
 use jni::sys::{jboolean, jfloat, jint, jlong, JNI_TRUE};
 use jni::JNIEnv;
 
-use skialin_core::{BlendMode, Paint, PaintStyle, StrokeCap, StrokeJoin};
+use skialin_core::{BlendMode, Paint, PaintStyle, Shader, StrokeCap, StrokeJoin};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 
@@ -134,4 +134,10 @@ pub extern "system" fn Java_org_skialin_PaintNative_nSetStrokeJoin(_env: JNIEnv,
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_PaintNative_nSetBlendMode(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, mode: jint) {
     unsafe { borrow_mut::<Paint>(ptr).set_blend_mode(blend_mode_from_ordinal(mode)) };
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nSetShader(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, shader_ptr: jlong) {
+    let shader = (shader_ptr != 0).then(|| unsafe { borrow::<Shader>(shader_ptr) });
+    unsafe { borrow_mut::<Paint>(ptr).set_shader(shader) };
 }
