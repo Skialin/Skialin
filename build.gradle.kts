@@ -57,11 +57,25 @@ val cargoBuild by tasks.registering(Exec::class) {
     commandLine("cargo", "build", "-p", "skialin-jni", "--release")
 }
 
+val skiaLibDir = providers.gradleProperty("skialin.skiaLibDir")
+    .orElse(providers.environmentVariable("SKIALIN_SKIA_LIB_DIR"))
+    .orElse(rustDir.dir("../external/skia/out/Release").asFile.absolutePath)
+
+/**
+ * SkLoadICU() (third_party/icu/SkLoadICU.cpp) looks for icudtl.dat next to
+ * the module it's compiled into -- here, wherever NativeLoader extracts
+ * skialin_jni's .dll/.so to at runtime (a JVM temp dir, not this build
+ * directory). Bundling it as a resource alongside the native lib lets
+ * NativeLoader extract both into the same temp directory.
+ */
 fun registerCopyNativeLib(name: String, destination: String) = tasks.register<Copy>(name) {
     onlyIf { buildNative }
     dependsOn(cargoBuild)
     from(rustDir.dir("target/$cargoProfile")) {
         include(nativeLibName)
+    }
+    from(skiaLibDir) {
+        include("icudtl.dat")
     }
     into(layout.buildDirectory.dir("$destination/natives/$nativePlatformDir"))
 }

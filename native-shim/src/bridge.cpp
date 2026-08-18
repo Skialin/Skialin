@@ -22,6 +22,11 @@
 #include "include/core/SkTextBlob.h"
 #include "modules/skparagraph/include/TextStyle.h"
 #include "modules/skparagraph/include/ParagraphStyle.h"
+#include "modules/skparagraph/include/FontCollection.h"
+#include "modules/skparagraph/include/ParagraphBuilder.h"
+#include "modules/skparagraph/include/Paragraph.h"
+#include "modules/skparagraph/include/Metrics.h"
+#include "modules/skunicode/include/SkUnicode_icu.h"
 #include "include/core/SkString.h"
 #include "include/core/SkStream.h"
 #include "include/encode/SkPngEncoder.h"
@@ -798,6 +803,134 @@ skia::textlayout::TextStyle* skialin_bridge_ParagraphStyle_getTextStyle(const sk
 
 void skialin_bridge_ParagraphStyle_setTextStyle(skia::textlayout::ParagraphStyle* paragraphStyle, const skia::textlayout::TextStyle* style) {
     paragraphStyle->setTextStyle(*style);
+}
+
+using skia::textlayout::FontCollection;
+using skia::textlayout::ParagraphBuilder;
+using skia::textlayout::Paragraph;
+using skia::textlayout::LineMetrics;
+
+skia::textlayout::FontCollection* skialin_bridge_FontCollection_new(void) {
+    return new FontCollection();
+}
+
+void skialin_bridge_FontCollection_unref(skia::textlayout::FontCollection* collection) {
+    SkSafeUnref(collection);
+}
+
+void skialin_bridge_FontCollection_setDefaultFontManager(skia::textlayout::FontCollection* collection, SkFontMgr* fontManager) {
+    collection->setDefaultFontManager(sk_ref_sp(fontManager));
+}
+
+skia::textlayout::ParagraphBuilder* skialin_bridge_ParagraphBuilder_make(const skia::textlayout::ParagraphStyle* style, skia::textlayout::FontCollection* fontCollection) {
+    return ParagraphBuilder::make(*style, sk_ref_sp(fontCollection), SkUnicodes::ICU::Make()).release();
+}
+
+void skialin_bridge_ParagraphBuilder_delete(skia::textlayout::ParagraphBuilder* builder) {
+    delete builder;
+}
+
+void skialin_bridge_ParagraphBuilder_pushStyle(skia::textlayout::ParagraphBuilder* builder, const skia::textlayout::TextStyle* style) {
+    builder->pushStyle(*style);
+}
+
+void skialin_bridge_ParagraphBuilder_pop(skia::textlayout::ParagraphBuilder* builder) {
+    builder->pop();
+}
+
+void skialin_bridge_ParagraphBuilder_addText(skia::textlayout::ParagraphBuilder* builder, const char* text, size_t length) {
+    builder->addText(text, length);
+}
+
+skia::textlayout::Paragraph* skialin_bridge_ParagraphBuilder_build(skia::textlayout::ParagraphBuilder* builder) {
+    return builder->Build().release();
+}
+
+void skialin_bridge_Paragraph_delete(skia::textlayout::Paragraph* paragraph) {
+    delete paragraph;
+}
+
+void skialin_bridge_Paragraph_layout(skia::textlayout::Paragraph* paragraph, float width) {
+    paragraph->layout(width);
+}
+
+void skialin_bridge_Paragraph_paint(skia::textlayout::Paragraph* paragraph, SkCanvas* canvas, float x, float y) {
+    paragraph->paint(canvas, x, y);
+}
+
+float skialin_bridge_Paragraph_getMaxWidth(const skia::textlayout::Paragraph* paragraph) {
+    return const_cast<Paragraph*>(paragraph)->getMaxWidth();
+}
+
+float skialin_bridge_Paragraph_getHeight(const skia::textlayout::Paragraph* paragraph) {
+    return const_cast<Paragraph*>(paragraph)->getHeight();
+}
+
+float skialin_bridge_Paragraph_getMinIntrinsicWidth(const skia::textlayout::Paragraph* paragraph) {
+    return const_cast<Paragraph*>(paragraph)->getMinIntrinsicWidth();
+}
+
+float skialin_bridge_Paragraph_getMaxIntrinsicWidth(const skia::textlayout::Paragraph* paragraph) {
+    return const_cast<Paragraph*>(paragraph)->getMaxIntrinsicWidth();
+}
+
+float skialin_bridge_Paragraph_getAlphabeticBaseline(const skia::textlayout::Paragraph* paragraph) {
+    return const_cast<Paragraph*>(paragraph)->getAlphabeticBaseline();
+}
+
+float skialin_bridge_Paragraph_getIdeographicBaseline(const skia::textlayout::Paragraph* paragraph) {
+    return const_cast<Paragraph*>(paragraph)->getIdeographicBaseline();
+}
+
+float skialin_bridge_Paragraph_getLongestLine(const skia::textlayout::Paragraph* paragraph) {
+    return const_cast<Paragraph*>(paragraph)->getLongestLine();
+}
+
+bool skialin_bridge_Paragraph_didExceedMaxLines(const skia::textlayout::Paragraph* paragraph) {
+    return const_cast<Paragraph*>(paragraph)->didExceedMaxLines();
+}
+
+size_t skialin_bridge_Paragraph_lineNumber(skia::textlayout::Paragraph* paragraph) {
+    return paragraph->lineNumber();
+}
+
+int32_t skialin_bridge_Paragraph_unresolvedGlyphs(skia::textlayout::Paragraph* paragraph) {
+    return paragraph->unresolvedGlyphs();
+}
+
+int32_t skialin_bridge_Paragraph_getGlyphPositionAtCoordinate(skia::textlayout::Paragraph* paragraph, float dx, float dy, int32_t* affinity) {
+    skia::textlayout::PositionWithAffinity result = paragraph->getGlyphPositionAtCoordinate(dx, dy);
+    *affinity = result.affinity == skia::textlayout::kUpstream ? 0 : 1;
+    return result.position;
+}
+
+void skialin_bridge_Paragraph_getWordBoundary(skia::textlayout::Paragraph* paragraph, uint32_t offset, size_t* start, size_t* end) {
+    skia::textlayout::SkRange<size_t> range = paragraph->getWordBoundary(offset);
+    *start = range.start;
+    *end = range.end;
+}
+
+bool skialin_bridge_Paragraph_getLineMetricsAt(
+    skia::textlayout::Paragraph* paragraph, int32_t lineNumber,
+    size_t* startIndex, size_t* endIndex, size_t* endExcludingWhitespaces, size_t* endIncludingNewline, int32_t* hardBreak,
+    double* ascent, double* descent, double* unscaledAscent, double* height, double* width, double* left, double* baseline) {
+    LineMetrics metrics;
+    if (!paragraph->getLineMetricsAt(lineNumber, &metrics)) {
+        return false;
+    }
+    *startIndex = metrics.fStartIndex;
+    *endIndex = metrics.fEndIndex;
+    *endExcludingWhitespaces = metrics.fEndExcludingWhitespaces;
+    *endIncludingNewline = metrics.fEndIncludingNewline;
+    *hardBreak = metrics.fHardBreak ? 1 : 0;
+    *ascent = metrics.fAscent;
+    *descent = metrics.fDescent;
+    *unscaledAscent = metrics.fUnscaledAscent;
+    *height = metrics.fHeight;
+    *width = metrics.fWidth;
+    *left = metrics.fLeft;
+    *baseline = metrics.fBaseline;
+    return true;
 }
 
 }  // extern "C"

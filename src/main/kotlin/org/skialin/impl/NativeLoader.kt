@@ -19,8 +19,24 @@ internal object NativeLoader {
         resource.use { input ->
             Files.copy(input, tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
         }
+        extractIcuData(tempFile.parentFile, resourcePath.substringBeforeLast('/'))
         System.load(tempFile.absolutePath)
         loaded = true
+    }
+
+    /**
+     * SkLoadICU() (third_party/icu/SkLoadICU.cpp) looks for icudtl.dat next
+     * to the module it's compiled into, i.e. next to [tempFile] once
+     * loaded. Extracted alongside it here so text layout works without a
+     * manual runtime setup step.
+     */
+    private fun extractIcuData(destDir: java.io.File, resourceDir: String) {
+        val dest = destDir.resolve("icudtl.dat")
+        if (dest.isFile) return
+        val resource = NativeLoader::class.java.getResourceAsStream("$resourceDir/icudtl.dat") ?: return
+        resource.use { input ->
+            Files.copy(input, dest.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
     }
 
     private fun suffixFor(libName: String): String {

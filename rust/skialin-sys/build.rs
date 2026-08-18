@@ -108,4 +108,27 @@ fn link_skia(skia_dir: &Path) {
             println!("cargo:rustc-link-lib=dylib={lib}");
         }
     }
+
+    copy_icu_data(&lib_dir);
+}
+
+/// SkLoadICU() (third_party/icu/SkLoadICU.cpp) looks for icudtl.dat next to
+/// the module containing Skia's own compiled code, i.e. next to whatever
+/// binary or dylib this static lib ends up linked into. For `cargo test`
+/// that's target/{profile}/deps; copy proactively so tests don't need a
+/// manual step. (The JNI .dll needs its own copy alongside it too --
+/// build.gradle.kts's copyNativeLib task handles that.)
+fn copy_icu_data(lib_dir: &Path) {
+    let src = lib_dir.join("icudtl.dat");
+    if !src.is_file() {
+        return;
+    }
+    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+    // OUT_DIR is target/{profile}/build/skialin-sys-{hash}/out
+    let Some(profile_dir) = out_dir.ancestors().nth(3) else { return };
+    for dest_dir in [profile_dir.to_path_buf(), profile_dir.join("deps")] {
+        if dest_dir.is_dir() {
+            let _ = std::fs::copy(&src, dest_dir.join("icudtl.dat"));
+        }
+    }
 }

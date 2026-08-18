@@ -2,7 +2,7 @@ package org.skialin
 
 import org.skialin.impl.NativeLoader
 
-class Canvas internal constructor(private val ptr: Long) {
+class Canvas internal constructor(internal val ptr: Long) {
     fun clear(color: Color) = CanvasNative.nClear(ptr, color)
 
     fun drawColor(color: Color, mode: BlendMode = BlendMode.SRC_OVER) =

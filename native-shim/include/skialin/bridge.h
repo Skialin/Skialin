@@ -35,6 +35,9 @@ namespace skia {
 namespace textlayout {
 class TextStyle;
 struct ParagraphStyle;
+class FontCollection;
+class ParagraphBuilder;
+class Paragraph;
 }  // namespace textlayout
 }  // namespace skia
 
@@ -371,5 +374,61 @@ void skialin_bridge_ParagraphStyle_setTextHeightBehavior(skia::textlayout::Parag
 skia::textlayout::TextStyle* skialin_bridge_ParagraphStyle_getTextStyle(const skia::textlayout::ParagraphStyle* style);
 /* style is copied, not consumed; the caller retains ownership of it. */
 void skialin_bridge_ParagraphStyle_setTextStyle(skia::textlayout::ParagraphStyle* paragraphStyle, const skia::textlayout::TextStyle* style);
+
+/* FontCollection: ref-owned by the caller. Free with
+ * skialin_bridge_FontCollection_unref. Resolves families named in TextStyle
+ * to a Typeface during layout; setDefaultFontManager is the minimum needed
+ * to get real glyphs (usually FontMgr::system()). setAssetFontManager/
+ * setDynamicFontManager/setTestFontManager are not yet bound. */
+skia::textlayout::FontCollection* skialin_bridge_FontCollection_new(void);
+void skialin_bridge_FontCollection_unref(skia::textlayout::FontCollection* collection);
+/* fontManager is ref'd by the bridge, not consumed. */
+void skialin_bridge_FontCollection_setDefaultFontManager(skia::textlayout::FontCollection* collection, SkFontMgr* fontManager);
+
+/* ParagraphBuilder: owned by the caller. Free with
+ * skialin_bridge_ParagraphBuilder_delete. Both ParagraphBuilder and
+ * Paragraph are abstract (pure virtual layout()/paint()/etc.), which
+ * defeats bindgen's vtable-layout inference the same way SkImage does, so
+ * every method is routed through the bridge. The bridge owns picking the
+ * SkUnicode implementation (ICU, via SkUnicodes::ICU::Make(), matching the
+ * icu/harfbuzz build enabled for this shim) so callers never need to touch
+ * SkUnicode directly. text is UTF-8. */
+skia::textlayout::ParagraphBuilder* skialin_bridge_ParagraphBuilder_make(const skia::textlayout::ParagraphStyle* style, skia::textlayout::FontCollection* fontCollection);
+void skialin_bridge_ParagraphBuilder_delete(skia::textlayout::ParagraphBuilder* builder);
+/* style is copied, not consumed; the caller retains ownership of it. */
+void skialin_bridge_ParagraphBuilder_pushStyle(skia::textlayout::ParagraphBuilder* builder, const skia::textlayout::TextStyle* style);
+void skialin_bridge_ParagraphBuilder_pop(skia::textlayout::ParagraphBuilder* builder);
+void skialin_bridge_ParagraphBuilder_addText(skia::textlayout::ParagraphBuilder* builder, const char* text, size_t length);
+/* Owned by the caller. Free with skialin_bridge_Paragraph_delete. Consumes the builder's accumulated state but not the builder object itself, which remains usable (matching the real API). */
+skia::textlayout::Paragraph* skialin_bridge_ParagraphBuilder_build(skia::textlayout::ParagraphBuilder* builder);
+
+/* Paragraph: owned by the caller. Free with skialin_bridge_Paragraph_delete. */
+void skialin_bridge_Paragraph_delete(skia::textlayout::Paragraph* paragraph);
+void skialin_bridge_Paragraph_layout(skia::textlayout::Paragraph* paragraph, float width);
+void skialin_bridge_Paragraph_paint(skia::textlayout::Paragraph* paragraph, SkCanvas* canvas, float x, float y);
+float skialin_bridge_Paragraph_getMaxWidth(const skia::textlayout::Paragraph* paragraph);
+float skialin_bridge_Paragraph_getHeight(const skia::textlayout::Paragraph* paragraph);
+float skialin_bridge_Paragraph_getMinIntrinsicWidth(const skia::textlayout::Paragraph* paragraph);
+float skialin_bridge_Paragraph_getMaxIntrinsicWidth(const skia::textlayout::Paragraph* paragraph);
+float skialin_bridge_Paragraph_getAlphabeticBaseline(const skia::textlayout::Paragraph* paragraph);
+float skialin_bridge_Paragraph_getIdeographicBaseline(const skia::textlayout::Paragraph* paragraph);
+float skialin_bridge_Paragraph_getLongestLine(const skia::textlayout::Paragraph* paragraph);
+bool skialin_bridge_Paragraph_didExceedMaxLines(const skia::textlayout::Paragraph* paragraph);
+size_t skialin_bridge_Paragraph_lineNumber(skia::textlayout::Paragraph* paragraph);
+/* -1 if not applicable (not shaped yet). */
+int32_t skialin_bridge_Paragraph_unresolvedGlyphs(skia::textlayout::Paragraph* paragraph);
+
+/* affinity: 0 = upstream, 1 = downstream. */
+int32_t skialin_bridge_Paragraph_getGlyphPositionAtCoordinate(skia::textlayout::Paragraph* paragraph, float dx, float dy, int32_t* affinity);
+/* [start, end) of the word containing the glyph at offset. */
+void skialin_bridge_Paragraph_getWordBoundary(skia::textlayout::Paragraph* paragraph, uint32_t offset, size_t* start, size_t* end);
+
+/* Line metrics, matching skia::textlayout::LineMetrics (Metrics.h); the
+ * per-run fLineMetrics map is not exposed. hardBreak: 0/1. Returns false
+ * (leaving outputs unset) if lineNumber is out of range. */
+bool skialin_bridge_Paragraph_getLineMetricsAt(
+    skia::textlayout::Paragraph* paragraph, int32_t lineNumber,
+    size_t* startIndex, size_t* endIndex, size_t* endExcludingWhitespaces, size_t* endIncludingNewline, int32_t* hardBreak,
+    double* ascent, double* descent, double* unscaledAscent, double* height, double* width, double* left, double* baseline);
 
 }  // extern "C"
