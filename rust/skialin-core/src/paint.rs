@@ -188,6 +188,12 @@ impl Paint {
         unsafe { self.0.setBlendMode(mode.into()) };
         self
     }
+
+    pub fn set_shader(&mut self, shader: Option<&crate::Shader>) -> &mut Self {
+        let ptr = shader.map_or(std::ptr::null_mut(), |s| s.0);
+        unsafe { sys::skialin_bridge_Paint_setShader(&mut *self.0, ptr) };
+        self
+    }
 }
 
 impl Default for Paint {
