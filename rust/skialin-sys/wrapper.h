@@ -26,5 +26,11 @@
 #include "include/core/SkShader.h"
 #include "include/core/SkSamplingOptions.h"
 #include "include/core/SkTileMode.h"
+#include "include/core/SkTypeface.h"
+#include "include/core/SkFont.h"
+#include "include/core/SkFontMgr.h"
+#include "include/core/SkFontStyle.h"
+#include "include/core/SkTextBlob.h"
+#include "include/core/SkFontMetrics.h"
 
 #include "skialin/bridge.h"

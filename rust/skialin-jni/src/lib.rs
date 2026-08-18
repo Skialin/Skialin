@@ -11,4 +11,5 @@ mod path;
 mod pixmap;
 mod shader;
 mod surface;
+mod typeface;
 mod util;

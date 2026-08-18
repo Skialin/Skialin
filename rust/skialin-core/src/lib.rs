@@ -7,6 +7,7 @@ pub mod color_space;
 pub mod color_type;
 pub mod data;
 pub mod filter_mode;
+pub mod font_style;
 pub mod image;
 pub mod image_info;
 pub mod matrix;
@@ -22,6 +23,7 @@ pub mod size;
 mod support;
 pub mod surface;
 pub mod tile_mode;
+pub mod typeface;
 
 pub use bitmap::{AlphaType, Bitmap};
 pub use canvas::{Canvas, ClipOp};
@@ -30,6 +32,7 @@ pub use color_space::{named_gamut, named_transfer_fn, CicpPrimaries, CicpTransfe
 pub use color_type::ColorType;
 pub use data::Data;
 pub use filter_mode::FilterMode;
+pub use font_style::{FontStyle, Slant};
 pub use image::Image;
 pub use image_info::ImageInfo;
 pub use matrix::Matrix;
@@ -44,3 +47,4 @@ pub use shader::Shader;
 pub use size::ISize;
 pub use surface::Surface;
 pub use tile_mode::TileMode;
+pub use typeface::Typeface;

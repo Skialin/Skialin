@@ -26,6 +26,7 @@ class SkColorSpace;
 class SkPixmap;
 class SkShader;
 class SkPaint;
+class SkTypeface;
 
 extern "C" {
 
@@ -204,5 +205,23 @@ bool skialin_bridge_Shader_isOpaque(const SkShader* shader);
 
 /* Attaches shader to paint; shader may be null to clear it. */
 void skialin_bridge_Paint_setShader(SkPaint* paint, SkShader* shader);
+
+/* Typeface: ref-owned by the caller. Free with skialin_bridge_Typeface_unref.
+ * SkTypeface has pure virtual methods (onGetFamilyName etc.), which defeats
+ * bindgen's vtable-layout inference the same way SkImage does, so every
+ * accessor is routed through the bridge. SkFontStyle is passed as 3 flat
+ * ints (weight, width, slant) rather than the packed struct itself. */
+void skialin_bridge_Typeface_unref(SkTypeface* typeface);
+SkTypeface* skialin_bridge_Typeface_MakeEmpty(void);
+uint32_t skialin_bridge_Typeface_uniqueID(const SkTypeface* typeface);
+bool skialin_bridge_Typeface_isBold(const SkTypeface* typeface);
+bool skialin_bridge_Typeface_isItalic(const SkTypeface* typeface);
+bool skialin_bridge_Typeface_isFixedPitch(const SkTypeface* typeface);
+int32_t skialin_bridge_Typeface_countGlyphs(const SkTypeface* typeface);
+int32_t skialin_bridge_Typeface_getUnitsPerEm(const SkTypeface* typeface);
+uint16_t skialin_bridge_Typeface_unicharToGlyph(const SkTypeface* typeface, int32_t unichar);
+void skialin_bridge_Typeface_fontStyle(const SkTypeface* typeface, int32_t* weight, int32_t* width, int32_t* slant);
+/* UTF-8 bytes, no NUL terminator. Ref-owned by the caller; free with skialin_bridge_Data_unref. */
+SkData* skialin_bridge_Typeface_familyName(const SkTypeface* typeface);
 
 }  // extern "C"

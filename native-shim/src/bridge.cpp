@@ -15,6 +15,9 @@
 #include "include/core/SkPaint.h"
 #include "include/core/SkShader.h"
 #include "include/core/SkSamplingOptions.h"
+#include "include/core/SkTypeface.h"
+#include "include/core/SkFontStyle.h"
+#include "include/core/SkString.h"
 #include "include/encode/SkPngEncoder.h"
 #include "modules/skcms/skcms.h"
 
@@ -465,6 +468,55 @@ bool skialin_bridge_Shader_isOpaque(const SkShader* shader) {
 
 void skialin_bridge_Paint_setShader(SkPaint* paint, SkShader* shader) {
     paint->setShader(sk_ref_sp(shader));
+}
+
+void skialin_bridge_Typeface_unref(SkTypeface* typeface) {
+    SkSafeUnref(typeface);
+}
+
+SkTypeface* skialin_bridge_Typeface_MakeEmpty(void) {
+    return SkTypeface::MakeEmpty().release();
+}
+
+uint32_t skialin_bridge_Typeface_uniqueID(const SkTypeface* typeface) {
+    return typeface->uniqueID();
+}
+
+bool skialin_bridge_Typeface_isBold(const SkTypeface* typeface) {
+    return typeface->isBold();
+}
+
+bool skialin_bridge_Typeface_isItalic(const SkTypeface* typeface) {
+    return typeface->isItalic();
+}
+
+bool skialin_bridge_Typeface_isFixedPitch(const SkTypeface* typeface) {
+    return typeface->isFixedPitch();
+}
+
+int32_t skialin_bridge_Typeface_countGlyphs(const SkTypeface* typeface) {
+    return typeface->countGlyphs();
+}
+
+int32_t skialin_bridge_Typeface_getUnitsPerEm(const SkTypeface* typeface) {
+    return typeface->getUnitsPerEm();
+}
+
+uint16_t skialin_bridge_Typeface_unicharToGlyph(const SkTypeface* typeface, int32_t unichar) {
+    return typeface->unicharToGlyph(unichar);
+}
+
+void skialin_bridge_Typeface_fontStyle(const SkTypeface* typeface, int32_t* weight, int32_t* width, int32_t* slant) {
+    SkFontStyle style = typeface->fontStyle();
+    *weight = style.weight();
+    *width = style.width();
+    *slant = style.slant();
+}
+
+SkData* skialin_bridge_Typeface_familyName(const SkTypeface* typeface) {
+    SkString name;
+    typeface->getFamilyName(&name);
+    return SkData::MakeWithCopy(name.c_str(), name.size()).release();
 }
 
 }  // extern "C"
