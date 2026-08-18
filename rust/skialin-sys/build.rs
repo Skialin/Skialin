@@ -41,6 +41,7 @@ fn main() {
         .cpp(true)
         .std("c++20")
         .file(shim_src.join("bridge.cpp"))
+        .file(shim_src.join("force_link.cpp"))
         .include(&skia_dir)
         .include(&shim_include)
         .warnings(false)
@@ -74,9 +75,6 @@ fn main() {
     link_skia(&skia_dir);
 }
 
-/// Links against a prebuilt Skia (produced by Skia's own GN/ninja build,
-/// which is out of scope for this crate). Point SKIALIN_SKIA_LIB_DIR at the
-/// output directory (e.g. external/skia/out/Release) once it exists.
 fn link_skia(skia_dir: &Path) {
     let lib_dir = env::var("SKIALIN_SKIA_LIB_DIR")
         .map(PathBuf::from)
@@ -92,4 +90,16 @@ fn link_skia(skia_dir: &Path) {
 
     println!("cargo:rustc-link-search=native={}", lib_dir.display());
     println!("cargo:rustc-link-lib=static=skia");
+    println!("cargo:rustc-link-lib=static=skcms");
+    println!("cargo:rustc-link-lib=static=libpng");
+    println!("cargo:rustc-link-lib=static=zlib");
+    println!("cargo:rustc-link-lib=static=expat");
+
+    if cfg!(target_os = "windows") {
+        for lib in [
+            "gdi32", "user32", "ole32", "advapi32", "usp10", "dwrite", "fontsub", "shlwapi", "rpcrt4", "opengl32",
+        ] {
+            println!("cargo:rustc-link-lib=dylib={lib}");
+        }
+    }
 }

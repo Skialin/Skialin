@@ -9,6 +9,7 @@ pub mod paint;
 pub mod path;
 pub mod point;
 pub mod rect;
+mod support;
 pub mod surface;
 
 pub use bitmap::{AlphaType, Bitmap, ColorType};

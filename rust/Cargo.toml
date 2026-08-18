@@ -12,4 +12,4 @@ edition = "2021"
 license = "MIT"
 
 [profile.release]
-lto = true
+lto = false

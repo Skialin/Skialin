@@ -16,36 +16,36 @@ impl From<PathDirection> for sys::SkPathDirection {
 }
 
 /// An immutable, drawable path snapshot. Produced from a [`PathBuilder`].
-pub struct Path(pub(crate) sys::SkPath);
+pub struct Path(pub(crate) *mut sys::SkPath);
 
 impl Path {
     pub fn is_empty(&self) -> bool {
-        unsafe { self.0.isEmpty() }
+        unsafe { (*self.0).isEmpty() }
     }
 
     pub fn bounds(&self) -> Rect {
-        unsafe { *self.0.getBounds() }.into()
+        unsafe { *(*self.0).getBounds() }.into()
     }
 
     pub fn contains(&self, point: Point) -> bool {
-        unsafe { self.0.contains(point.into()) }
+        unsafe { (*self.0).contains(point.into()) }
     }
 }
 
 impl Drop for Path {
     fn drop(&mut self) {
-        unsafe { self.0.destruct() };
+        unsafe { sys::skialin_bridge_Path_delete(self.0) };
     }
 }
 
 /// Mutable path construction, mirroring Skia's `SkPathBuilder`. Call
 /// [`PathBuilder::snapshot`] to obtain a drawable [`Path`] without
 /// consuming the builder, or [`PathBuilder::detach`] to take it and reset.
-pub struct PathBuilder(sys::SkPathBuilder);
+pub struct PathBuilder(Box<sys::SkPathBuilder>);
 
 impl PathBuilder {
     pub fn new() -> Self {
-        PathBuilder(unsafe { sys::SkPathBuilder::new() })
+        PathBuilder(crate::support::new_boxed(sys::SkPathBuilder_SkPathBuilder))
     }
 
     pub fn move_to(&mut self, point: Point) -> &mut Self {
@@ -106,24 +106,24 @@ impl PathBuilder {
     }
 
     pub fn bounds(&self) -> Rect {
-        unsafe { self.0.computeBounds() }.into()
+        unsafe { sys::skialin_bridge_PathBuilder_computeBounds(&*self.0) }.into()
     }
 
     /// Snapshots the current contents into a drawable [`Path`] without
     /// consuming the builder.
     pub fn snapshot(&self) -> Path {
-        Path(unsafe { self.0.snapshot(std::ptr::null()) })
+        Path(unsafe { sys::skialin_bridge_PathBuilder_snapshot(&*self.0, std::ptr::null()) })
     }
 
     /// Snapshots and applies `matrix`, without consuming the builder.
     pub fn snapshot_with_matrix(&self, matrix: &Matrix) -> Path {
-        Path(unsafe { self.0.snapshot(&matrix.0) })
+        Path(unsafe { sys::skialin_bridge_PathBuilder_snapshot(&*self.0, &matrix.0) })
     }
 
     /// Takes the current contents into a drawable [`Path`], resetting the
     /// builder to empty.
     pub fn detach(&mut self) -> Path {
-        Path(unsafe { self.0.detach(std::ptr::null()) })
+        Path(unsafe { sys::skialin_bridge_PathBuilder_detach(&mut *self.0, std::ptr::null()) })
     }
 }
 

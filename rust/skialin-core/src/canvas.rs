@@ -49,29 +49,29 @@ impl<'a> Canvas<'a> {
     }
 
     pub fn draw_paint(&mut self, paint: &Paint) {
-        unsafe { self.as_mut().drawPaint(&paint.0) };
+        unsafe { self.as_mut().drawPaint(&*paint.0) };
     }
 
     pub fn draw_line(&mut self, p0: Point, p1: Point, paint: &Paint) {
-        unsafe { self.as_mut().drawLine1(p0.into(), p1.into(), &paint.0) };
+        unsafe { self.as_mut().drawLine1(p0.into(), p1.into(), &*paint.0) };
     }
 
     pub fn draw_rect(&mut self, rect: Rect, paint: &Paint) {
         let sk_rect: sys::SkRect = rect.into();
-        unsafe { self.as_mut().drawRect(&sk_rect, &paint.0) };
+        unsafe { self.as_mut().drawRect(&sk_rect, &*paint.0) };
     }
 
     pub fn draw_oval(&mut self, rect: Rect, paint: &Paint) {
         let sk_rect: sys::SkRect = rect.into();
-        unsafe { self.as_mut().drawOval(&sk_rect, &paint.0) };
+        unsafe { self.as_mut().drawOval(&sk_rect, &*paint.0) };
     }
 
     pub fn draw_circle(&mut self, center: Point, radius: f32, paint: &Paint) {
-        unsafe { self.as_mut().drawCircle1(center.into(), radius, &paint.0) };
+        unsafe { self.as_mut().drawCircle1(center.into(), radius, &*paint.0) };
     }
 
     pub fn draw_path(&mut self, path: &Path, paint: &Paint) {
-        unsafe { self.as_mut().drawPath(&path.0, &paint.0) };
+        unsafe { self.as_mut().drawPath(path.0, &*paint.0) };
     }
 
     pub fn save(&mut self) -> i32 {
@@ -108,6 +108,6 @@ impl<'a> Canvas<'a> {
     }
 
     pub fn clip_path(&mut self, path: &Path, op: ClipOp) {
-        unsafe { self.as_mut().clipPath1(&path.0, op.into()) };
+        unsafe { self.as_mut().clipPath1(path.0, op.into()) };
     }
 }

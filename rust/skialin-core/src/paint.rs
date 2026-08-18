@@ -123,11 +123,11 @@ impl From<BlendMode> for sys::SkBlendMode {
     }
 }
 
-pub struct Paint(pub(crate) sys::SkPaint);
+pub struct Paint(pub(crate) Box<sys::SkPaint>);
 
 impl Paint {
     pub fn new() -> Self {
-        Paint(unsafe { sys::SkPaint::new() })
+        Paint(crate::support::new_boxed(sys::SkPaint_SkPaint))
     }
 
     pub fn color(&self) -> Color {

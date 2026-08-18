@@ -57,15 +57,22 @@ val cargoBuild by tasks.registering(Exec::class) {
     commandLine("cargo", "build", "-p", "skialin-jni", "--release")
 }
 
-val copyNativeLib by tasks.registering(Copy::class) {
+fun registerCopyNativeLib(name: String, destination: String) = tasks.register<Copy>(name) {
     onlyIf { buildNative }
     dependsOn(cargoBuild)
     from(rustDir.dir("target/$cargoProfile")) {
         include(nativeLibName)
     }
-    into(layout.buildDirectory.dir("resources/main/natives/$nativePlatformDir"))
+    into(layout.buildDirectory.dir("$destination/natives/$nativePlatformDir"))
 }
+
+val copyNativeLib = registerCopyNativeLib("copyNativeLib", "resources/main")
+val copyNativeLibForTest = registerCopyNativeLib("copyNativeLibForTest", "resources/test")
 
 tasks.named("processResources") {
     dependsOn(copyNativeLib)
+}
+
+tasks.named("processTestResources") {
+    dependsOn(copyNativeLibForTest)
 }

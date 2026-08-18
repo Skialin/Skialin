@@ -38,11 +38,11 @@ impl From<AlphaType> for sys::SkAlphaType {
     }
 }
 
-pub struct Bitmap(sys::SkBitmap);
+pub struct Bitmap(Box<sys::SkBitmap>);
 
 impl Bitmap {
     pub fn new() -> Self {
-        Bitmap(unsafe { sys::SkBitmap::new() })
+        Bitmap(crate::support::new_boxed(sys::SkBitmap_SkBitmap))
     }
 
     pub fn alloc_pixels(&mut self, width: i32, height: i32, color_type: ColorType, alpha_type: AlphaType) {
@@ -84,7 +84,7 @@ impl Bitmap {
     }
 
     pub fn as_image(&self) -> Option<Image> {
-        let ptr = unsafe { sys::skialin_bridge_Bitmap_asImage(&self.0) };
+        let ptr = unsafe { sys::skialin_bridge_Bitmap_asImage(&*self.0) };
         (!ptr.is_null()).then_some(Image(ptr))
     }
 }

@@ -5,9 +5,35 @@
 #include "include/core/SkImage.h"
 #include "include/core/SkData.h"
 #include "include/core/SkBitmap.h"
+#include "include/core/SkPath.h"
+#include "include/core/SkPathBuilder.h"
 #include "include/encode/SkPngEncoder.h"
 
 extern "C" {
+
+SkPoint skialin_bridge_Matrix_mapPoint(const SkMatrix* matrix, SkPoint point) {
+    return matrix->mapPoint(point);
+}
+
+SkRect skialin_bridge_Matrix_mapRect(const SkMatrix* matrix, const SkRect* rect) {
+    return matrix->mapRect(*rect);
+}
+
+SkRect skialin_bridge_PathBuilder_computeBounds(const SkPathBuilder* builder) {
+    return builder->computeBounds();
+}
+
+SkPath* skialin_bridge_PathBuilder_snapshot(const SkPathBuilder* builder, const SkMatrix* matrix) {
+    return new SkPath(builder->snapshot(matrix));
+}
+
+SkPath* skialin_bridge_PathBuilder_detach(SkPathBuilder* builder, const SkMatrix* matrix) {
+    return new SkPath(builder->detach(matrix));
+}
+
+void skialin_bridge_Path_delete(SkPath* path) {
+    delete path;
+}
 
 SkSurface* skialin_bridge_Surface_MakeRasterN32Premul(int32_t width, int32_t height) {
     return SkSurfaces::Raster(SkImageInfo::MakeN32Premul(width, height)).release();

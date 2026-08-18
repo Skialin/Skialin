@@ -47,3 +47,4 @@ bin/
 .idea/
 
 **/target
+hs_err_pid*.log

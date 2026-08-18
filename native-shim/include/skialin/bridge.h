@@ -9,14 +9,34 @@
  * owns a plain pointer with clear, explicit lifetime rules. */
 
 #include "include/core/SkImageInfo.h"
+#include "include/core/SkMatrix.h"
+#include "include/core/SkPoint.h"
+#include "include/core/SkRect.h"
 
 class SkSurface;
 class SkCanvas;
 class SkImage;
 class SkData;
 class SkBitmap;
+class SkPath;
+class SkPathBuilder;
 
 extern "C" {
+
+/* By-value returns from a C++ member function are classified differently
+ * by clang (bindgen's parser) than by the MSVC cl.exe that built skia.lib,
+ * corrupting registers/stack on return. These wrappers use the plain C ABI,
+ * which both compilers implement identically: trivial types are returned
+ * through an explicit out-parameter-shaped signature, non-trivial types
+ * (SkPath) are heap-allocated and returned as an owned pointer. */
+SkPoint skialin_bridge_Matrix_mapPoint(const SkMatrix* matrix, SkPoint point);
+SkRect skialin_bridge_Matrix_mapRect(const SkMatrix* matrix, const SkRect* rect);
+SkRect skialin_bridge_PathBuilder_computeBounds(const SkPathBuilder* builder);
+
+/* Path: ref-owned by the caller. Free with skialin_bridge_Path_delete. */
+SkPath* skialin_bridge_PathBuilder_snapshot(const SkPathBuilder* builder, const SkMatrix* matrix);
+SkPath* skialin_bridge_PathBuilder_detach(SkPathBuilder* builder, const SkMatrix* matrix);
+void skialin_bridge_Path_delete(SkPath* path);
 
 /* Surface: ref-owned by the caller. Free with skialin_bridge_Surface_unref. */
 SkSurface* skialin_bridge_Surface_MakeRasterN32Premul(int32_t width, int32_t height);

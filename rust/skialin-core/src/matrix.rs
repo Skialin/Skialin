@@ -43,12 +43,12 @@ impl Matrix {
     }
 
     pub fn map_point(&self, point: Point) -> Point {
-        unsafe { self.0.mapPoint(point.into()).into() }
+        unsafe { sys::skialin_bridge_Matrix_mapPoint(&self.0, point.into()).into() }
     }
 
     pub fn map_rect(&self, rect: Rect) -> Rect {
         let sk_rect: sys::SkRect = rect.into();
-        unsafe { self.0.mapRect2(&sk_rect).into() }
+        unsafe { sys::skialin_bridge_Matrix_mapRect(&self.0, &sk_rect).into() }
     }
 
     /// Row-major 3x3 matrix values, matching Skia's `get9`/`set9` layout.
