@@ -1,5 +1,6 @@
 mod bitmap;
 mod canvas;
+mod color_filter;
 mod color_space;
 mod color_type;
 mod data;
@@ -7,7 +8,9 @@ mod font;
 mod font_collection;
 mod font_mgr;
 mod image;
+mod image_filter;
 mod image_info;
+mod mask_filter;
 mod matrix;
 mod paint;
 mod paragraph;

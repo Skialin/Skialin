@@ -27,6 +27,11 @@
 #include "modules/skparagraph/include/Paragraph.h"
 #include "modules/skparagraph/include/Metrics.h"
 #include "modules/skunicode/include/SkUnicode_icu.h"
+#include "include/core/SkColorFilter.h"
+#include "include/core/SkImageFilter.h"
+#include "include/core/SkMaskFilter.h"
+#include "include/core/SkBlurTypes.h"
+#include "include/effects/SkImageFilters.h"
 #include "include/core/SkString.h"
 #include "include/core/SkStream.h"
 #include "include/encode/SkPngEncoder.h"
@@ -931,6 +936,89 @@ bool skialin_bridge_Paragraph_getLineMetricsAt(
     *left = metrics.fLeft;
     *baseline = metrics.fBaseline;
     return true;
+}
+
+void skialin_bridge_ColorFilter_unref(SkColorFilter* filter) {
+    SkSafeUnref(filter);
+}
+
+SkColorFilter* skialin_bridge_ColorFilter_Blend(uint32_t argb, SkBlendMode mode) {
+    return SkColorFilters::Blend(static_cast<SkColor>(argb), mode).release();
+}
+
+SkColorFilter* skialin_bridge_ColorFilter_Matrix(const float* rowMajor20, bool clamp) {
+    return SkColorFilters::Matrix(rowMajor20, clamp ? SkColorFilters::Clamp::kYes : SkColorFilters::Clamp::kNo).release();
+}
+
+SkColorFilter* skialin_bridge_ColorFilter_Compose(SkColorFilter* outer, SkColorFilter* inner) {
+    return SkColorFilters::Compose(sk_ref_sp(outer), sk_ref_sp(inner)).release();
+}
+
+SkColorFilter* skialin_bridge_ColorFilter_Lerp(float t, SkColorFilter* dst, SkColorFilter* src) {
+    return SkColorFilters::Lerp(t, sk_ref_sp(dst), sk_ref_sp(src)).release();
+}
+
+void skialin_bridge_ImageFilter_unref(SkImageFilter* filter) {
+    SkSafeUnref(filter);
+}
+
+SkImageFilter* skialin_bridge_ImageFilter_Blur(float sigmaX, float sigmaY, SkTileMode tileMode, SkImageFilter* input) {
+    return SkImageFilters::Blur(sigmaX, sigmaY, tileMode, sk_ref_sp(input)).release();
+}
+
+SkImageFilter* skialin_bridge_ImageFilter_DropShadow(float dx, float dy, float sigmaX, float sigmaY, uint32_t color, SkImageFilter* input) {
+    return SkImageFilters::DropShadow(dx, dy, sigmaX, sigmaY, static_cast<SkColor>(color), sk_ref_sp(input)).release();
+}
+
+SkImageFilter* skialin_bridge_ImageFilter_DropShadowOnly(float dx, float dy, float sigmaX, float sigmaY, uint32_t color, SkImageFilter* input) {
+    return SkImageFilters::DropShadowOnly(dx, dy, sigmaX, sigmaY, static_cast<SkColor>(color), sk_ref_sp(input)).release();
+}
+
+SkImageFilter* skialin_bridge_ImageFilter_Offset(float dx, float dy, SkImageFilter* input) {
+    return SkImageFilters::Offset(dx, dy, sk_ref_sp(input)).release();
+}
+
+SkImageFilter* skialin_bridge_ImageFilter_ColorFilter(SkColorFilter* cf, SkImageFilter* input) {
+    return SkImageFilters::ColorFilter(sk_ref_sp(cf), sk_ref_sp(input)).release();
+}
+
+SkImageFilter* skialin_bridge_ImageFilter_Compose(SkImageFilter* outer, SkImageFilter* inner) {
+    return SkImageFilters::Compose(sk_ref_sp(outer), sk_ref_sp(inner)).release();
+}
+
+SkImageFilter* skialin_bridge_ImageFilter_MatrixTransform(
+    const SkMatrix* matrix, int32_t maxAniso, bool useCubic, float cubicB, float cubicC, SkFilterMode filter, SkMipmapMode mipmap,
+    SkImageFilter* input) {
+    SkSamplingOptions sampling = toSamplingOptions(maxAniso, useCubic, cubicB, cubicC, filter, mipmap);
+    return SkImageFilters::MatrixTransform(*matrix, sampling, sk_ref_sp(input)).release();
+}
+
+SkImageFilter* skialin_bridge_ImageFilter_Dilate(float radiusX, float radiusY, SkImageFilter* input) {
+    return SkImageFilters::Dilate(radiusX, radiusY, sk_ref_sp(input)).release();
+}
+
+SkImageFilter* skialin_bridge_ImageFilter_Erode(float radiusX, float radiusY, SkImageFilter* input) {
+    return SkImageFilters::Erode(radiusX, radiusY, sk_ref_sp(input)).release();
+}
+
+void skialin_bridge_MaskFilter_unref(SkMaskFilter* filter) {
+    SkSafeUnref(filter);
+}
+
+SkMaskFilter* skialin_bridge_MaskFilter_MakeBlur(int32_t style, float sigma, bool respectCTM) {
+    return SkMaskFilter::MakeBlur(static_cast<SkBlurStyle>(style), sigma, respectCTM).release();
+}
+
+void skialin_bridge_Paint_setColorFilter(SkPaint* paint, SkColorFilter* filter) {
+    paint->setColorFilter(sk_ref_sp(filter));
+}
+
+void skialin_bridge_Paint_setImageFilter(SkPaint* paint, SkImageFilter* filter) {
+    paint->setImageFilter(sk_ref_sp(filter));
+}
+
+void skialin_bridge_Paint_setMaskFilter(SkPaint* paint, SkMaskFilter* filter) {
+    paint->setMaskFilter(sk_ref_sp(filter));
 }
 
 }  // extern "C"

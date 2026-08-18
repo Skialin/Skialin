@@ -30,6 +30,11 @@ class SkTypeface;
 class SkFontMgr;
 class SkFont;
 class SkTextBlob;
+class SkColorFilter;
+class SkImageFilter;
+class SkMaskFilter;
+enum class SkBlendMode;
+enum SkBlurStyle : int;
 
 namespace skia {
 namespace textlayout {
@@ -430,5 +435,50 @@ bool skialin_bridge_Paragraph_getLineMetricsAt(
     skia::textlayout::Paragraph* paragraph, int32_t lineNumber,
     size_t* startIndex, size_t* endIndex, size_t* endExcludingWhitespaces, size_t* endIncludingNewline, int32_t* hardBreak,
     double* ascent, double* descent, double* unscaledAscent, double* height, double* width, double* left, double* baseline);
+
+/* ColorFilter: ref-owned by the caller. Free with skialin_bridge_ColorFilter_unref.
+ * Routed entirely through the bridge, not direct bindgen calls: bindgen
+ * doesn't generate instance methods for SkColorFilter (its SkFlattenable
+ * base defeats its vtable-layout inference, same as SkShader). Scoped to
+ * the common factories: Blend/Matrix/Compose/Lerp. HSLAMatrix, gamma,
+ * table, and lighting filters are not yet bound. */
+void skialin_bridge_ColorFilter_unref(SkColorFilter* filter);
+SkColorFilter* skialin_bridge_ColorFilter_Blend(uint32_t argb, SkBlendMode mode);
+/* rowMajor20 is a 4x5 row-major matrix (20 floats). */
+SkColorFilter* skialin_bridge_ColorFilter_Matrix(const float* rowMajor20, bool clamp);
+SkColorFilter* skialin_bridge_ColorFilter_Compose(SkColorFilter* outer, SkColorFilter* inner);
+SkColorFilter* skialin_bridge_ColorFilter_Lerp(float t, SkColorFilter* dst, SkColorFilter* src);
+
+/* ImageFilter: ref-owned by the caller. Free with skialin_bridge_ImageFilter_unref.
+ * Routed entirely through the bridge for the same reason as SkColorFilter
+ * (SkFlattenable base). Scoped to the common factories from
+ * include/effects/SkImageFilters.h; Arithmetic, Crop, DisplacementMap,
+ * Image, Magnifier, MatrixConvolution, Merge, Picture, RuntimeShader,
+ * Shader, Tile, and the lighting filters are not yet bound. `input` may be
+ * null to use the source bitmap. */
+void skialin_bridge_ImageFilter_unref(SkImageFilter* filter);
+SkImageFilter* skialin_bridge_ImageFilter_Blur(float sigmaX, float sigmaY, SkTileMode tileMode, SkImageFilter* input);
+SkImageFilter* skialin_bridge_ImageFilter_DropShadow(float dx, float dy, float sigmaX, float sigmaY, uint32_t color, SkImageFilter* input);
+SkImageFilter* skialin_bridge_ImageFilter_DropShadowOnly(float dx, float dy, float sigmaX, float sigmaY, uint32_t color, SkImageFilter* input);
+SkImageFilter* skialin_bridge_ImageFilter_Offset(float dx, float dy, SkImageFilter* input);
+SkImageFilter* skialin_bridge_ImageFilter_ColorFilter(SkColorFilter* cf, SkImageFilter* input);
+SkImageFilter* skialin_bridge_ImageFilter_Compose(SkImageFilter* outer, SkImageFilter* inner);
+SkImageFilter* skialin_bridge_ImageFilter_MatrixTransform(
+    const SkMatrix* matrix, int32_t maxAniso, bool useCubic, float cubicB, float cubicC, SkFilterMode filter, SkMipmapMode mipmap,
+    SkImageFilter* input);
+SkImageFilter* skialin_bridge_ImageFilter_Dilate(float radiusX, float radiusY, SkImageFilter* input);
+SkImageFilter* skialin_bridge_ImageFilter_Erode(float radiusX, float radiusY, SkImageFilter* input);
+
+/* MaskFilter: ref-owned by the caller. Free with skialin_bridge_MaskFilter_unref.
+ * Routed entirely through the bridge for the same reason as SkColorFilter
+ * (SkFlattenable base). style: 0 = normal, 1 = solid, 2 = outer, 3 = inner
+ * (matches SkBlurStyle's declaration order). */
+void skialin_bridge_MaskFilter_unref(SkMaskFilter* filter);
+SkMaskFilter* skialin_bridge_MaskFilter_MakeBlur(int32_t style, float sigma, bool respectCTM);
+
+/* Attaches a filter to paint; the filter may be null to clear it. */
+void skialin_bridge_Paint_setColorFilter(SkPaint* paint, SkColorFilter* filter);
+void skialin_bridge_Paint_setImageFilter(SkPaint* paint, SkImageFilter* filter);
+void skialin_bridge_Paint_setMaskFilter(SkPaint* paint, SkMaskFilter* filter);
 
 }  // extern "C"

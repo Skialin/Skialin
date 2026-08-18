@@ -194,6 +194,24 @@ impl Paint {
         unsafe { sys::skialin_bridge_Paint_setShader(&mut *self.0, ptr) };
         self
     }
+
+    pub fn set_color_filter(&mut self, filter: Option<&crate::ColorFilter>) -> &mut Self {
+        let ptr = filter.map_or(std::ptr::null_mut(), |f| f.0);
+        unsafe { sys::skialin_bridge_Paint_setColorFilter(&mut *self.0, ptr) };
+        self
+    }
+
+    pub fn set_image_filter(&mut self, filter: Option<&crate::ImageFilter>) -> &mut Self {
+        let ptr = filter.map_or(std::ptr::null_mut(), |f| f.0);
+        unsafe { sys::skialin_bridge_Paint_setImageFilter(&mut *self.0, ptr) };
+        self
+    }
+
+    pub fn set_mask_filter(&mut self, filter: Option<&crate::MaskFilter>) -> &mut Self {
+        let ptr = filter.map_or(std::ptr::null_mut(), |f| f.0);
+        unsafe { sys::skialin_bridge_Paint_setMaskFilter(&mut *self.0, ptr) };
+        self
+    }
 }
 
 impl Default for Paint {

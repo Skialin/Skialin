@@ -1,7 +1,7 @@
 use jni::sys::{jboolean, jfloat, jint, jlong, JNI_TRUE};
 use jni::JNIEnv;
 
-use skialin_core::{BlendMode, Paint, PaintStyle, Shader, StrokeCap, StrokeJoin};
+use skialin_core::{BlendMode, ColorFilter, ImageFilter, MaskFilter, Paint, PaintStyle, Shader, StrokeCap, StrokeJoin};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 
@@ -140,4 +140,22 @@ pub extern "system" fn Java_org_skialin_PaintNative_nSetBlendMode(_env: JNIEnv, 
 pub extern "system" fn Java_org_skialin_PaintNative_nSetShader(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, shader_ptr: jlong) {
     let shader = (shader_ptr != 0).then(|| unsafe { borrow::<Shader>(shader_ptr) });
     unsafe { borrow_mut::<Paint>(ptr).set_shader(shader) };
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nSetColorFilter(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, filter_ptr: jlong) {
+    let filter = (filter_ptr != 0).then(|| unsafe { borrow::<ColorFilter>(filter_ptr) });
+    unsafe { borrow_mut::<Paint>(ptr).set_color_filter(filter) };
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nSetImageFilter(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, filter_ptr: jlong) {
+    let filter = (filter_ptr != 0).then(|| unsafe { borrow::<ImageFilter>(filter_ptr) });
+    unsafe { borrow_mut::<Paint>(ptr).set_image_filter(filter) };
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nSetMaskFilter(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, filter_ptr: jlong) {
+    let filter = (filter_ptr != 0).then(|| unsafe { borrow::<MaskFilter>(filter_ptr) });
+    unsafe { borrow_mut::<Paint>(ptr).set_mask_filter(filter) };
 }

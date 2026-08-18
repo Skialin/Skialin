@@ -35,6 +35,18 @@ class Paint : Managed(PaintNative.nMake(), PaintNative::nRelease) {
     fun setShader(shader: Shader?) {
         PaintNative.nSetShader(nativePtr, shader?.nativePtr ?: 0L)
     }
+
+    fun setColorFilter(filter: ColorFilter?) {
+        PaintNative.nSetColorFilter(nativePtr, filter?.nativePtr ?: 0L)
+    }
+
+    fun setImageFilter(filter: ImageFilter?) {
+        PaintNative.nSetImageFilter(nativePtr, filter?.nativePtr ?: 0L)
+    }
+
+    fun setMaskFilter(filter: MaskFilter?) {
+        PaintNative.nSetMaskFilter(nativePtr, filter?.nativePtr ?: 0L)
+    }
 }
 
 private object PaintNative {
@@ -58,4 +70,7 @@ private object PaintNative {
     external fun nSetStrokeJoin(ptr: Long, join: Int)
     external fun nSetBlendMode(ptr: Long, mode: Int)
     external fun nSetShader(ptr: Long, shaderPtr: Long)
+    external fun nSetColorFilter(ptr: Long, filterPtr: Long)
+    external fun nSetImageFilter(ptr: Long, filterPtr: Long)
+    external fun nSetMaskFilter(ptr: Long, filterPtr: Long)
 }
