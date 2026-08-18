@@ -224,6 +224,24 @@ bool skialin_bridge_Shader_isOpaque(const SkShader* shader);
 /* Attaches shader to paint; shader may be null to clear it. */
 void skialin_bridge_Paint_setShader(SkPaint* paint, SkShader* shader);
 
+/* Gradients: ref-owned by the caller. Free with skialin_bridge_Shader_unref.
+ * colors is `count` packed ARGB uint32s; positions may be null (colors
+ * distributed evenly) or `count` strictly-increasing floats in [0, 1].
+ * colorSpace is always sRGB and interpolation always the default
+ * (destination color space, not premultiplied) for this pass; localMatrix
+ * may be null. Null result if the inputs are invalid (e.g. count < 2,
+ * non-positive radius). */
+SkShader* skialin_bridge_Shader_makeLinearGradient(
+    const SkPoint* pts /* [2] */, const uint32_t* colors, const float* positions, size_t count, SkTileMode tileMode, const SkMatrix* localMatrix);
+SkShader* skialin_bridge_Shader_makeRadialGradient(
+    SkPoint center, float radius, const uint32_t* colors, const float* positions, size_t count, SkTileMode tileMode, const SkMatrix* localMatrix);
+SkShader* skialin_bridge_Shader_makeTwoPointConicalGradient(
+    SkPoint start, float startRadius, SkPoint end, float endRadius,
+    const uint32_t* colors, const float* positions, size_t count, SkTileMode tileMode, const SkMatrix* localMatrix);
+SkShader* skialin_bridge_Shader_makeSweepGradient(
+    SkPoint center, float startAngle, float endAngle,
+    const uint32_t* colors, const float* positions, size_t count, SkTileMode tileMode, const SkMatrix* localMatrix);
+
 /* Typeface: ref-owned by the caller. Free with skialin_bridge_Typeface_unref.
  * SkTypeface has pure virtual methods (onGetFamilyName etc.), which defeats
  * bindgen's vtable-layout inference the same way SkImage does, so every

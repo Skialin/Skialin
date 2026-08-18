@@ -32,6 +32,7 @@
 #include "include/core/SkMaskFilter.h"
 #include "include/core/SkBlurTypes.h"
 #include "include/effects/SkImageFilters.h"
+#include "include/effects/SkGradient.h"
 #include "include/core/SkString.h"
 #include "include/core/SkStream.h"
 #include "include/encode/SkPngEncoder.h"
@@ -48,6 +49,15 @@ SkSamplingOptions toSamplingOptions(int32_t maxAniso, bool useCubic, float cubic
         return SkSamplingOptions(SkCubicResampler{cubicB, cubicC});
     }
     return SkSamplingOptions(filter, mipmap);
+}
+
+std::vector<SkColor4f> toColor4fVec(const uint32_t* colors, size_t count) {
+    std::vector<SkColor4f> result;
+    result.reserve(count);
+    for (size_t i = 0; i < count; ++i) {
+        result.push_back(SkColor4f::FromColor(colors[i]));
+    }
+    return result;
 }
 
 skcms_TransferFunction toTransferFn(const float* fn7) {
@@ -485,6 +495,40 @@ bool skialin_bridge_Shader_isOpaque(const SkShader* shader) {
 
 void skialin_bridge_Paint_setShader(SkPaint* paint, SkShader* shader) {
     paint->setShader(sk_ref_sp(shader));
+}
+
+SkShader* skialin_bridge_Shader_makeLinearGradient(
+    const SkPoint* pts, const uint32_t* colors, const float* positions, size_t count, SkTileMode tileMode, const SkMatrix* localMatrix) {
+    std::vector<SkColor4f> color4fs = toColor4fVec(colors, count);
+    SkGradient::Colors gradColors(color4fs, positions ? SkSpan<const float>(positions, count) : SkSpan<const float>(), tileMode);
+    SkGradient gradient(gradColors, {});
+    return SkShaders::LinearGradient(pts, gradient, localMatrix).release();
+}
+
+SkShader* skialin_bridge_Shader_makeRadialGradient(
+    SkPoint center, float radius, const uint32_t* colors, const float* positions, size_t count, SkTileMode tileMode, const SkMatrix* localMatrix) {
+    std::vector<SkColor4f> color4fs = toColor4fVec(colors, count);
+    SkGradient::Colors gradColors(color4fs, positions ? SkSpan<const float>(positions, count) : SkSpan<const float>(), tileMode);
+    SkGradient gradient(gradColors, {});
+    return SkShaders::RadialGradient(center, radius, gradient, localMatrix).release();
+}
+
+SkShader* skialin_bridge_Shader_makeTwoPointConicalGradient(
+    SkPoint start, float startRadius, SkPoint end, float endRadius,
+    const uint32_t* colors, const float* positions, size_t count, SkTileMode tileMode, const SkMatrix* localMatrix) {
+    std::vector<SkColor4f> color4fs = toColor4fVec(colors, count);
+    SkGradient::Colors gradColors(color4fs, positions ? SkSpan<const float>(positions, count) : SkSpan<const float>(), tileMode);
+    SkGradient gradient(gradColors, {});
+    return SkShaders::TwoPointConicalGradient(start, startRadius, end, endRadius, gradient, localMatrix).release();
+}
+
+SkShader* skialin_bridge_Shader_makeSweepGradient(
+    SkPoint center, float startAngle, float endAngle,
+    const uint32_t* colors, const float* positions, size_t count, SkTileMode tileMode, const SkMatrix* localMatrix) {
+    std::vector<SkColor4f> color4fs = toColor4fVec(colors, count);
+    SkGradient::Colors gradColors(color4fs, positions ? SkSpan<const float>(positions, count) : SkSpan<const float>(), tileMode);
+    SkGradient gradient(gradColors, {});
+    return SkShaders::SweepGradient(center, startAngle, endAngle, gradient, localMatrix).release();
 }
 
 void skialin_bridge_Typeface_unref(SkTypeface* typeface) {
