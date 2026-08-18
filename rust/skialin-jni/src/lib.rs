@@ -1,5 +1,6 @@
 mod bitmap;
 mod canvas;
+mod color_space;
 mod data;
 mod image;
 mod matrix;
