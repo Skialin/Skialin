@@ -7,6 +7,7 @@
 #include "include/core/SkMatrix.h"
 #include "include/core/SkPaint.h"
 #include "include/core/SkPathBuilder.h"
+#include "include/core/SkPixmap.h"
 
 namespace skialin_force_link {
 
@@ -98,6 +99,24 @@ SKIALIN_NOINLINE void touch(const SkImageInfo& info) {
     (void)info.minRowBytes();
     (void)info.computeMinByteSize();
     (void)info.validRowBytes(0);
+}
+
+SKIALIN_NOINLINE void touch(const SkPixmap& pixmap) {
+    (void)pixmap.rowBytes();
+    (void)pixmap.addr();
+    (void)pixmap.width();
+    (void)pixmap.height();
+    (void)pixmap.isEmpty();
+    (void)pixmap.colorType();
+    (void)pixmap.alphaType();
+    (void)pixmap.isOpaque();
+    (void)pixmap.bounds();
+    (void)pixmap.rowBytesAsPixels();
+    (void)pixmap.shiftPerPixel();
+    (void)pixmap.computeByteSize();
+    (void)pixmap.getColor(0, 0);
+    (void)pixmap.getAlphaf(0, 0);
+    (void)pixmap.writable_addr();
 }
 
 }  // namespace skialin_force_link
