@@ -28,6 +28,7 @@ mod runtime_effect;
 mod shader;
 mod strut_style;
 mod surface;
+mod surface_props;
 mod text_blob;
 mod text_style;
 mod typeface;

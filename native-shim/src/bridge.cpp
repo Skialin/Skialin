@@ -1540,6 +1540,42 @@ void skialin_bridge_Canvas_concat44(SkCanvas* canvas, const SkM44* matrix) {
     canvas->concat(*matrix);
 }
 
+SkSurfaceProps* skialin_bridge_SurfaceProps_make(uint32_t flags, SkPixelGeometry pixelGeometry, float textContrast, float textGamma) {
+    return new SkSurfaceProps(flags, pixelGeometry, textContrast, textGamma);
+}
+
+void skialin_bridge_SurfaceProps_delete(SkSurfaceProps* props) {
+    delete props;
+}
+
+SkSurfaceProps* skialin_bridge_SurfaceProps_clone(const SkSurfaceProps* props) {
+    return new SkSurfaceProps(*props);
+}
+
+SkSurfaceProps* skialin_bridge_SurfaceProps_cloneWithPixelGeometry(const SkSurfaceProps* props, SkPixelGeometry pixelGeometry) {
+    return new SkSurfaceProps(props->cloneWithPixelGeometry(pixelGeometry));
+}
+
+uint32_t skialin_bridge_SurfaceProps_flags(const SkSurfaceProps* props) {
+    return props->flags();
+}
+
+SkPixelGeometry skialin_bridge_SurfaceProps_pixelGeometry(const SkSurfaceProps* props) {
+    return props->pixelGeometry();
+}
+
+float skialin_bridge_SurfaceProps_textContrast(const SkSurfaceProps* props) {
+    return props->textContrast();
+}
+
+float skialin_bridge_SurfaceProps_textGamma(const SkSurfaceProps* props) {
+    return props->textGamma();
+}
+
+bool skialin_bridge_SurfaceProps_equals(const SkSurfaceProps* a, const SkSurfaceProps* b) {
+    return *a == *b;
+}
+
 GrDirectContext* skialin_bridge_DirectContext_MakeGL(void) {
     return GrDirectContexts::MakeGL().release();
 }

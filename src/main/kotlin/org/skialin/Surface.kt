@@ -29,11 +29,13 @@ class Surface private constructor(ptr: Long) : Managed(ptr, SurfaceNative::nRele
             info: ImageInfo,
             sampleCount: Int,
             surfaceOrigin: SurfaceOrigin,
-            shouldCreateWithMips: Boolean,
-            isProtected: Boolean,
+            surfaceProps: SurfaceProps? = null,
+            shouldCreateWithMips: Boolean = false,
+            isProtected: Boolean = false,
         ): Surface? {
             val ptr = SurfaceNative.nMakeRenderTarget(
-                context.nativePtr, budgeted, info.nativePtr, sampleCount, surfaceOrigin.ordinal, shouldCreateWithMips, isProtected,
+                context.nativePtr, budgeted, info.nativePtr, sampleCount, surfaceOrigin.ordinal,
+                surfaceProps?.nativePtr ?: 0L, shouldCreateWithMips, isProtected,
             )
             return if (ptr == 0L) null else Surface(ptr)
         }
@@ -53,6 +55,7 @@ private object SurfaceNative {
         infoPtr: Long,
         sampleCount: Int,
         surfaceOrigin: Int,
+        surfacePropsPtr: Long,
         shouldCreateWithMips: Boolean,
         isProtected: Boolean,
     ): Long

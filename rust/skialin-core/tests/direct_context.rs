@@ -105,7 +105,7 @@ fn render_target_round_trip() {
     let mut context = DirectContext::new_gl().expect("DirectContext::new_gl failed -- no GL driver current?");
 
     let info = ImageInfo::new(16, 16, ColorType::N32, AlphaType::Premul);
-    let mut surface = Surface::new_render_target(&mut context, false, &info, 0, SurfaceOrigin::TopLeft, false, false)
+    let mut surface = Surface::new_render_target(&mut context, false, &info, 0, SurfaceOrigin::TopLeft, None, false, false)
         .expect("failed to create GPU render-target surface");
 
     surface.canvas().clear(0xFFFF0000);

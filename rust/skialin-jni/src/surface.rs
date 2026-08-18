@@ -1,7 +1,7 @@
 use jni::sys::{jboolean, jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{DirectContext, ImageInfo, Surface, SurfaceOrigin};
+use skialin_core::{DirectContext, ImageInfo, Surface, SurfaceOrigin, SurfaceProps};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 
@@ -36,18 +36,21 @@ pub extern "system" fn Java_org_skialin_SurfaceNative_nMakeRenderTarget(
     info_ptr: jlong,
     sample_count: jint,
     surface_origin: jint,
+    surface_props_ptr: jlong,
     should_create_with_mips: jboolean,
     is_protected: jboolean,
 ) -> jlong {
     let context = unsafe { borrow_mut::<DirectContext>(context_ptr) };
     let info = unsafe { borrow::<ImageInfo>(info_ptr) };
     let origin = if surface_origin == 0 { SurfaceOrigin::TopLeft } else { SurfaceOrigin::BottomLeft };
+    let surface_props = (surface_props_ptr != 0).then(|| unsafe { borrow::<SurfaceProps>(surface_props_ptr) });
     match Surface::new_render_target(
         context,
         budgeted != 0,
         info,
         sample_count,
         origin,
+        surface_props,
         should_create_with_mips != 0,
         is_protected != 0,
     ) {

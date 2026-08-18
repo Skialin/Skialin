@@ -1,4 +1,4 @@
-use crate::{sys, Canvas, DirectContext, Image, ImageInfo, SurfaceOrigin};
+use crate::{sys, Canvas, DirectContext, Image, ImageInfo, SurfaceOrigin, SurfaceProps};
 use std::marker::PhantomData;
 
 pub struct Surface(*mut sys::SkSurface);
@@ -15,7 +15,6 @@ impl Surface {
     }
 
     /// Must be called on the thread `context`'s GL context is current on.
-    /// `surface_props` is TODO, always null for now.
     #[allow(clippy::too_many_arguments)]
     pub fn new_render_target(
         context: &mut DirectContext,
@@ -23,9 +22,11 @@ impl Surface {
         info: &ImageInfo,
         sample_count: i32,
         surface_origin: SurfaceOrigin,
+        surface_props: Option<&SurfaceProps>,
         should_create_with_mips: bool,
         is_protected: bool,
     ) -> Option<Self> {
+        let props_ptr = surface_props.map_or(std::ptr::null(), |props| props.0 as *const _);
         let ptr = unsafe {
             sys::skialin_bridge_Surface_MakeRenderTarget(
                 context.0,
@@ -33,7 +34,7 @@ impl Surface {
                 info.0,
                 sample_count,
                 surface_origin.into(),
-                std::ptr::null(),
+                props_ptr,
                 should_create_with_mips,
                 is_protected,
             )

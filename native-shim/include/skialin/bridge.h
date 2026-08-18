@@ -13,6 +13,7 @@
 #include "include/core/SkPoint.h"
 #include "include/core/SkRect.h"
 #include "include/core/SkSamplingOptions.h"
+#include "include/core/SkSurfaceProps.h"
 #include "include/core/SkTileMode.h"
 #include "include/gpu/ganesh/gl/GrGLAssembleInterface.h"
 
@@ -41,7 +42,6 @@ class SkPathMeasure;
 class SkM44;
 class SkVertices;
 class GrDirectContext;
-class SkSurfaceProps;
 enum GrSurfaceOrigin : int;
 namespace skgpu {
 enum class Budgeted : bool;
@@ -308,6 +308,19 @@ SkRRect* skialin_bridge_RRect_transform(const SkRRect* rrect, const SkMatrix* ma
 void skialin_bridge_Canvas_drawRRect(SkCanvas* canvas, const SkRRect* rrect, const SkPaint* paint);
 void skialin_bridge_Canvas_drawDRRect(SkCanvas* canvas, const SkRRect* outer, const SkRRect* inner, const SkPaint* paint);
 void skialin_bridge_Canvas_clipRRect(SkCanvas* canvas, const SkRRect* rrect, SkClipOp op);
+
+/* SkSurfaceProps: heap-allocated, same rationale as RRect (cloneWithPixelGeometry
+ * returns by value, hitting gotcha #1). Owned by the caller; free with
+ * skialin_bridge_SurfaceProps_delete. flags is SkSurfaceProps::Flags bits. */
+SkSurfaceProps* skialin_bridge_SurfaceProps_make(uint32_t flags, SkPixelGeometry pixelGeometry, float textContrast, float textGamma);
+void skialin_bridge_SurfaceProps_delete(SkSurfaceProps* props);
+SkSurfaceProps* skialin_bridge_SurfaceProps_clone(const SkSurfaceProps* props);
+SkSurfaceProps* skialin_bridge_SurfaceProps_cloneWithPixelGeometry(const SkSurfaceProps* props, SkPixelGeometry pixelGeometry);
+uint32_t skialin_bridge_SurfaceProps_flags(const SkSurfaceProps* props);
+SkPixelGeometry skialin_bridge_SurfaceProps_pixelGeometry(const SkSurfaceProps* props);
+float skialin_bridge_SurfaceProps_textContrast(const SkSurfaceProps* props);
+float skialin_bridge_SurfaceProps_textGamma(const SkSurfaceProps* props);
+bool skialin_bridge_SurfaceProps_equals(const SkSurfaceProps* a, const SkSurfaceProps* b);
 
 /* PathEffect: ref-owned by the caller. Free with skialin_bridge_PathEffect_unref.
  * Routed entirely through the bridge: SkPathEffect's SkFlattenable base

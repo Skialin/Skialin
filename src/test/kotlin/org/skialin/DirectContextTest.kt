@@ -45,8 +45,7 @@ class DirectContextTest {
         context.use {
             val info = ImageInfo.make(16, 16, ColorType.N32, AlphaType.PREMUL)
             val surface = Surface.makeRenderTarget(
-                context, budgeted = false, info = info, sampleCount = 0,
-                surfaceOrigin = SurfaceOrigin.TOP_LEFT, shouldCreateWithMips = false, isProtected = false,
+                context, budgeted = false, info = info, sampleCount = 0, surfaceOrigin = SurfaceOrigin.TOP_LEFT,
             ) ?: fail("makeRenderTarget failed")
             surface.use {
                 surface.canvas().clear(Colors.RED)
