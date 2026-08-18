@@ -20,6 +20,7 @@ class SkData;
 class SkBitmap;
 class SkPath;
 class SkPathBuilder;
+class SkColorSpace;
 
 extern "C" {
 
@@ -68,5 +69,28 @@ SkData* skialin_bridge_Data_makeFromFileName(const char* path);
 /* Null if offset+length is out of range. */
 SkData* skialin_bridge_Data_copySubset(const SkData* data, size_t offset, size_t length);
 SkData* skialin_bridge_Data_shareSubset(const SkData* data, size_t offset, size_t length);
+
+/* ColorSpace: ref-owned by the caller. Free with skialin_bridge_ColorSpace_unref.
+ * skcms_TransferFunction is passed as 7 floats (g,a,b,c,d,e,f); skcms_Matrix3x3
+ * as 9 floats, row-major. */
+void skialin_bridge_ColorSpace_unref(SkColorSpace* cs);
+SkColorSpace* skialin_bridge_ColorSpace_makeSRGB(void);
+SkColorSpace* skialin_bridge_ColorSpace_makeSRGBLinear(void);
+SkColorSpace* skialin_bridge_ColorSpace_makeRGB(const float* transferFn7, const float* toXyz9);
+/* Null for an invalid or unsupported combination of code points. */
+SkColorSpace* skialin_bridge_ColorSpace_makeCICP(uint8_t colorPrimaries, uint8_t transferCharacteristics);
+/* Null if the bytes don't parse as an ICC profile. */
+SkColorSpace* skialin_bridge_ColorSpace_makeFromIccProfile(const uint8_t* bytes, size_t length);
+SkColorSpace* skialin_bridge_ColorSpace_deserialize(const uint8_t* bytes, size_t length);
+SkColorSpace* skialin_bridge_ColorSpace_makeLinearGamma(const SkColorSpace* cs);
+SkColorSpace* skialin_bridge_ColorSpace_makeSRGBGamma(const SkColorSpace* cs);
+SkColorSpace* skialin_bridge_ColorSpace_makeColorSpin(const SkColorSpace* cs);
+bool skialin_bridge_ColorSpace_toXYZD50(const SkColorSpace* cs, float* outXyz9);
+void skialin_bridge_ColorSpace_transferFn(const SkColorSpace* cs, float* outFn7);
+void skialin_bridge_ColorSpace_invTransferFn(const SkColorSpace* cs, float* outFn7);
+bool skialin_bridge_ColorSpace_isNumericalTransferFn(const SkColorSpace* cs, float* outFn7);
+void skialin_bridge_ColorSpace_gamutTransformTo(const SkColorSpace* src, const SkColorSpace* dst, float* outXyz9);
+SkData* skialin_bridge_ColorSpace_serialize(const SkColorSpace* cs);
+bool skialin_bridge_ColorSpace_equals(const SkColorSpace* a, const SkColorSpace* b);
 
 }  // extern "C"
