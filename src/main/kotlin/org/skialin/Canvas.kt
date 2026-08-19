@@ -41,6 +41,16 @@ class Canvas internal constructor(
         paint: Paint,
     ) = CanvasNative.nDrawPath(ptr, path.nativePtr, paint.nativePtr)
 
+    fun drawTextLine(
+        line: TextLine,
+        x: Float,
+        y: Float,
+        paint: Paint,
+    ) {
+        val blob = line.textBlob ?: return
+        drawTextBlob(blob, x, y, paint)
+    }
+
     fun drawTextBlob(
         blob: TextBlob,
         x: Float,

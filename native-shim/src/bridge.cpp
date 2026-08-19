@@ -2097,6 +2097,18 @@ uint32_t skialin_bridge_Picture_uniqueID(const SkPicture* picture) {
     return picture->uniqueID();
 }
 
+SkTextBlobBuilder* skialin_bridge_TextBlobBuilder_new(void) {
+    return new SkTextBlobBuilder();
+}
+
+void skialin_bridge_TextBlobBuilder_delete(SkTextBlobBuilder* builder) {
+    delete builder;
+}
+
+SkTextBlob* skialin_bridge_TextBlobBuilder_make(SkTextBlobBuilder* builder) {
+    return builder->make().release();
+}
+
 int32_t skialin_bridge_Picture_approximateOpCount(const SkPicture* picture, bool nested) {
     return picture->approximateOpCount(nested);
 }

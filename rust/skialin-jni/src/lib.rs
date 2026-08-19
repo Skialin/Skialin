@@ -41,6 +41,7 @@ mod surface_props;
 mod svg_canvas;
 mod svg_dom;
 mod text_blob;
+mod text_blob_builder;
 mod text_style;
 mod typeface;
 mod util;

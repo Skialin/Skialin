@@ -44,6 +44,7 @@ class SkTypeface;
 class SkFontMgr;
 class SkFont;
 class SkTextBlob;
+class SkTextBlobBuilder;
 class SkColorFilter;
 class SkImageFilter;
 class SkMaskFilter;
@@ -986,6 +987,13 @@ uint32_t skialin_bridge_Picture_uniqueID(const SkPicture* picture);
 int32_t skialin_bridge_Picture_approximateOpCount(const SkPicture* picture, bool nested);
 
 void skialin_bridge_Canvas_drawPicture(SkCanvas* canvas, const SkPicture* picture);
+
+/* TextBlobBuilder: heap-allocated with new/delete, same as
+ * SkPictureRecorder. make() returns sk_sp<SkTextBlob> by value, routed
+ * through the bridge like every other sk_sp-returning factory. */
+SkTextBlobBuilder* skialin_bridge_TextBlobBuilder_new(void);
+void skialin_bridge_TextBlobBuilder_delete(SkTextBlobBuilder* builder);
+SkTextBlob* skialin_bridge_TextBlobBuilder_make(SkTextBlobBuilder* builder);
 
 /* Direct wrapper around SkShadowUtils::DrawShadow. zPlane/light are SkPoint3
  * (x, y, z) as flat floats. flags matches SkShadowFlags. */
