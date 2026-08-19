@@ -11,6 +11,7 @@ pub mod color_space;
 pub mod color_type;
 pub mod data;
 pub mod direct_context;
+pub mod drawable;
 pub mod filter_mode;
 pub mod font;
 pub mod font_collection;
@@ -67,6 +68,7 @@ pub use color_space::{named_gamut, named_transfer_fn, CicpPrimaries, CicpTransfe
 pub use color_type::ColorType;
 pub use data::Data;
 pub use direct_context::{DirectContext, SurfaceOrigin};
+pub use drawable::Drawable;
 pub use filter_mode::FilterMode;
 pub use font::{Edging, Font, FontMetrics, Hinting, TextEncoding};
 pub use font_collection::FontCollection;

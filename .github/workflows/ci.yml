@@ -102,6 +102,10 @@ jobs:
       - name: Build, test, publish (local repo)
         run: ./gradlew test publish -Pskialin.buildNative=true --console=plain
 
+      - name: Stop Gradle daemon
+        if: always()
+        run: ./gradlew --stop
+
       - uses: actions/upload-artifact@v4
         with:
           name: skialin-${{ matrix.name }}

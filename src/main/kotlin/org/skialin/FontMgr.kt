@@ -38,7 +38,7 @@ class FontMgr internal constructor(
     }
 
     companion object {
-        /** The platform's default font manager (DirectWrite on Windows). */
+        /** The platform's default font manager (DirectWrite on Windows, CoreText on macOS, FontConfig on Linux). */
         fun system(): FontMgr = FontMgr(FontMgrNative.nSystem())
 
         fun empty(): FontMgr = FontMgr(FontMgrNative.nEmpty())

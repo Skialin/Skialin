@@ -163,6 +163,14 @@ fn link_skia(skia_dir: &Path) {
         ] {
             println!("cargo:rustc-link-lib=dylib={lib}");
         }
+    } else if cfg!(target_os = "macos") {
+        for framework in ["AppKit", "ApplicationServices", "CoreFoundation", "CoreGraphics", "CoreText"] {
+            println!("cargo:rustc-link-lib=framework={framework}");
+        }
+    } else if cfg!(target_os = "linux") {
+        for lib in ["fontconfig", "freetype"] {
+            println!("cargo:rustc-link-lib=dylib={lib}");
+        }
     }
 
     copy_icu_data(&lib_dir);

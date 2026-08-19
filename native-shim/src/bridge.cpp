@@ -13,6 +13,7 @@
 #include "include/core/SkData.h"
 #include "include/core/SkBitmap.h"
 #include "include/core/SkPath.h"
+#include "include/core/SkDrawable.h"
 #include "include/core/SkPathBuilder.h"
 #include "include/core/SkColorSpace.h"
 #include "include/core/SkPixmap.h"
@@ -60,7 +61,15 @@
 #include "include/encode/SkJpegEncoder.h"
 #include "include/encode/SkWebpEncoder.h"
 #include "include/codec/SkCodec.h"
+#include "include/core/SkTypes.h"
+#if defined(SK_BUILD_FOR_WIN)
 #include "include/ports/SkTypeface_win.h"
+#elif defined(SK_BUILD_FOR_MAC)
+#include "include/ports/SkFontMgr_mac_ct.h"
+#elif defined(SK_BUILD_FOR_UNIX)
+#include "include/ports/SkFontMgr_fontconfig.h"
+#include "include/ports/SkFontScanner_FreeType.h"
+#endif
 #include "modules/skcms/skcms.h"
 #include "include/gpu/ganesh/GrBackendSurface.h"
 #include "include/gpu/ganesh/GrDirectContext.h"
@@ -699,7 +708,13 @@ void skialin_bridge_FontMgr_unref(SkFontMgr* mgr) {
 }
 
 SkFontMgr* skialin_bridge_FontMgr_RefSystem(void) {
+#if defined(SK_BUILD_FOR_WIN)
     return SkFontMgr_New_DirectWrite().release();
+#elif defined(SK_BUILD_FOR_MAC)
+    return SkFontMgr_New_CoreText(nullptr).release();
+#elif defined(SK_BUILD_FOR_UNIX)
+    return SkFontMgr_New_FontConfig(nullptr, SkFontScanner_Make_FreeType()).release();
+#endif
 }
 
 SkFontMgr* skialin_bridge_FontMgr_RefEmpty(void) {
@@ -1817,6 +1832,43 @@ void skialin_bridge_SkottieAnimation_size(const skottie::Animation* animation, f
     const SkSize& size = animation->size();
     *outWidth = size.width();
     *outHeight = size.height();
+}
+
+namespace {
+class SkialinDrawable final : public SkDrawable {
+public:
+    SkialinDrawable(void* context, SkialinDrawableDrawFn onDraw, SkialinDrawableGetBoundsFn onGetBounds, SkialinDrawableDisposeFn onDispose)
+        : fContext(context), fOnDraw(onDraw), fOnGetBounds(onGetBounds), fOnDispose(onDispose) {}
+
+    ~SkialinDrawable() override {
+        fOnDispose(fContext);
+    }
+
+protected:
+    void onDraw(SkCanvas* canvas) override {
+        fOnDraw(fContext, canvas);
+    }
+
+    SkRect onGetBounds() override {
+        SkRect bounds = SkRect::MakeEmpty();
+        fOnGetBounds(fContext, &bounds);
+        return bounds;
+    }
+
+private:
+    void* fContext;
+    SkialinDrawableDrawFn fOnDraw;
+    SkialinDrawableGetBoundsFn fOnGetBounds;
+    SkialinDrawableDisposeFn fOnDispose;
+};
+}  // namespace
+
+SkDrawable* skialin_bridge_Drawable_Make(void* context, SkialinDrawableDrawFn onDraw, SkialinDrawableGetBoundsFn onGetBounds, SkialinDrawableDisposeFn onDispose) {
+    return new SkialinDrawable(context, onDraw, onGetBounds, onDispose);
+}
+
+void skialin_bridge_Drawable_unref(SkDrawable* drawable) {
+    SkSafeUnref(drawable);
 }
 
 GrDirectContext* skialin_bridge_DirectContext_MakeGL(void) {

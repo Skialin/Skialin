@@ -8,6 +8,7 @@ mod color_space;
 mod color_type;
 mod data;
 mod direct_context;
+mod drawable;
 mod font;
 mod font_collection;
 mod font_mgr;

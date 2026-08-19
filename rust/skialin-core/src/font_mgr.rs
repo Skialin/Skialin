@@ -9,7 +9,7 @@ impl FontMgr {
         (!ptr.is_null()).then_some(FontMgr(ptr))
     }
 
-    /// The platform's default font manager (DirectWrite on Windows).
+    /// The platform's default font manager (DirectWrite on Windows, CoreText on macOS, FontConfig on Linux).
     pub fn system() -> Self {
         unsafe { Self::from_raw(sys::skialin_bridge_FontMgr_RefSystem()).expect("RefSystem never returns null") }
     }

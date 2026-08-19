@@ -305,6 +305,12 @@ impl<'a> Canvas<'a> {
         unsafe { self.as_mut().drawAnnotation(&sk_rect, key_cstr.as_ptr(), value_ptr) };
     }
 
+    /// Draws `drawable`, optionally transformed by `matrix`.
+    pub fn draw_drawable(&mut self, drawable: &crate::Drawable, matrix: Option<&Matrix>) {
+        let matrix_ptr = matrix.map_or(std::ptr::null(), |m| &m.0 as *const sys::SkMatrix);
+        unsafe { self.as_mut().drawDrawable(drawable.as_raw(), matrix_ptr) };
+    }
+
     pub fn concat_44(&mut self, matrix: &M44) {
         unsafe { sys::skialin_bridge_Canvas_concat44(self.ptr, matrix.0) };
     }

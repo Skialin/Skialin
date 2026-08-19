@@ -223,6 +223,11 @@ class Canvas internal constructor(
         value: Data? = null,
     ) = CanvasNative.nDrawAnnotation(ptr, rect.left, rect.top, rect.right, rect.bottom, key, value?.nativePtr ?: 0L)
 
+    fun drawDrawable(
+        drawable: Drawable,
+        matrix: Matrix33? = null,
+    ) = CanvasNative.nDrawDrawable(ptr, drawable.nativePtr, matrix?.values)
+
     fun drawRRect(
         rrect: RRect,
         paint: Paint,
@@ -543,6 +548,12 @@ private object CanvasNative {
         bottom: Float,
         key: String,
         valuePtr: Long,
+    )
+
+    external fun nDrawDrawable(
+        ptr: Long,
+        drawablePtr: Long,
+        matrix: FloatArray?,
     )
 
     external fun nDrawRRect(

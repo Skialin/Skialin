@@ -30,6 +30,7 @@
 
 class SkSurface;
 class SkCanvas;
+class SkDrawable;
 class SkImage;
 class SkData;
 class SkBitmap;
@@ -428,6 +429,17 @@ double skialin_bridge_SkottieAnimation_duration(const skottie::Animation* animat
 double skialin_bridge_SkottieAnimation_fps(const skottie::Animation* animation);
 void skialin_bridge_SkottieAnimation_size(const skottie::Animation* animation, float* outWidth, float* outHeight);
 
+/* Drawable: a custom, user-implemented draw command. Ref-owned by the
+ * caller; free with skialin_bridge_Drawable_unref. `context` is an opaque
+ * pointer forwarded to every callback, owned by the caller: onDispose is
+ * called exactly once, when the drawable's refcount reaches zero (from
+ * whatever thread that happens on), and is the caller's cue to free it. */
+typedef void (*SkialinDrawableDrawFn)(void* context, SkCanvas* canvas);
+typedef void (*SkialinDrawableGetBoundsFn)(void* context, SkRect* outBounds);
+typedef void (*SkialinDrawableDisposeFn)(void* context);
+SkDrawable* skialin_bridge_Drawable_Make(void* context, SkialinDrawableDrawFn onDraw, SkialinDrawableGetBoundsFn onGetBounds, SkialinDrawableDisposeFn onDispose);
+void skialin_bridge_Drawable_unref(SkDrawable* drawable);
+
 /* PathEffect: ref-owned by the caller. Free with skialin_bridge_PathEffect_unref.
  * Routed entirely through the bridge: SkPathEffect's SkFlattenable base
  * defeats bindgen's vtable-layout inference, same as SkShader/SkColorFilter.
@@ -527,7 +539,7 @@ SkData* skialin_bridge_Typeface_familyName(const SkTypeface* typeface);
 /* FontMgr: ref-owned by the caller. Free with skialin_bridge_FontMgr_unref.
  * SkFontMgr is abstract (pure virtual methods), so it's routed entirely
  * through the bridge, same as SkTypeface. RefSystem is the platform default
- * (DirectWrite on Windows, the only platform this shim currently builds for). */
+ * (DirectWrite on Windows, CoreText on macOS, FontConfig on Linux). */
 void skialin_bridge_FontMgr_unref(SkFontMgr* mgr);
 SkFontMgr* skialin_bridge_FontMgr_RefSystem(void);
 SkFontMgr* skialin_bridge_FontMgr_RefEmpty(void);
