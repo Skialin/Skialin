@@ -203,6 +203,38 @@ pub extern "system" fn Java_org_skialin_TextStyleNative_nResetShadows(_env: JNIE
 }
 
 #[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nFontFeatureNames<'l>(mut env: JNIEnv<'l>, _class: jni::objects::JClass<'l>, ptr: jlong) -> jobjectArray {
+    let features = unsafe { borrow::<TextStyle>(ptr) }.font_features();
+    let string_class = env.find_class("java/lang/String").expect("find_class");
+    let array = env.new_object_array(features.len() as i32, string_class, unsafe { jni::objects::JObject::from_raw(std::ptr::null_mut()) }).expect("new_object_array");
+    for (i, feature) in features.iter().enumerate() {
+        let jstr = env.new_string(&feature.name).expect("new_string");
+        env.set_object_array_element(&array, i as i32, jstr).expect("set_object_array_element");
+    }
+    array.into_raw()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nFontFeatureValues(env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jni::sys::jintArray {
+    let features = unsafe { borrow::<TextStyle>(ptr) }.font_features();
+    let values: Vec<jint> = features.iter().map(|f| f.value).collect();
+    let array = env.new_int_array(values.len() as i32).expect("new_int_array");
+    env.set_int_array_region(&array, 0, &values).expect("set_int_array_region");
+    array.into_raw()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nAddFontFeature<'l>(mut env: JNIEnv<'l>, _class: jni::objects::JClass<'l>, ptr: jlong, name: jni::objects::JString<'l>, value: jint) {
+    let name: String = env.get_string(&name).expect("get_string").into();
+    unsafe { borrow_mut::<TextStyle>(ptr) }.add_font_feature(&name, value);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nResetFontFeatures(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) {
+    unsafe { borrow_mut::<TextStyle>(ptr) }.reset_font_features();
+}
+
+#[no_mangle]
 pub extern "system" fn Java_org_skialin_TextStyleNative_nTypeface(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jlong {
     match unsafe { borrow::<TextStyle>(ptr) }.typeface() {
         Some(typeface) => box_ptr(typeface),

@@ -32,6 +32,11 @@ class TextStyle internal constructor(
         val blurSigma: Double,
     )
 
+    data class FontFeature(
+        val name: String,
+        val value: Int,
+    )
+
     constructor() : this(TextStyleNative.nNew())
 
     fun cloneStyle(): TextStyle = TextStyle(TextStyleNative.nClone(nativePtr))
@@ -111,6 +116,20 @@ class TextStyle internal constructor(
     fun addShadows(shadows: List<Shadow>) = shadows.forEach { addShadow(it) }
 
     fun clearShadows() = TextStyleNative.nResetShadows(nativePtr)
+
+    val fontFeatures: List<FontFeature>
+        get() {
+            val names = TextStyleNative.nFontFeatureNames(nativePtr)
+            val values = TextStyleNative.nFontFeatureValues(nativePtr)
+            return names.indices.map { i -> FontFeature(names[i], values[i]) }
+        }
+
+    fun addFontFeature(
+        name: String,
+        value: Int,
+    ) = TextStyleNative.nAddFontFeature(nativePtr, name, value)
+
+    fun clearFontFeatures() = TextStyleNative.nResetFontFeatures(nativePtr)
 }
 
 private object TextStyleNative {
@@ -246,4 +265,16 @@ private object TextStyleNative {
     )
 
     external fun nResetShadows(ptr: Long)
+
+    external fun nFontFeatureNames(ptr: Long): Array<String>
+
+    external fun nFontFeatureValues(ptr: Long): IntArray
+
+    external fun nAddFontFeature(
+        ptr: Long,
+        name: String,
+        value: Int,
+    )
+
+    external fun nResetFontFeatures(ptr: Long)
 }

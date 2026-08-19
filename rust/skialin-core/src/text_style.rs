@@ -82,6 +82,12 @@ pub struct Shadow {
     pub blur_sigma: f64,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FontFeature {
+    pub name: String,
+    pub value: i32,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Decoration {
     pub decoration: TextDecoration,
@@ -227,6 +233,25 @@ impl TextStyle {
 
     pub fn reset_shadows(&mut self) {
         unsafe { sys::skialin_bridge_TextStyle_resetShadows(self.0) };
+    }
+
+    pub fn font_features(&self) -> Vec<FontFeature> {
+        let count = unsafe { sys::skialin_bridge_TextStyle_countFontFeatures(self.0) };
+        (0..count)
+            .map(|i| {
+                let name = unsafe { crate::Data::from_raw(sys::skialin_bridge_TextStyle_fontFeatureName(self.0, i)) }.expect("fontFeatureName never returns null");
+                let value = unsafe { sys::skialin_bridge_TextStyle_fontFeatureValue(self.0, i) };
+                FontFeature { name: String::from_utf8_lossy(name.as_bytes()).into_owned(), value }
+            })
+            .collect()
+    }
+
+    pub fn add_font_feature(&mut self, name: &str, value: i32) {
+        unsafe { sys::skialin_bridge_TextStyle_addFontFeature(self.0, name.as_ptr().cast(), name.len(), value) };
+    }
+
+    pub fn reset_font_features(&mut self) {
+        unsafe { sys::skialin_bridge_TextStyle_resetFontFeatures(self.0) };
     }
 
     pub fn typeface(&self) -> Option<Typeface> {

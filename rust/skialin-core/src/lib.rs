@@ -112,7 +112,7 @@ pub use svg_canvas::{SVGCanvas, SVGCanvasFlags};
 pub use svg_dom::SVGDOM;
 pub use text_blob::TextBlob;
 pub use text_blob_builder::TextBlobBuilder;
-pub use text_style::{Decoration, Shadow, TextDecoration, TextDecorationMode, TextDecorationStyle, TextStyle};
+pub use text_style::{Decoration, FontFeature, Shadow, TextDecoration, TextDecorationMode, TextDecorationStyle, TextStyle};
 pub use tile_mode::TileMode;
 pub use typeface::Typeface;
 pub use vertices::{VertexMode, Vertices};

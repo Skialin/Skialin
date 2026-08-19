@@ -670,6 +670,13 @@ int32_t skialin_bridge_TextStyle_getShadows(const skia::textlayout::TextStyle* s
 void skialin_bridge_TextStyle_addShadow(skia::textlayout::TextStyle* style, uint32_t color, float offsetX, float offsetY, double blurSigma);
 void skialin_bridge_TextStyle_resetShadows(skia::textlayout::TextStyle* style);
 
+size_t skialin_bridge_TextStyle_countFontFeatures(const skia::textlayout::TextStyle* style);
+/* UTF-8 bytes, no NUL terminator. Ref-owned by the caller; free with skialin_bridge_Data_unref. */
+SkData* skialin_bridge_TextStyle_fontFeatureName(const skia::textlayout::TextStyle* style, size_t index);
+int32_t skialin_bridge_TextStyle_fontFeatureValue(const skia::textlayout::TextStyle* style, size_t index);
+void skialin_bridge_TextStyle_addFontFeature(skia::textlayout::TextStyle* style, const char* name, size_t length, int32_t value);
+void skialin_bridge_TextStyle_resetFontFeatures(skia::textlayout::TextStyle* style);
+
 /* Ref-owned by the caller; null if this TextStyle has no typeface. Free with skialin_bridge_Typeface_unref. */
 SkTypeface* skialin_bridge_TextStyle_refTypeface(const skia::textlayout::TextStyle* style);
 /* typeface may be null to clear it; ref'd by the bridge, not consumed. */

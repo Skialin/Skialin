@@ -1037,6 +1037,27 @@ void skialin_bridge_TextStyle_resetShadows(skia::textlayout::TextStyle* style) {
     style->resetShadows();
 }
 
+size_t skialin_bridge_TextStyle_countFontFeatures(const skia::textlayout::TextStyle* style) {
+    return style->getFontFeatureNumber();
+}
+
+SkData* skialin_bridge_TextStyle_fontFeatureName(const skia::textlayout::TextStyle* style, size_t index) {
+    const SkString& name = style->getFontFeatures()[index].fName;
+    return SkData::MakeWithCopy(name.c_str(), name.size()).release();
+}
+
+int32_t skialin_bridge_TextStyle_fontFeatureValue(const skia::textlayout::TextStyle* style, size_t index) {
+    return style->getFontFeatures()[index].fValue;
+}
+
+void skialin_bridge_TextStyle_addFontFeature(skia::textlayout::TextStyle* style, const char* name, size_t length, int32_t value) {
+    style->addFontFeature(SkString(name, length), value);
+}
+
+void skialin_bridge_TextStyle_resetFontFeatures(skia::textlayout::TextStyle* style) {
+    style->resetFontFeatures();
+}
+
 SkTypeface* skialin_bridge_TextStyle_refTypeface(const skia::textlayout::TextStyle* style) {
     return style->refTypeface().release();
 }

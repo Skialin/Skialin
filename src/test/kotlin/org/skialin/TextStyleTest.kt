@@ -84,6 +84,21 @@ class TextStyleTest {
     }
 
     @Test
+    fun fontFeaturesRoundtrip() {
+        TextStyle().use { style ->
+            assertEquals(emptyList(), style.fontFeatures)
+            style.addFontFeature("liga", 1)
+            style.addFontFeature("smcp", 0)
+            val features = style.fontFeatures
+            assertEquals(2, features.size)
+            assertEquals(TextStyle.FontFeature("liga", 1), features[0])
+            assertEquals(TextStyle.FontFeature("smcp", 0), features[1])
+            style.clearFontFeatures()
+            assertEquals(emptyList(), style.fontFeatures)
+        }
+    }
+
+    @Test
     fun cloneIsIndependent() {
         TextStyle().use { style ->
             style.fontSize = 20f
