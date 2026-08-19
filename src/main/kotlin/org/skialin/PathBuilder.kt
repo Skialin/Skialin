@@ -32,6 +32,88 @@ class PathBuilder : Managed(PathBuilderNative.nMake(), PathBuilderNative::nRelea
 
     fun closePath(): PathBuilder = apply { PathBuilderNative.nClose(nativePtr) }
 
+    fun rMoveTo(
+        dx: Float,
+        dy: Float,
+    ): PathBuilder = apply { PathBuilderNative.nRMoveTo(nativePtr, dx, dy) }
+
+    fun rLineTo(
+        dx: Float,
+        dy: Float,
+    ): PathBuilder = apply { PathBuilderNative.nRLineTo(nativePtr, dx, dy) }
+
+    fun rQuadTo(
+        dx1: Float,
+        dy1: Float,
+        dx2: Float,
+        dy2: Float,
+    ): PathBuilder = apply { PathBuilderNative.nRQuadTo(nativePtr, dx1, dy1, dx2, dy2) }
+
+    fun rCubicTo(
+        dx1: Float,
+        dy1: Float,
+        dx2: Float,
+        dy2: Float,
+        dx3: Float,
+        dy3: Float,
+    ): PathBuilder = apply { PathBuilderNative.nRCubicTo(nativePtr, dx1, dy1, dx2, dy2, dx3, dy3) }
+
+    fun conicTo(
+        x1: Float,
+        y1: Float,
+        x2: Float,
+        y2: Float,
+        w: Float,
+    ): PathBuilder = apply { PathBuilderNative.nConicTo(nativePtr, x1, y1, x2, y2, w) }
+
+    fun rConicTo(
+        dx1: Float,
+        dy1: Float,
+        dx2: Float,
+        dy2: Float,
+        w: Float,
+    ): PathBuilder = apply { PathBuilderNative.nRConicTo(nativePtr, dx1, dy1, dx2, dy2, w) }
+
+    fun addRRect(
+        rrect: RRect,
+        direction: PathDirection = PathDirection.CLOCKWISE,
+    ): PathBuilder = apply { PathBuilderNative.nAddRRect(nativePtr, rrect.nativePtr, direction.ordinal) }
+
+    fun addPoly(
+        points: Array<Point>,
+        close: Boolean,
+    ): PathBuilder {
+        val flat = FloatArray(points.size * 2)
+        points.forEachIndexed { i, p ->
+            flat[i * 2] = p.x
+            flat[i * 2 + 1] = p.y
+        }
+        PathBuilderNative.nAddPoly(nativePtr, flat, close)
+        return this
+    }
+
+    fun addPath(
+        src: Path,
+        dx: Float = 0f,
+        dy: Float = 0f,
+        mode: PathAddMode = PathAddMode.APPEND,
+    ): PathBuilder = apply { PathBuilderNative.nAddPath(nativePtr, src.nativePtr, dx, dy, mode.ordinal) }
+
+    fun addPath(
+        src: Path,
+        matrix: Matrix33,
+        mode: PathAddMode = PathAddMode.APPEND,
+    ): PathBuilder = apply { PathBuilderNative.nAddPathMatrix(nativePtr, src.nativePtr, matrix.values, mode.ordinal) }
+
+    fun transform(matrix: Matrix33): PathBuilder = apply { PathBuilderNative.nTransform(nativePtr, matrix.values) }
+
+    fun setLastPt(
+        x: Float,
+        y: Float,
+    ): PathBuilder = apply { PathBuilderNative.nSetLastPt(nativePtr, x, y) }
+
+    fun reset(): PathBuilder = apply { PathBuilderNative.nReset(nativePtr) }
+
     fun addRect(
         rect: Rect,
         direction: PathDirection = PathDirection.CLOCKWISE,
@@ -106,6 +188,94 @@ private object PathBuilderNative {
     )
 
     external fun nClose(ptr: Long)
+
+    external fun nRMoveTo(
+        ptr: Long,
+        dx: Float,
+        dy: Float,
+    )
+
+    external fun nRLineTo(
+        ptr: Long,
+        dx: Float,
+        dy: Float,
+    )
+
+    external fun nRQuadTo(
+        ptr: Long,
+        dx1: Float,
+        dy1: Float,
+        dx2: Float,
+        dy2: Float,
+    )
+
+    external fun nRCubicTo(
+        ptr: Long,
+        dx1: Float,
+        dy1: Float,
+        dx2: Float,
+        dy2: Float,
+        dx3: Float,
+        dy3: Float,
+    )
+
+    external fun nConicTo(
+        ptr: Long,
+        x1: Float,
+        y1: Float,
+        x2: Float,
+        y2: Float,
+        w: Float,
+    )
+
+    external fun nRConicTo(
+        ptr: Long,
+        dx1: Float,
+        dy1: Float,
+        dx2: Float,
+        dy2: Float,
+        w: Float,
+    )
+
+    external fun nAddRRect(
+        ptr: Long,
+        rrectPtr: Long,
+        direction: Int,
+    )
+
+    external fun nAddPoly(
+        ptr: Long,
+        points: FloatArray,
+        close: Boolean,
+    )
+
+    external fun nAddPath(
+        ptr: Long,
+        srcPtr: Long,
+        dx: Float,
+        dy: Float,
+        mode: Int,
+    )
+
+    external fun nAddPathMatrix(
+        ptr: Long,
+        srcPtr: Long,
+        matrix: FloatArray,
+        mode: Int,
+    )
+
+    external fun nTransform(
+        ptr: Long,
+        matrix: FloatArray,
+    )
+
+    external fun nSetLastPt(
+        ptr: Long,
+        x: Float,
+        y: Float,
+    )
+
+    external fun nReset(ptr: Long)
 
     external fun nAddRect(
         ptr: Long,

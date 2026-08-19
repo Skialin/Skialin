@@ -486,6 +486,7 @@ bool skialin_bridge_PathMeasure_nextContour(SkPathMeasure* measure);
 SkPath* skialin_bridge_Path_op(const SkPath* one, const SkPath* two, int32_t op);
 /* Null on failure. */
 SkPath* skialin_bridge_Path_simplify(const SkPath* path);
+void skialin_bridge_Path_computeTightBounds(const SkPath* path, SkRect* outRect);
 
 /* M44: heap-allocated with `new`/`delete`. A plain value class (16 floats),
  * but never given to bindgen (forward-declared only), so routed through

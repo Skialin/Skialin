@@ -1606,6 +1606,10 @@ SkPath* skialin_bridge_Path_simplify(const SkPath* path) {
     return new SkPath(*result);
 }
 
+void skialin_bridge_Path_computeTightBounds(const SkPath* path, SkRect* outRect) {
+    *outRect = path->computeTightBounds();
+}
+
 SkM44* skialin_bridge_M44_MakeIdentity(void) {
     return new SkM44();
 }
