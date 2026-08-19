@@ -76,12 +76,20 @@ class RenderNode(
     fun setClipRect(
         r: Rect,
         mode: ClipOp = ClipOp.INTERSECT,
-    ) = RenderNodeNative.nSetClipRect(nativePtr, r.left, r.top, r.right, r.bottom, mode.ordinal)
+        antiAlias: Boolean = false,
+    ) = RenderNodeNative.nSetClipRect(nativePtr, r.left, r.top, r.right, r.bottom, mode.ordinal, antiAlias)
 
     fun setClipRRect(
         r: RRect,
         mode: ClipOp = ClipOp.INTERSECT,
-    ) = RenderNodeNative.nSetClipRRect(nativePtr, r.nativePtr, mode.ordinal)
+        antiAlias: Boolean = false,
+    ) = RenderNodeNative.nSetClipRRect(nativePtr, r.nativePtr, mode.ordinal, antiAlias)
+
+    fun setClipPath(
+        path: Path,
+        mode: ClipOp = ClipOp.INTERSECT,
+        antiAlias: Boolean = false,
+    ) = RenderNodeNative.nSetClipPath(nativePtr, path.nativePtr, mode.ordinal, antiAlias)
 
     fun beginRecording(): Canvas = Canvas(RenderNodeNative.nBeginRecording(nativePtr))
 
@@ -217,12 +225,21 @@ private object RenderNodeNative {
         right: Float,
         bottom: Float,
         mode: Int,
+        antiAlias: Boolean,
     )
 
     external fun nSetClipRRect(
         ptr: Long,
         rrectPtr: Long,
         mode: Int,
+        antiAlias: Boolean,
+    )
+
+    external fun nSetClipPath(
+        ptr: Long,
+        pathPtr: Long,
+        mode: Int,
+        antiAlias: Boolean,
     )
 
     external fun nGetClip(ptr: Long): Boolean

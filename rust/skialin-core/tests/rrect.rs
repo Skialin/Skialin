@@ -63,5 +63,5 @@ fn draws_and_clips_without_crashing() {
     paint.set_color(color::RED);
     canvas.draw_rrect(&outer, &paint);
     canvas.draw_drrect(&outer, &inner, &paint);
-    canvas.clip_rrect(&outer, skialin_core::ClipOp::Intersect);
+    canvas.clip_rrect(&outer, skialin_core::ClipOp::Intersect, false);
 }

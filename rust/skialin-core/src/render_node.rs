@@ -94,6 +94,7 @@ pub struct RenderNode {
 
     clip_shape: Option<ClipShape>,
     clip_op: ClipOp,
+    clip_antialias: bool,
     clip: bool,
 }
 
@@ -120,6 +121,7 @@ impl RenderNode {
             camera_distance: 8.0,
             clip_shape: None,
             clip_op: ClipOp::Intersect,
+            clip_antialias: false,
             clip: false,
         }
     }
@@ -224,19 +226,22 @@ impl RenderNode {
         self.spot_shadow_color = v;
     }
 
-    pub fn set_clip_rect(&mut self, rect: Option<Rect>, op: ClipOp) {
+    pub fn set_clip_rect(&mut self, rect: Option<Rect>, op: ClipOp, antialias: bool) {
         self.clip_shape = rect.map(ClipShape::Rect);
         self.clip_op = op;
+        self.clip_antialias = antialias;
     }
 
-    pub fn set_clip_rrect(&mut self, rrect: Option<RRect>, op: ClipOp) {
+    pub fn set_clip_rrect(&mut self, rrect: Option<RRect>, op: ClipOp, antialias: bool) {
         self.clip_shape = rrect.map(ClipShape::RRect);
         self.clip_op = op;
+        self.clip_antialias = antialias;
     }
 
-    pub fn set_clip_path(&mut self, path: Option<Path>, op: ClipOp) {
+    pub fn set_clip_path(&mut self, path: Option<Path>, op: ClipOp, antialias: bool) {
         self.clip_shape = path.map(ClipShape::Path);
         self.clip_op = op;
+        self.clip_antialias = antialias;
     }
 
     pub fn clip(&self) -> bool {
@@ -339,10 +344,10 @@ impl RenderNode {
         if self.clip {
             canvas.save();
             match &self.clip_shape {
-                Some(ClipShape::Rect(r)) => canvas.clip_rect(*r, self.clip_op),
-                Some(ClipShape::RRect(rr)) => canvas.clip_rrect(rr, self.clip_op),
-                Some(ClipShape::Path(p)) => canvas.clip_path(p, self.clip_op),
-                None => canvas.clip_rect(Rect::new(0.0, 0.0, self.bounds.width(), self.bounds.height()), self.clip_op),
+                Some(ClipShape::Rect(r)) => canvas.clip_rect(*r, self.clip_op, self.clip_antialias),
+                Some(ClipShape::RRect(rr)) => canvas.clip_rrect(rr, self.clip_op, self.clip_antialias),
+                Some(ClipShape::Path(p)) => canvas.clip_path(p, self.clip_op, self.clip_antialias),
+                None => canvas.clip_rect(Rect::new(0.0, 0.0, self.bounds.width(), self.bounds.height()), self.clip_op, self.clip_antialias),
             }
         }
 

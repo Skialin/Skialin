@@ -177,12 +177,12 @@ pub extern "system" fn Java_org_skialin_CanvasNative_nClipRect(
     bottom: jfloat,
     op: jint,
 ) {
-    canvas_from_ptr(ptr).clip_rect(Rect::new(left, top, right, bottom), clip_op_from_ordinal(op));
+    canvas_from_ptr(ptr).clip_rect(Rect::new(left, top, right, bottom), clip_op_from_ordinal(op), false);
 }
 
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_CanvasNative_nClipPath(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, path_ptr: jlong, op: jint) {
-    canvas_from_ptr(ptr).clip_path(unsafe { borrow::<Path>(path_ptr) }, clip_op_from_ordinal(op));
+    canvas_from_ptr(ptr).clip_path(unsafe { borrow::<Path>(path_ptr) }, clip_op_from_ordinal(op), false);
 }
 
 #[no_mangle]
@@ -342,7 +342,7 @@ pub extern "system" fn Java_org_skialin_CanvasNative_nDrawDRRect(_env: JNIEnv, _
 
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_CanvasNative_nClipRRect(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, rrect_ptr: jlong, op: jint) {
-    canvas_from_ptr(ptr).clip_rrect(unsafe { borrow::<RRect>(rrect_ptr) }, clip_op_from_ordinal(op));
+    canvas_from_ptr(ptr).clip_rrect(unsafe { borrow::<RRect>(rrect_ptr) }, clip_op_from_ordinal(op), false);
 }
 
 #[no_mangle]

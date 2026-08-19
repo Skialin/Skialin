@@ -3,7 +3,7 @@ use jni::JNIEnv;
 use std::rc::Rc;
 
 use skialin_core::canvas::ClipOp;
-use skialin_core::{Canvas, LightGeometry, LightInfo, Paint, RRect, Rect, RenderNode, RenderNodeContext};
+use skialin_core::{Canvas, LightGeometry, LightInfo, Paint, Path, RRect, Rect, RenderNode, RenderNodeContext};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 
@@ -149,21 +149,31 @@ pub extern "system" fn Java_org_skialin_RenderNodeNative_nSetSpotShadowColor(_en
 
 #[no_mangle]
 #[allow(clippy::too_many_arguments)]
-pub extern "system" fn Java_org_skialin_RenderNodeNative_nSetClipRect(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, left: jfloat, top: jfloat, right: jfloat, bottom: jfloat, mode: jint) {
-    unsafe { borrow_mut::<RenderNode>(ptr) }.set_clip_rect(Some(Rect::new(left, top, right, bottom)), clip_op_from_jint(mode));
+pub extern "system" fn Java_org_skialin_RenderNodeNative_nSetClipRect(
+    _env: JNIEnv,
+    _class: jni::objects::JClass,
+    ptr: jlong,
+    left: jfloat,
+    top: jfloat,
+    right: jfloat,
+    bottom: jfloat,
+    mode: jint,
+    antialias: jboolean,
+) {
+    unsafe { borrow_mut::<RenderNode>(ptr) }.set_clip_rect(Some(Rect::new(left, top, right, bottom)), clip_op_from_jint(mode), antialias != 0);
 }
 
 #[no_mangle]
-pub extern "system" fn Java_org_skialin_RenderNodeNative_nSetClipRRect(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, rrect_ptr: jlong, mode: jint) {
+pub extern "system" fn Java_org_skialin_RenderNodeNative_nSetClipRRect(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, rrect_ptr: jlong, mode: jint, antialias: jboolean) {
     let rrect = unsafe { borrow::<RRect>(rrect_ptr) }.clone();
-    unsafe { borrow_mut::<RenderNode>(ptr) }.set_clip_rrect(Some(rrect), clip_op_from_jint(mode));
+    unsafe { borrow_mut::<RenderNode>(ptr) }.set_clip_rrect(Some(rrect), clip_op_from_jint(mode), antialias != 0);
 }
 
-// Note: no nSetClipPath -- SkPath has no bridge clone yet, and stealing
-// ownership of the caller's Path pointer would double-free once its own
-// Kotlin-side Managed/Cleaner also releases it. Rect/RRect clipping cover
-// the common cases for now; Path clipping is available from Rust directly
-// (RenderNode::set_clip_path takes an owned Path).
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_RenderNodeNative_nSetClipPath(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, path_ptr: jlong, mode: jint, antialias: jboolean) {
+    let path = unsafe { borrow::<Path>(path_ptr) }.clone();
+    unsafe { borrow_mut::<RenderNode>(ptr) }.set_clip_path(Some(path), clip_op_from_jint(mode), antialias != 0);
+}
 
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_RenderNodeNative_nGetClip(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jboolean {

@@ -150,6 +150,10 @@ void skialin_bridge_Path_delete(SkPath* path) {
     delete path;
 }
 
+SkPath* skialin_bridge_Path_clone(const SkPath* path) {
+    return new SkPath(*path);
+}
+
 SkSurface* skialin_bridge_Surface_MakeRasterN32Premul(int32_t width, int32_t height) {
     return SkSurfaces::Raster(SkImageInfo::MakeN32Premul(width, height)).release();
 }
@@ -1389,8 +1393,8 @@ void skialin_bridge_Canvas_drawDRRect(SkCanvas* canvas, const SkRRect* outer, co
     canvas->drawDRRect(*outer, *inner, *paint);
 }
 
-void skialin_bridge_Canvas_clipRRect(SkCanvas* canvas, const SkRRect* rrect, SkClipOp op) {
-    canvas->clipRRect(*rrect, op);
+void skialin_bridge_Canvas_clipRRect(SkCanvas* canvas, const SkRRect* rrect, SkClipOp op, bool doAntiAlias) {
+    canvas->clipRRect(*rrect, op, doAntiAlias);
 }
 
 void skialin_bridge_PathEffect_unref(SkPathEffect* effect) {

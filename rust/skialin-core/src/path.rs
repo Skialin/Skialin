@@ -69,6 +69,12 @@ impl Path {
     }
 }
 
+impl Clone for Path {
+    fn clone(&self) -> Self {
+        Path(unsafe { sys::skialin_bridge_Path_clone(self.0) })
+    }
+}
+
 impl Drop for Path {
     fn drop(&mut self) {
         unsafe { sys::skialin_bridge_Path_delete(self.0) };

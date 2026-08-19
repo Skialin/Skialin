@@ -91,6 +91,7 @@ void skialin_bridge_Canvas_getTotalMatrix(const SkCanvas* canvas, SkMatrix* outM
 SkPath* skialin_bridge_PathBuilder_snapshot(const SkPathBuilder* builder, const SkMatrix* matrix);
 SkPath* skialin_bridge_PathBuilder_detach(SkPathBuilder* builder, const SkMatrix* matrix);
 void skialin_bridge_Path_delete(SkPath* path);
+SkPath* skialin_bridge_Path_clone(const SkPath* path);
 
 /* Surface: ref-owned by the caller. Free with skialin_bridge_Surface_unref. */
 SkSurface* skialin_bridge_Surface_MakeRasterN32Premul(int32_t width, int32_t height);
@@ -320,7 +321,7 @@ SkRRect* skialin_bridge_RRect_transform(const SkRRect* rrect, const SkMatrix* ma
 /* Canvas draw/clip calls that need an SkRRect. paint may be null for clipRRect. */
 void skialin_bridge_Canvas_drawRRect(SkCanvas* canvas, const SkRRect* rrect, const SkPaint* paint);
 void skialin_bridge_Canvas_drawDRRect(SkCanvas* canvas, const SkRRect* outer, const SkRRect* inner, const SkPaint* paint);
-void skialin_bridge_Canvas_clipRRect(SkCanvas* canvas, const SkRRect* rrect, SkClipOp op);
+void skialin_bridge_Canvas_clipRRect(SkCanvas* canvas, const SkRRect* rrect, SkClipOp op, bool doAntiAlias);
 
 /* SkSurfaceProps: heap-allocated, same rationale as RRect (cloneWithPixelGeometry
  * returns by value, hitting gotcha #1). Owned by the caller; free with

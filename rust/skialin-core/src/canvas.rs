@@ -149,13 +149,13 @@ impl<'a> Canvas<'a> {
         unsafe { self.as_mut().concat(&matrix.0) };
     }
 
-    pub fn clip_rect(&mut self, rect: Rect, op: ClipOp) {
+    pub fn clip_rect(&mut self, rect: Rect, op: ClipOp, antialias: bool) {
         let sk_rect: sys::SkRect = rect.into();
-        unsafe { self.as_mut().clipRect1(&sk_rect, op.into()) };
+        unsafe { self.as_mut().clipRect(&sk_rect, op.into(), antialias) };
     }
 
-    pub fn clip_path(&mut self, path: &Path, op: ClipOp) {
-        unsafe { self.as_mut().clipPath1(path.0, op.into()) };
+    pub fn clip_path(&mut self, path: &Path, op: ClipOp, antialias: bool) {
+        unsafe { self.as_mut().clipPath(path.0, op.into(), antialias) };
     }
 
     pub fn skew(&mut self, sx: f32, sy: f32) {
@@ -246,8 +246,8 @@ impl<'a> Canvas<'a> {
         unsafe { sys::skialin_bridge_Canvas_drawDRRect(self.ptr, outer.0, inner.0, &*paint.0) };
     }
 
-    pub fn clip_rrect(&mut self, rrect: &RRect, op: ClipOp) {
-        unsafe { sys::skialin_bridge_Canvas_clipRRect(self.ptr, rrect.0, op.into()) };
+    pub fn clip_rrect(&mut self, rrect: &RRect, op: ClipOp, antialias: bool) {
+        unsafe { sys::skialin_bridge_Canvas_clipRRect(self.ptr, rrect.0, op.into(), antialias) };
     }
 
     pub fn draw_vertices(&mut self, vertices: &Vertices, mode: BlendMode, paint: &Paint) {

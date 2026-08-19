@@ -23,7 +23,7 @@ fn skew_and_matrix_roundtrip() {
 fn quick_reject_rect_outside_clip() {
     let mut surface = Surface::new_raster_n32_premul(16, 16).unwrap();
     let mut canvas = surface.canvas();
-    canvas.clip_rect(Rect::new(0.0, 0.0, 8.0, 8.0), skialin_core::ClipOp::Intersect);
+    canvas.clip_rect(Rect::new(0.0, 0.0, 8.0, 8.0), skialin_core::ClipOp::Intersect, false);
     assert!(canvas.quick_reject_rect(Rect::new(100.0, 100.0, 200.0, 200.0)));
     assert!(!canvas.quick_reject_rect(Rect::new(0.0, 0.0, 4.0, 4.0)));
 }
