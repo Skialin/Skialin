@@ -3,7 +3,6 @@ package org.skialin
 import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
-/** Laid-out, paintable text. Mirrors skparagraph's `Paragraph`. */
 class Paragraph internal constructor(
     ptr: Long,
 ) : Managed(ptr, ParagraphNative::nRelease) {
@@ -14,7 +13,13 @@ class Paragraph internal constructor(
         val affinity: Affinity,
     )
 
-    /** Line layout metrics. Mirrors skparagraph's `LineMetrics`, excluding its per-run font metrics map. */
+    data class GlyphInfo(
+        val bounds: Rect,
+        val graphemeClusterRange: LongRange,
+        val direction: ParagraphStyle.TextDirection,
+        val isEllipsis: Boolean,
+    )
+
     data class LineMetrics(
         val startIndex: Long,
         val endIndex: Long,
@@ -48,11 +53,9 @@ class Paragraph internal constructor(
     val didExceedMaxLines: Boolean get() = ParagraphNative.nDidExceedMaxLines(nativePtr)
     val lineNumber: Long get() = ParagraphNative.nLineNumber(nativePtr)
 
-    /** The number of unresolved glyphs, or `null` if the paragraph hasn't been shaped yet (i.e. before [layout]). */
     val unresolvedGlyphs: Int?
         get() = ParagraphNative.nUnresolvedGlyphs(nativePtr).takeIf { it >= 0 }
 
-    /** The glyph at the given coordinate, with the paragraph's top-left as the origin and +y as down. */
     fun glyphPositionAtCoordinate(
         dx: Float,
         dy: Float,
@@ -61,13 +64,11 @@ class Paragraph internal constructor(
         return GlyphPosition((packed shr 32).toInt(), if ((packed and 1) == 0L) Affinity.UPSTREAM else Affinity.DOWNSTREAM)
     }
 
-    /** The `[start, end)` range of the word containing the glyph at [offset]. */
     fun wordBoundary(offset: Int): LongRange {
         val range = ParagraphNative.nWordBoundary(nativePtr, offset)
         return range[0] until range[1]
     }
 
-    /** Layout metrics for line [lineNumber] (0-indexed), or `null` if out of range. */
     fun lineMetricsAt(lineNumber: Int): LineMetrics? {
         val out = DoubleArray(12)
         if (!ParagraphNative.nLineMetricsAt(nativePtr, lineNumber, out)) return null
@@ -87,21 +88,63 @@ class Paragraph internal constructor(
         )
     }
 
-    /** Layout metrics for every line, in order. */
     fun lineMetrics(): List<LineMetrics> = (0 until lineNumber.toInt()).mapNotNull { lineMetricsAt(it) }
+
+    private fun flatToTextBoxes(flat: FloatArray): List<TextBox> =
+        (0 until flat.size / 5).map { i ->
+            val direction = if (flat[i * 5 + 4] > 0.5f) ParagraphStyle.TextDirection.LTR else ParagraphStyle.TextDirection.RTL
+            TextBox(Rect(flat[i * 5], flat[i * 5 + 1], flat[i * 5 + 2], flat[i * 5 + 3]), direction)
+        }
 
     fun getRectsForRange(
         start: Int,
         end: Int,
         heightStyle: RectHeightStyle = RectHeightStyle.TIGHT,
         widthStyle: RectWidthStyle = RectWidthStyle.TIGHT,
-    ): List<TextBox> {
-        val flat = ParagraphNative.nGetRectsForRange(nativePtr, start, end, heightStyle.ordinal, widthStyle.ordinal)
-        return (0 until flat.size / 5).map { i ->
-            val direction = if (flat[i * 5 + 4] > 0.5f) ParagraphStyle.TextDirection.LTR else ParagraphStyle.TextDirection.RTL
-            TextBox(Rect(flat[i * 5], flat[i * 5 + 1], flat[i * 5 + 2], flat[i * 5 + 3]), direction)
-        }
+    ): List<TextBox> = flatToTextBoxes(ParagraphNative.nGetRectsForRange(nativePtr, start, end, heightStyle.ordinal, widthStyle.ordinal))
+
+    fun getRectsForPlaceholders(): List<TextBox> = flatToTextBoxes(ParagraphNative.nGetRectsForPlaceholders(nativePtr))
+
+    private fun readGlyphInfo(out: DoubleArray): GlyphInfo =
+        GlyphInfo(
+            Rect(out[0].toFloat(), out[1].toFloat(), out[2].toFloat(), out[3].toFloat()),
+            out[4].toLong() until out[5].toLong(),
+            if (out[6] > 0.5) ParagraphStyle.TextDirection.LTR else ParagraphStyle.TextDirection.RTL,
+            out[7] > 0.5,
+        )
+
+    fun glyphInfoAt(codeUnitIndex: Long): GlyphInfo? {
+        val out = DoubleArray(8)
+        if (!ParagraphNative.nGlyphInfoAtUTF16Offset(nativePtr, codeUnitIndex, out)) return null
+        return readGlyphInfo(out)
     }
+
+    fun closestGlyphInfoAt(
+        dx: Float,
+        dy: Float,
+    ): GlyphInfo? {
+        val out = DoubleArray(8)
+        if (!ParagraphNative.nClosestGlyphInfoAt(nativePtr, dx, dy, out)) return null
+        return readGlyphInfo(out)
+    }
+
+    fun updateFontSize(
+        from: Long,
+        to: Long,
+        fontSize: Float,
+    ) = ParagraphNative.nUpdateFontSize(nativePtr, from, to, fontSize)
+
+    fun updateForegroundPaint(
+        from: Long,
+        to: Long,
+        paint: Paint,
+    ) = ParagraphNative.nUpdateForegroundPaint(nativePtr, from, to, paint.nativePtr)
+
+    fun updateBackgroundPaint(
+        from: Long,
+        to: Long,
+        paint: Paint,
+    ) = ParagraphNative.nUpdateBackgroundPaint(nativePtr, from, to, paint.nativePtr)
 }
 
 private object ParagraphNative {
@@ -167,4 +210,40 @@ private object ParagraphNative {
         heightStyle: Int,
         widthStyle: Int,
     ): FloatArray
+
+    external fun nGetRectsForPlaceholders(ptr: Long): FloatArray
+
+    external fun nGlyphInfoAtUTF16Offset(
+        ptr: Long,
+        codeUnitIndex: Long,
+        out: DoubleArray,
+    ): Boolean
+
+    external fun nClosestGlyphInfoAt(
+        ptr: Long,
+        dx: Float,
+        dy: Float,
+        out: DoubleArray,
+    ): Boolean
+
+    external fun nUpdateFontSize(
+        ptr: Long,
+        from: Long,
+        to: Long,
+        fontSize: Float,
+    )
+
+    external fun nUpdateForegroundPaint(
+        ptr: Long,
+        from: Long,
+        to: Long,
+        paintPtr: Long,
+    )
+
+    external fun nUpdateBackgroundPaint(
+        ptr: Long,
+        from: Long,
+        to: Long,
+        paintPtr: Long,
+    )
 }

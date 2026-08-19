@@ -1454,6 +1454,64 @@ int32_t skialin_bridge_Paragraph_getRectsForRange(
     return count;
 }
 
+int32_t skialin_bridge_Paragraph_getRectsForPlaceholders(skia::textlayout::Paragraph* paragraph, float* outBuf, int32_t capacity) {
+    std::vector<skia::textlayout::TextBox> boxes = paragraph->getRectsForPlaceholders();
+    int32_t count = static_cast<int32_t>(boxes.size());
+    int32_t toWrite = count < capacity ? count : capacity;
+    for (int32_t i = 0; i < toWrite; i++) {
+        const skia::textlayout::TextBox& box = boxes[i];
+        outBuf[i * 5 + 0] = box.rect.fLeft;
+        outBuf[i * 5 + 1] = box.rect.fTop;
+        outBuf[i * 5 + 2] = box.rect.fRight;
+        outBuf[i * 5 + 3] = box.rect.fBottom;
+        outBuf[i * 5 + 4] = box.direction == skia::textlayout::TextDirection::kLtr ? 1.0f : 0.0f;
+    }
+    return count;
+}
+
+static bool skialin_bridge_writeGlyphInfo(
+    const skia::textlayout::Paragraph::GlyphInfo& info, float* outBounds, size_t* outRangeStart, size_t* outRangeEnd, int32_t* outDirection, bool* outIsEllipsis) {
+    outBounds[0] = info.fGraphemeLayoutBounds.fLeft;
+    outBounds[1] = info.fGraphemeLayoutBounds.fTop;
+    outBounds[2] = info.fGraphemeLayoutBounds.fRight;
+    outBounds[3] = info.fGraphemeLayoutBounds.fBottom;
+    *outRangeStart = info.fGraphemeClusterTextRange.start;
+    *outRangeEnd = info.fGraphemeClusterTextRange.end;
+    *outDirection = info.fDirection == skia::textlayout::TextDirection::kLtr ? 1 : 0;
+    *outIsEllipsis = info.fIsEllipsis;
+    return true;
+}
+
+bool skialin_bridge_Paragraph_getGlyphInfoAtUTF16Offset(
+    skia::textlayout::Paragraph* paragraph, size_t codeUnitIndex, float* outBounds, size_t* outRangeStart, size_t* outRangeEnd, int32_t* outDirection, bool* outIsEllipsis) {
+    skia::textlayout::Paragraph::GlyphInfo info;
+    if (!paragraph->getGlyphInfoAtUTF16Offset(codeUnitIndex, &info)) {
+        return false;
+    }
+    return skialin_bridge_writeGlyphInfo(info, outBounds, outRangeStart, outRangeEnd, outDirection, outIsEllipsis);
+}
+
+bool skialin_bridge_Paragraph_getClosestUTF16GlyphInfoAt(
+    skia::textlayout::Paragraph* paragraph, float dx, float dy, float* outBounds, size_t* outRangeStart, size_t* outRangeEnd, int32_t* outDirection, bool* outIsEllipsis) {
+    skia::textlayout::Paragraph::GlyphInfo info;
+    if (!paragraph->getClosestUTF16GlyphInfoAt(dx, dy, &info)) {
+        return false;
+    }
+    return skialin_bridge_writeGlyphInfo(info, outBounds, outRangeStart, outRangeEnd, outDirection, outIsEllipsis);
+}
+
+void skialin_bridge_Paragraph_updateFontSize(skia::textlayout::Paragraph* paragraph, size_t from, size_t to, float fontSize) {
+    paragraph->updateFontSize(from, to, fontSize);
+}
+
+void skialin_bridge_Paragraph_updateForegroundPaint(skia::textlayout::Paragraph* paragraph, size_t from, size_t to, const SkPaint* paint) {
+    paragraph->updateForegroundPaint(from, to, *paint);
+}
+
+void skialin_bridge_Paragraph_updateBackgroundPaint(skia::textlayout::Paragraph* paragraph, size_t from, size_t to, const SkPaint* paint) {
+    paragraph->updateBackgroundPaint(from, to, *paint);
+}
+
 void skialin_bridge_ColorFilter_unref(SkColorFilter* filter) {
     SkSafeUnref(filter);
 }

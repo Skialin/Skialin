@@ -12,8 +12,14 @@ pub struct GlyphPosition {
     pub affinity: Affinity,
 }
 
-/// Line layout metrics. Mirrors skparagraph's `LineMetrics`, excluding its
-/// per-run `fLineMetrics` map.
+#[derive(Debug, Clone, PartialEq)]
+pub struct GlyphInfo {
+    pub bounds: crate::Rect,
+    pub grapheme_cluster_range: std::ops::Range<usize>,
+    pub direction: crate::TextDirection,
+    pub is_ellipsis: bool,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct LineMetrics {
     pub start_index: usize,
@@ -82,29 +88,23 @@ impl Paragraph {
         unsafe { sys::skialin_bridge_Paragraph_lineNumber(self.0) }
     }
 
-    /// The number of unresolved glyphs, or `None` if the paragraph hasn't
-    /// been shaped yet (i.e. before the first [`layout`](Self::layout)).
     pub fn unresolved_glyphs(&mut self) -> Option<i32> {
         let count = unsafe { sys::skialin_bridge_Paragraph_unresolvedGlyphs(self.0) };
         (count >= 0).then_some(count)
     }
 
-    /// The glyph at the given coordinate, with the paragraph's top-left as
-    /// the origin and +y as down.
     pub fn glyph_position_at_coordinate(&mut self, dx: f32, dy: f32) -> GlyphPosition {
         let mut affinity = 0i32;
         let position = unsafe { sys::skialin_bridge_Paragraph_getGlyphPositionAtCoordinate(self.0, dx, dy, &mut affinity) };
         GlyphPosition { position, affinity: if affinity == 0 { Affinity::Upstream } else { Affinity::Downstream } }
     }
 
-    /// The `[start, end)` range of the word containing the glyph at `offset`.
     pub fn word_boundary(&mut self, offset: u32) -> std::ops::Range<usize> {
         let (mut start, mut end) = (0usize, 0usize);
         unsafe { sys::skialin_bridge_Paragraph_getWordBoundary(self.0, offset, &mut start, &mut end) };
         start..end
     }
 
-    /// Layout metrics for line `line_number` (0-indexed), or `None` if out of range.
     pub fn line_metrics_at(&self, line_number: i32) -> Option<LineMetrics> {
         let (mut start_index, mut end_index, mut end_excluding_whitespaces, mut end_including_newline) = (0usize, 0usize, 0usize, 0usize);
         let mut hard_break = 0i32;
@@ -144,7 +144,6 @@ impl Paragraph {
         })
     }
 
-    /// Layout metrics for every line, in order.
     pub fn line_metrics(&mut self) -> Vec<LineMetrics> {
         let count = self.line_number();
         (0..count as i32).filter_map(|i| self.line_metrics_at(i)).collect()
@@ -163,6 +162,63 @@ impl Paragraph {
                 direction: if c[4] > 0.5 { crate::TextDirection::Ltr } else { crate::TextDirection::Rtl },
             })
             .collect()
+    }
+
+    pub fn rects_for_placeholders(&mut self) -> Vec<TextBox> {
+        let count = unsafe { sys::skialin_bridge_Paragraph_getRectsForPlaceholders(self.0, std::ptr::null_mut(), 0) };
+        if count <= 0 {
+            return Vec::new();
+        }
+        let mut buf = vec![0f32; count as usize * 5];
+        unsafe { sys::skialin_bridge_Paragraph_getRectsForPlaceholders(self.0, buf.as_mut_ptr(), count) };
+        buf.chunks_exact(5)
+            .map(|c| TextBox {
+                rect: crate::Rect::new(c[0], c[1], c[2], c[3]),
+                direction: if c[4] > 0.5 { crate::TextDirection::Ltr } else { crate::TextDirection::Rtl },
+            })
+            .collect()
+    }
+
+    pub fn glyph_info_at_utf16_offset(&mut self, code_unit_index: usize) -> Option<GlyphInfo> {
+        let mut bounds = [0f32; 4];
+        let (mut range_start, mut range_end) = (0usize, 0usize);
+        let mut direction = 0i32;
+        let mut is_ellipsis = false;
+        let found = unsafe {
+            sys::skialin_bridge_Paragraph_getGlyphInfoAtUTF16Offset(self.0, code_unit_index, bounds.as_mut_ptr(), &mut range_start, &mut range_end, &mut direction, &mut is_ellipsis)
+        };
+        found.then_some(GlyphInfo {
+            bounds: crate::Rect::new(bounds[0], bounds[1], bounds[2], bounds[3]),
+            grapheme_cluster_range: range_start..range_end,
+            direction: if direction != 0 { crate::TextDirection::Ltr } else { crate::TextDirection::Rtl },
+            is_ellipsis,
+        })
+    }
+
+    pub fn closest_glyph_info_at(&mut self, dx: f32, dy: f32) -> Option<GlyphInfo> {
+        let mut bounds = [0f32; 4];
+        let (mut range_start, mut range_end) = (0usize, 0usize);
+        let mut direction = 0i32;
+        let mut is_ellipsis = false;
+        let found = unsafe { sys::skialin_bridge_Paragraph_getClosestUTF16GlyphInfoAt(self.0, dx, dy, bounds.as_mut_ptr(), &mut range_start, &mut range_end, &mut direction, &mut is_ellipsis) };
+        found.then_some(GlyphInfo {
+            bounds: crate::Rect::new(bounds[0], bounds[1], bounds[2], bounds[3]),
+            grapheme_cluster_range: range_start..range_end,
+            direction: if direction != 0 { crate::TextDirection::Ltr } else { crate::TextDirection::Rtl },
+            is_ellipsis,
+        })
+    }
+
+    pub fn update_font_size(&mut self, from: usize, to: usize, font_size: f32) {
+        unsafe { sys::skialin_bridge_Paragraph_updateFontSize(self.0, from, to, font_size) };
+    }
+
+    pub fn update_foreground_paint(&mut self, from: usize, to: usize, paint: &crate::Paint) {
+        unsafe { sys::skialin_bridge_Paragraph_updateForegroundPaint(self.0, from, to, &*paint.0) };
+    }
+
+    pub fn update_background_paint(&mut self, from: usize, to: usize, paint: &crate::Paint) {
+        unsafe { sys::skialin_bridge_Paragraph_updateBackgroundPaint(self.0, from, to, &*paint.0) };
     }
 }
 

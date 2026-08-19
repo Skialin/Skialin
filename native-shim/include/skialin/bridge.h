@@ -835,6 +835,20 @@ bool skialin_bridge_Paragraph_getLineMetricsAt(
  * skia::textlayout::RectHeightStyle/RectWidthStyle's declaration order. */
 int32_t skialin_bridge_Paragraph_getRectsForRange(
     skia::textlayout::Paragraph* paragraph, uint32_t start, uint32_t end, int32_t rectHeightStyle, int32_t rectWidthStyle, float* outBuf, int32_t capacity);
+/* Same box layout as getRectsForRange, no range/style params. */
+int32_t skialin_bridge_Paragraph_getRectsForPlaceholders(skia::textlayout::Paragraph* paragraph, float* outBuf, int32_t capacity);
+
+/* GlyphInfo fields, in order: outBounds (left,top,right,bottom), outRangeStart,
+ * outRangeEnd (UTF-16 grapheme-cluster text range), outDirection (0=rtl/1=ltr),
+ * outIsEllipsis. Returns false (leaving outputs unset) if no glyph was found. */
+bool skialin_bridge_Paragraph_getGlyphInfoAtUTF16Offset(
+    skia::textlayout::Paragraph* paragraph, size_t codeUnitIndex, float* outBounds, size_t* outRangeStart, size_t* outRangeEnd, int32_t* outDirection, bool* outIsEllipsis);
+bool skialin_bridge_Paragraph_getClosestUTF16GlyphInfoAt(
+    skia::textlayout::Paragraph* paragraph, float dx, float dy, float* outBounds, size_t* outRangeStart, size_t* outRangeEnd, int32_t* outDirection, bool* outIsEllipsis);
+
+void skialin_bridge_Paragraph_updateFontSize(skia::textlayout::Paragraph* paragraph, size_t from, size_t to, float fontSize);
+void skialin_bridge_Paragraph_updateForegroundPaint(skia::textlayout::Paragraph* paragraph, size_t from, size_t to, const SkPaint* paint);
+void skialin_bridge_Paragraph_updateBackgroundPaint(skia::textlayout::Paragraph* paragraph, size_t from, size_t to, const SkPaint* paint);
 
 /* ColorFilter: ref-owned by the caller. Free with skialin_bridge_ColorFilter_unref.
  * Routed entirely through the bridge, not direct bindgen calls: bindgen
