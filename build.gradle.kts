@@ -36,7 +36,7 @@ val targetArch = (findProperty("skialin.targetArch") as String?) ?: hostArch
 val nativePlatformDir = "$targetOs-$targetArch"
 
 val lwjglVersion = "3.3.4"
-val lwjglNatives = "natives-$hostOs"
+val lwjglNatives = if (hostArch == "arm64") "natives-$hostOs-arm64" else "natives-$hostOs"
 
 dependencies {
     testImplementation(kotlin("test"))
