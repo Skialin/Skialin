@@ -16,30 +16,33 @@ impl From<SurfaceOrigin> for sys::GrSurfaceOrigin {
     }
 }
 
-/// Wraps a GrDirectContext (Ganesh + OpenGL). The caller must make a native
-/// GL context current on this thread first; this type doesn't create one.
-/// Thread-affine after creation: every method here, and every `Surface`
-/// made from it, must stay on that thread.
-pub struct DirectContext(pub(crate) *mut sys::GrDirectContext);
+/// Wraps a GrDirectContext (Ganesh + OpenGL or Vulkan). The caller must make
+/// a native GL context current on this thread first for `new_gl*`; this type
+/// doesn't create one. Thread-affine after creation for GL: every method
+/// here, and every `Surface` made from it, must stay on that thread.
+pub struct DirectContext(pub(crate) *mut sys::GrDirectContext, #[allow(dead_code)] Option<Box<dyn std::any::Any>>);
 
 impl DirectContext {
     /// Resolves GL function pointers via Skia's own per-platform dispatch.
     pub fn new_gl() -> Option<Self> {
         let ptr = unsafe { sys::skialin_bridge_DirectContext_MakeGL() };
-        (!ptr.is_null()).then_some(DirectContext(ptr))
+        (!ptr.is_null()).then_some(DirectContext(ptr, None))
     }
 
     /// Same as `new_gl`, but with a caller-supplied function pointer
     /// resolver instead of Skia's default loader.
     pub fn new_gl_assembled(ctx: *mut std::ffi::c_void, get: sys::GrGLGetProc) -> Option<Self> {
         let ptr = unsafe { sys::skialin_bridge_DirectContext_MakeGLAssembled(ctx, get) };
-        (!ptr.is_null()).then_some(DirectContext(ptr))
+        (!ptr.is_null()).then_some(DirectContext(ptr, None))
     }
 
     /// Wraps a caller-created Vulkan instance/physical device/device/queue.
     /// Those must outlive this DirectContext and everything made from it.
     /// `get_proc` resolves function pointers (vkGetInstanceProcAddr /
-    /// vkGetDeviceProcAddr); `get_proc_ctx` is passed through uninterpreted.
+    /// vkGetDeviceProcAddr) and may be called for as long as the returned
+    /// DirectContext is alive, not just during this call, so `get_proc_ctx`
+    /// is an owned value this DirectContext keeps alive for that long
+    /// (reclaimed and dropped if construction fails).
     #[allow(clippy::too_many_arguments)]
     pub fn new_vulkan(
         instance: sys::VkInstance,
@@ -48,10 +51,11 @@ impl DirectContext {
         queue: sys::VkQueue,
         graphics_queue_index: u32,
         max_api_version: u32,
-        get_proc_ctx: *mut std::ffi::c_void,
+        get_proc_ctx: Box<dyn std::any::Any>,
         get_proc: sys::SkialinVulkanGetProc,
         protected_context: bool,
     ) -> Option<Self> {
+        let ctx_ptr = Box::into_raw(get_proc_ctx);
         let ptr = unsafe {
             sys::skialin_bridge_DirectContext_MakeVulkan(
                 instance,
@@ -60,12 +64,13 @@ impl DirectContext {
                 queue,
                 graphics_queue_index,
                 max_api_version,
-                get_proc_ctx,
+                ctx_ptr as *mut std::ffi::c_void,
                 get_proc,
                 protected_context,
             )
         };
-        (!ptr.is_null()).then_some(DirectContext(ptr))
+        let keep_alive = unsafe { Box::from_raw(ctx_ptr) };
+        (!ptr.is_null()).then_some(DirectContext(ptr, Some(keep_alive)))
     }
 
     pub fn flush(&mut self) {

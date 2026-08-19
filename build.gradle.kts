@@ -29,9 +29,11 @@ dependencies {
     testImplementation("org.lwjgl", "lwjgl")
     testImplementation("org.lwjgl", "lwjgl-glfw")
     testImplementation("org.lwjgl", "lwjgl-opengl")
+    testImplementation("org.lwjgl", "lwjgl-vulkan")
     testRuntimeOnly("org.lwjgl", "lwjgl", classifier = lwjglNatives)
     testRuntimeOnly("org.lwjgl", "lwjgl-glfw", classifier = lwjglNatives)
     testRuntimeOnly("org.lwjgl", "lwjgl-opengl", classifier = lwjglNatives)
+    // lwjgl-vulkan has no platform natives jar -- it loads the system Vulkan loader dynamically.
 }
 
 kotlin {
@@ -40,6 +42,9 @@ kotlin {
 
 tasks.test {
     useJUnitPlatform()
+    // LWJGL's default per-thread MemoryStack (64KB) is too small for
+    // VkInstance's capability-detection allocations on some drivers.
+    systemProperty("org.lwjgl.system.stackSize", "4096")
 }
 
 val buildNative = (findProperty("skialin.buildNative") as String?).toBoolean()

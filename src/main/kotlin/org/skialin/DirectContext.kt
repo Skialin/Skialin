@@ -3,14 +3,15 @@ package org.skialin
 import org.skialin.impl.NativeLoader
 
 /**
- * Wraps a native GrDirectContext (Ganesh + OpenGL). Caller must make a
- * native GL context current on this thread first (e.g. via LWJGL/GLFW).
- * Thread-affine after creation: this object, and any [Surface] made from
- * it, must stay on that thread.
+ * Wraps a native GrDirectContext (Ganesh + OpenGL or Vulkan). For GL, the
+ * caller must make a native GL context current on this thread first (e.g.
+ * via LWJGL/GLFW); the resulting object, and any [Surface] made from it,
+ * must then stay on that thread. Vulkan has no such requirement -- only
+ * the instance/device/queue must outlive this context.
  *
  * Doesn't extend [org.skialin.impl.Managed]: its Cleaner runs release on an
- * arbitrary thread, which would tear down GL state from the wrong one.
- * [close] must be called explicitly; skipping it leaks.
+ * arbitrary thread, which would tear down GL state from the wrong one for
+ * the GL case. [close] must be called explicitly; skipping it leaks.
  */
 class DirectContext private constructor(ptr: Long) : AutoCloseable {
     @Volatile
@@ -42,6 +43,27 @@ class DirectContext private constructor(ptr: Long) : AutoCloseable {
             val ptr = DirectContextNative.nMakeGL()
             return if (ptr == 0L) null else DirectContext(ptr)
         }
+
+        /**
+         * instance/physicalDevice/device/queue are native VkInstance/
+         * VkPhysicalDevice/VkDevice/VkQueue handles (e.g. from LWJGL's
+         * `.address()`); they must outlive this context and everything
+         * made from it. Resolves vk*ProcAddr via the platform's own
+         * Vulkan loader, loaded natively -- independent of any loader
+         * the caller used to create the instance/device.
+         */
+        fun makeVulkan(
+            instance: Long,
+            physicalDevice: Long,
+            device: Long,
+            queue: Long,
+            graphicsQueueIndex: Int,
+            maxApiVersion: Int,
+            protectedContext: Boolean = false,
+        ): DirectContext? {
+            val ptr = DirectContextNative.nMakeVulkan(instance, physicalDevice, device, queue, graphicsQueueIndex, maxApiVersion, protectedContext)
+            return if (ptr == 0L) null else DirectContext(ptr)
+        }
     }
 }
 
@@ -51,6 +73,15 @@ private object DirectContextNative {
     }
 
     external fun nMakeGL(): Long
+    external fun nMakeVulkan(
+        instance: Long,
+        physicalDevice: Long,
+        device: Long,
+        queue: Long,
+        graphicsQueueIndex: Int,
+        maxApiVersion: Int,
+        protectedContext: Boolean,
+    ): Long
     external fun nRelease(ptr: Long)
     external fun nFlush(ptr: Long)
     external fun nSubmit(ptr: Long, syncCpu: Boolean)

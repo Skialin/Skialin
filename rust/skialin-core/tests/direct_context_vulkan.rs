@@ -14,6 +14,7 @@ use std::ffi::{c_char, c_void};
 type RawGetInstanceProcAddr = unsafe extern "system" fn(*mut c_void, *const c_char) -> sys::PFN_vkVoidFunction;
 type RawGetDeviceProcAddr = unsafe extern "system" fn(*mut c_void, *const c_char) -> sys::PFN_vkVoidFunction;
 
+#[derive(Clone, Copy)]
 struct ProcAddrs {
     get_instance_proc_addr: RawGetInstanceProcAddr,
     get_device_proc_addr: RawGetDeviceProcAddr,
@@ -82,7 +83,7 @@ impl VulkanFixture {
                 std::mem::transmute(self.queue),
                 self.queue_family_index,
                 vk::API_VERSION_1_1,
-                &self.proc_addrs as *const ProcAddrs as *mut c_void,
+                Box::new(self.proc_addrs),
                 Some(get_proc),
                 false,
             )
