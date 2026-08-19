@@ -18,6 +18,7 @@ fn main() {
         }
         "macos" => {
             let list = manifest_dir.join("exports/skialin_jni.exports");
+            println!("cargo:rustc-link-arg=-Wl,-ld_classic");
             println!("cargo:rustc-link-arg=-Wl,-dead_strip");
             println!("cargo:rustc-link-arg=-Wl,-exported_symbols_list,{}", list.display());
             println!("cargo:rerun-if-changed={}", list.display());
