@@ -2,6 +2,7 @@ package org.skialin
 
 import kotlin.test.Test
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class FiltersTest {
     @Test
@@ -87,6 +88,45 @@ class FiltersTest {
     fun imageFilterMatrixTransform() {
         val matrix = Matrix33.makeTranslate(5f, 5f)
         ImageFilter.makeMatrixTransform(matrix).use { assertNotNull(it) }
+    }
+
+    @Test
+    fun colorFilterExpandedFactoriesAreUsable() {
+        ColorFilter.makeHSLAMatrix(FloatArray(20)).use { assertNotNull(it) }
+        assertNotNull(ColorFilter.linearToSRGBGamma)
+        assertNotNull(ColorFilter.sRGBToLinearGamma)
+        ColorFilter.makeTable(ByteArray(256)).use { assertNotNull(it) }
+        ColorFilter.makeTableARGB(a = ByteArray(256)).use { assertNotNull(it) }
+        ColorFilter.makeLighting(Colors.RED, Colors.BLUE).use { assertNotNull(it) }
+        ColorFilter.makeHighContrast(true, ColorFilter.InvertStyle.NO_INVERT, 0.2f)!!.use { assertNotNull(it) }
+        assertNotNull(ColorFilter.luma)
+    }
+
+    @Test
+    fun imageFilterExpandedFactoriesAreUsable() {
+        ImageFilter.makeBlend(BlendMode.SRC_OVER).use { assertNotNull(it) }
+        ImageFilter.makeMerge().use { assertNotNull(it) }
+        Shader.makeColor(Colors.RED).use { shader -> ImageFilter.makeShader(shader).use { assertNotNull(it) } }
+        ImageFilter.makeTile(Rect(0f, 0f, 8f, 8f), Rect(0f, 0f, 16f, 16f)).use { assertNotNull(it) }
+    }
+
+    @Test
+    fun shaderExpandedFactoriesAreUsable() {
+        Shader.makeColor(Colors.RED).use { dst ->
+            Shader.makeColor(Colors.BLUE).use { src ->
+                Shader.makeBlend(BlendMode.SRC_OVER, dst, src).use { assertNotNull(it) }
+            }
+        }
+        Shader.makeFractalNoise(0.1f, 0.1f, 2, 0f).use { assertNotNull(it) }
+        Shader.makeTurbulence(0.1f, 0.1f, 2, 0f).use { assertNotNull(it) }
+    }
+
+    @Test
+    fun maskFilterSigmaRadiusConversionRoundtrips() {
+        val sigma = MaskFilter.convertRadiusToSigma(4f)
+        assertTrue(sigma > 0f)
+        val radius = MaskFilter.convertSigmaToRadius(sigma)
+        assertTrue(kotlin.math.abs(radius - 4f) < 0.01f)
     }
 
     @Test

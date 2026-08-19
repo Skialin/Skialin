@@ -173,3 +173,43 @@ pub extern "system" fn Java_org_skialin_ShaderNative_nMakeSweepGradient(
         None => 0,
     }
 }
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_ShaderNative_nBlend(_env: JNIEnv, _class: jni::objects::JClass, mode: jint, dst_ptr: jlong, src_ptr: jlong) -> jlong {
+    let dst = unsafe { borrow::<Shader>(dst_ptr) };
+    let src = unsafe { borrow::<Shader>(src_ptr) };
+    match Shader::blend(crate::paint::blend_mode_from_ordinal(mode), dst, src) {
+        Some(shader) => box_ptr(shader),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_ShaderNative_nFractalNoise(
+    _env: JNIEnv,
+    _class: jni::objects::JClass,
+    base_freq_x: jni::sys::jfloat,
+    base_freq_y: jni::sys::jfloat,
+    num_octaves: jint,
+    seed: jni::sys::jfloat,
+) -> jlong {
+    match Shader::fractal_noise(base_freq_x, base_freq_y, num_octaves, seed) {
+        Some(shader) => box_ptr(shader),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_ShaderNative_nTurbulence(
+    _env: JNIEnv,
+    _class: jni::objects::JClass,
+    base_freq_x: jni::sys::jfloat,
+    base_freq_y: jni::sys::jfloat,
+    num_octaves: jint,
+    seed: jni::sys::jfloat,
+) -> jlong {
+    match Shader::turbulence(base_freq_x, base_freq_y, num_octaves, seed) {
+        Some(shader) => box_ptr(shader),
+        None => 0,
+    }
+}

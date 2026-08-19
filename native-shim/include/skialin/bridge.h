@@ -291,6 +291,9 @@ SkShader* skialin_bridge_Shader_makeTwoPointConicalGradient(
 SkShader* skialin_bridge_Shader_makeSweepGradient(
     SkPoint center, float startAngle, float endAngle,
     const uint32_t* colors, const float* positions, size_t count, SkTileMode tileMode, const SkMatrix* localMatrix);
+SkShader* skialin_bridge_Shader_Blend(SkBlendMode mode, SkShader* dst, SkShader* src);
+SkShader* skialin_bridge_Shader_MakeFractalNoise(float baseFreqX, float baseFreqY, int32_t numOctaves, float seed);
+SkShader* skialin_bridge_Shader_MakeTurbulence(float baseFreqX, float baseFreqY, int32_t numOctaves, float seed);
 
 /* RuntimeEffect: ref-owned by the caller. Free with
  * skialin_bridge_RuntimeEffect_unref. Scoped to shader and color-filter
@@ -796,6 +799,14 @@ SkColorFilter* skialin_bridge_ColorFilter_Blend(uint32_t argb, SkBlendMode mode)
 SkColorFilter* skialin_bridge_ColorFilter_Matrix(const float* rowMajor20, bool clamp);
 SkColorFilter* skialin_bridge_ColorFilter_Compose(SkColorFilter* outer, SkColorFilter* inner);
 SkColorFilter* skialin_bridge_ColorFilter_Lerp(float t, SkColorFilter* dst, SkColorFilter* src);
+SkColorFilter* skialin_bridge_ColorFilter_HSLAMatrix(const float* rowMajor20);
+SkColorFilter* skialin_bridge_ColorFilter_LinearToSRGBGamma(void);
+SkColorFilter* skialin_bridge_ColorFilter_SRGBToLinearGamma(void);
+SkColorFilter* skialin_bridge_ColorFilter_Table(const uint8_t* table256);
+SkColorFilter* skialin_bridge_ColorFilter_TableARGB(const uint8_t* tableA256, const uint8_t* tableR256, const uint8_t* tableG256, const uint8_t* tableB256);
+SkColorFilter* skialin_bridge_ColorFilter_Lighting(uint32_t mul, uint32_t add);
+SkColorFilter* skialin_bridge_ColorFilter_HighContrast(bool grayscale, int32_t invertStyle, float contrast);
+SkColorFilter* skialin_bridge_ColorFilter_Luma(void);
 
 /* ColorMatrix (SkColorMatrix): operates in place on a caller-owned 20-float
  * row-major buffer (a 4x5 matrix), never heap-allocated. Safe because
@@ -829,6 +840,10 @@ SkImageFilter* skialin_bridge_ImageFilter_MatrixTransform(
     SkImageFilter* input);
 SkImageFilter* skialin_bridge_ImageFilter_Dilate(float radiusX, float radiusY, SkImageFilter* input);
 SkImageFilter* skialin_bridge_ImageFilter_Erode(float radiusX, float radiusY, SkImageFilter* input);
+SkImageFilter* skialin_bridge_ImageFilter_Blend(SkBlendMode mode, SkImageFilter* background, SkImageFilter* foreground);
+SkImageFilter* skialin_bridge_ImageFilter_Merge(SkImageFilter* first, SkImageFilter* second);
+SkImageFilter* skialin_bridge_ImageFilter_Shader(SkShader* shader);
+SkImageFilter* skialin_bridge_ImageFilter_Tile(const SkRect* src, const SkRect* dst, SkImageFilter* input);
 
 /* MaskFilter: ref-owned by the caller. Free with skialin_bridge_MaskFilter_unref.
  * Routed entirely through the bridge for the same reason as SkColorFilter

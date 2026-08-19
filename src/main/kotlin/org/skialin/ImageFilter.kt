@@ -3,7 +3,6 @@ package org.skialin
 import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
-/** A graph of image-space effects (blur, shadow, offset, ...) applied before drawing. Mirrors Skia's `SkImageFilter`. */
 class ImageFilter internal constructor(
     ptr: Long,
 ) : Managed(ptr, ImageFilterNative::nRelease) {
@@ -35,7 +34,6 @@ class ImageFilter internal constructor(
                 ).takeIf { it != 0L }
                 ?.let { ImageFilter(it) }
 
-        /** Renders the drop shadow without the input content, so callers can compose the shadow and input in their own filter graph. */
         fun makeDropShadowOnly(
             dx: Float,
             dy: Float,
@@ -67,7 +65,6 @@ class ImageFilter internal constructor(
         ): ImageFilter? =
             ImageFilterNative.nColorFilter(colorFilter.nativePtr, input?.nativePtr ?: 0L).takeIf { it != 0L }?.let { ImageFilter(it) }
 
-        /** `result = outer(inner(source))`. */
         fun makeCompose(
             outer: ImageFilter,
             inner: ImageFilter,
@@ -102,6 +99,30 @@ class ImageFilter internal constructor(
             radiusY: Float,
             input: ImageFilter? = null,
         ): ImageFilter? = ImageFilterNative.nErode(radiusX, radiusY, input?.nativePtr ?: 0L).takeIf { it != 0L }?.let { ImageFilter(it) }
+
+        fun makeBlend(
+            mode: BlendMode,
+            background: ImageFilter? = null,
+            foreground: ImageFilter? = null,
+        ): ImageFilter? =
+            ImageFilterNative.nBlend(mode.ordinal, background?.nativePtr ?: 0L, foreground?.nativePtr ?: 0L).takeIf { it != 0L }?.let { ImageFilter(it) }
+
+        fun makeMerge(
+            first: ImageFilter? = null,
+            second: ImageFilter? = null,
+        ): ImageFilter? = ImageFilterNative.nMerge(first?.nativePtr ?: 0L, second?.nativePtr ?: 0L).takeIf { it != 0L }?.let { ImageFilter(it) }
+
+        fun makeShader(shader: Shader): ImageFilter? = ImageFilterNative.nShader(shader.nativePtr).takeIf { it != 0L }?.let { ImageFilter(it) }
+
+        fun makeTile(
+            src: Rect,
+            dst: Rect,
+            input: ImageFilter? = null,
+        ): ImageFilter? =
+            ImageFilterNative
+                .nTile(src.left, src.top, src.right, src.bottom, dst.left, dst.top, dst.right, dst.bottom, input?.nativePtr ?: 0L)
+                .takeIf { it != 0L }
+                ?.let { ImageFilter(it) }
     }
 }
 
@@ -173,6 +194,31 @@ private object ImageFilterNative {
     external fun nErode(
         radiusX: Float,
         radiusY: Float,
+        inputPtr: Long,
+    ): Long
+
+    external fun nBlend(
+        mode: Int,
+        backgroundPtr: Long,
+        foregroundPtr: Long,
+    ): Long
+
+    external fun nMerge(
+        firstPtr: Long,
+        secondPtr: Long,
+    ): Long
+
+    external fun nShader(shaderPtr: Long): Long
+
+    external fun nTile(
+        srcLeft: Float,
+        srcTop: Float,
+        srcRight: Float,
+        srcBottom: Float,
+        dstLeft: Float,
+        dstTop: Float,
+        dstRight: Float,
+        dstBottom: Float,
         inputPtr: Long,
     ): Long
 }

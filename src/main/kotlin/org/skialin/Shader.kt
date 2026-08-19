@@ -3,7 +3,6 @@ package org.skialin
 import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
-/** Specifies the source color(s) for a [Paint]. Mirrors Skia's `SkShader`. */
 class Shader internal constructor(
     ptr: Long,
 ) : Managed(ptr, ShaderNative::nRelease) {
@@ -16,11 +15,6 @@ class Shader internal constructor(
 
         fun makeColor(color: Color): Shader = Shader(ShaderNative.nMakeColor(color))
 
-        /**
-         * A gradient between [p0] and [p1]. [positions], if given, must have the same
-         * size as [colors]: strictly increasing values in `[0, 1]`. `null` if
-         * [colors] has fewer than 2 entries or [positions] is malformed.
-         */
         fun makeLinearGradient(
             p0: Point,
             p1: Point,
@@ -33,7 +27,6 @@ class Shader internal constructor(
             return if (ptr == 0L) null else Shader(ptr)
         }
 
-        /** A gradient radiating from [center] out to [radius]. [radius] must be positive. */
         fun makeRadialGradient(
             center: Point,
             radius: Float,
@@ -46,7 +39,6 @@ class Shader internal constructor(
             return if (ptr == 0L) null else Shader(ptr)
         }
 
-        /** A gradient between two circles; both radii must be non-negative. */
         fun makeTwoPointConicalGradient(
             start: Point,
             startRadius: Float,
@@ -73,10 +65,6 @@ class Shader internal constructor(
             return if (ptr == 0L) null else Shader(ptr)
         }
 
-        /**
-         * A gradient sweeping around [center] from [startAngle] to [endAngle] degrees
-         * (0 = positive x axis). [startAngle] must be less than [endAngle].
-         */
         fun makeSweepGradient(
             center: Point,
             colors: IntArray,
@@ -99,6 +87,26 @@ class Shader internal constructor(
                 )
             return if (ptr == 0L) null else Shader(ptr)
         }
+
+        fun makeBlend(
+            mode: BlendMode,
+            dst: Shader,
+            src: Shader,
+        ): Shader? = ShaderNative.nBlend(mode.ordinal, dst.nativePtr, src.nativePtr).takeIf { it != 0L }?.let { Shader(it) }
+
+        fun makeFractalNoise(
+            baseFreqX: Float,
+            baseFreqY: Float,
+            numOctaves: Int,
+            seed: Float,
+        ): Shader? = ShaderNative.nFractalNoise(baseFreqX, baseFreqY, numOctaves, seed).takeIf { it != 0L }?.let { Shader(it) }
+
+        fun makeTurbulence(
+            baseFreqX: Float,
+            baseFreqY: Float,
+            numOctaves: Int,
+            seed: Float,
+        ): Shader? = ShaderNative.nTurbulence(baseFreqX, baseFreqY, numOctaves, seed).takeIf { it != 0L }?.let { Shader(it) }
     }
 }
 
@@ -163,5 +171,25 @@ private object ShaderNative {
         positions: FloatArray?,
         tileMode: Int,
         localMatrix: FloatArray?,
+    ): Long
+
+    external fun nBlend(
+        mode: Int,
+        dstPtr: Long,
+        srcPtr: Long,
+    ): Long
+
+    external fun nFractalNoise(
+        baseFreqX: Float,
+        baseFreqY: Float,
+        numOctaves: Int,
+        seed: Float,
+    ): Long
+
+    external fun nTurbulence(
+        baseFreqX: Float,
+        baseFreqY: Float,
+        numOctaves: Int,
+        seed: Float,
     ): Long
 }

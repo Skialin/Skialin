@@ -1,8 +1,9 @@
 use jni::sys::{jboolean, jfloat, jfloatArray, jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{ColorFilter, ImageFilter, Matrix, SamplingOptions, TileMode};
+use skialin_core::{ColorFilter, ImageFilter, Matrix, Rect, SamplingOptions, Shader, TileMode};
 
+use crate::paint::blend_mode_from_ordinal;
 use crate::util::{borrow, box_ptr, drop_ptr};
 
 fn tile_mode_from_ordinal(ordinal: jint) -> TileMode {
@@ -139,6 +140,53 @@ pub extern "system" fn Java_org_skialin_ImageFilterNative_nDilate(_env: JNIEnv, 
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_ImageFilterNative_nErode(_env: JNIEnv, _class: jni::objects::JClass, radius_x: jfloat, radius_y: jfloat, input_ptr: jlong) -> jlong {
     match ImageFilter::erode(radius_x, radius_y, input_from_ptr(input_ptr)) {
+        Some(filter) => box_ptr(filter),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_ImageFilterNative_nBlend(_env: JNIEnv, _class: jni::objects::JClass, mode: jint, background_ptr: jlong, foreground_ptr: jlong) -> jlong {
+    match ImageFilter::blend(blend_mode_from_ordinal(mode), input_from_ptr(background_ptr), input_from_ptr(foreground_ptr)) {
+        Some(filter) => box_ptr(filter),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_ImageFilterNative_nMerge(_env: JNIEnv, _class: jni::objects::JClass, first_ptr: jlong, second_ptr: jlong) -> jlong {
+    match ImageFilter::merge(input_from_ptr(first_ptr), input_from_ptr(second_ptr)) {
+        Some(filter) => box_ptr(filter),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_ImageFilterNative_nShader(_env: JNIEnv, _class: jni::objects::JClass, shader_ptr: jlong) -> jlong {
+    let shader = unsafe { borrow::<Shader>(shader_ptr) };
+    match ImageFilter::shader(shader) {
+        Some(filter) => box_ptr(filter),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_ImageFilterNative_nTile(
+    _env: JNIEnv,
+    _class: jni::objects::JClass,
+    src_left: jfloat,
+    src_top: jfloat,
+    src_right: jfloat,
+    src_bottom: jfloat,
+    dst_left: jfloat,
+    dst_top: jfloat,
+    dst_right: jfloat,
+    dst_bottom: jfloat,
+    input_ptr: jlong,
+) -> jlong {
+    let src = Rect::new(src_left, src_top, src_right, src_bottom);
+    let dst = Rect::new(dst_left, dst_top, dst_right, dst_bottom);
+    match ImageFilter::tile(src, dst, input_from_ptr(input_ptr)) {
         Some(filter) => box_ptr(filter),
         None => 0,
     }

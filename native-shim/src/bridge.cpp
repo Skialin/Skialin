@@ -58,6 +58,9 @@
 #include "include/core/SkM44.h"
 #include "include/core/SkVertices.h"
 #include "include/effects/SkColorMatrix.h"
+#include "include/effects/SkHighContrastFilter.h"
+#include "include/effects/SkLumaColorFilter.h"
+#include "include/effects/SkPerlinNoiseShader.h"
 #include "include/core/SkString.h"
 #include "include/core/SkStream.h"
 #include "include/encode/SkPngEncoder.h"
@@ -613,6 +616,18 @@ SkShader* skialin_bridge_Shader_makeSweepGradient(
     SkGradient::Colors gradColors(color4fs, positions ? SkSpan<const float>(positions, count) : SkSpan<const float>(), tileMode);
     SkGradient gradient(gradColors, {});
     return SkShaders::SweepGradient(center, startAngle, endAngle, gradient, localMatrix).release();
+}
+
+SkShader* skialin_bridge_Shader_Blend(SkBlendMode mode, SkShader* dst, SkShader* src) {
+    return SkShaders::Blend(mode, sk_ref_sp(dst), sk_ref_sp(src)).release();
+}
+
+SkShader* skialin_bridge_Shader_MakeFractalNoise(float baseFreqX, float baseFreqY, int32_t numOctaves, float seed) {
+    return SkShaders::MakeFractalNoise(baseFreqX, baseFreqY, numOctaves, seed).release();
+}
+
+SkShader* skialin_bridge_Shader_MakeTurbulence(float baseFreqX, float baseFreqY, int32_t numOctaves, float seed) {
+    return SkShaders::MakeTurbulence(baseFreqX, baseFreqY, numOctaves, seed).release();
 }
 
 SkRuntimeEffect* skialin_bridge_RuntimeEffect_MakeForShader(const char* sksl, size_t length, SkData** outError) {
@@ -1277,6 +1292,39 @@ SkColorFilter* skialin_bridge_ColorFilter_Lerp(float t, SkColorFilter* dst, SkCo
     return SkColorFilters::Lerp(t, sk_ref_sp(dst), sk_ref_sp(src)).release();
 }
 
+SkColorFilter* skialin_bridge_ColorFilter_HSLAMatrix(const float* rowMajor20) {
+    return SkColorFilters::HSLAMatrix(rowMajor20).release();
+}
+
+SkColorFilter* skialin_bridge_ColorFilter_LinearToSRGBGamma(void) {
+    return SkColorFilters::LinearToSRGBGamma().release();
+}
+
+SkColorFilter* skialin_bridge_ColorFilter_SRGBToLinearGamma(void) {
+    return SkColorFilters::SRGBToLinearGamma().release();
+}
+
+SkColorFilter* skialin_bridge_ColorFilter_Table(const uint8_t* table256) {
+    return SkColorFilters::Table(table256).release();
+}
+
+SkColorFilter* skialin_bridge_ColorFilter_TableARGB(const uint8_t* tableA256, const uint8_t* tableR256, const uint8_t* tableG256, const uint8_t* tableB256) {
+    return SkColorFilters::TableARGB(tableA256, tableR256, tableG256, tableB256).release();
+}
+
+SkColorFilter* skialin_bridge_ColorFilter_Lighting(uint32_t mul, uint32_t add) {
+    return SkColorFilters::Lighting(static_cast<SkColor>(mul), static_cast<SkColor>(add)).release();
+}
+
+SkColorFilter* skialin_bridge_ColorFilter_HighContrast(bool grayscale, int32_t invertStyle, float contrast) {
+    SkHighContrastConfig config(grayscale, static_cast<SkHighContrastConfig::InvertStyle>(invertStyle), contrast);
+    return SkHighContrastFilter::Make(config).release();
+}
+
+SkColorFilter* skialin_bridge_ColorFilter_Luma(void) {
+    return SkLumaColorFilter::Make().release();
+}
+
 void skialin_bridge_ColorMatrix_setIdentity(float* mat20) {
     reinterpret_cast<SkColorMatrix*>(mat20)->setIdentity();
 }
@@ -1339,6 +1387,22 @@ SkImageFilter* skialin_bridge_ImageFilter_Dilate(float radiusX, float radiusY, S
 
 SkImageFilter* skialin_bridge_ImageFilter_Erode(float radiusX, float radiusY, SkImageFilter* input) {
     return SkImageFilters::Erode(radiusX, radiusY, sk_ref_sp(input)).release();
+}
+
+SkImageFilter* skialin_bridge_ImageFilter_Blend(SkBlendMode mode, SkImageFilter* background, SkImageFilter* foreground) {
+    return SkImageFilters::Blend(mode, sk_ref_sp(background), sk_ref_sp(foreground)).release();
+}
+
+SkImageFilter* skialin_bridge_ImageFilter_Merge(SkImageFilter* first, SkImageFilter* second) {
+    return SkImageFilters::Merge(sk_ref_sp(first), sk_ref_sp(second)).release();
+}
+
+SkImageFilter* skialin_bridge_ImageFilter_Shader(SkShader* shader) {
+    return SkImageFilters::Shader(sk_ref_sp(shader)).release();
+}
+
+SkImageFilter* skialin_bridge_ImageFilter_Tile(const SkRect* src, const SkRect* dst, SkImageFilter* input) {
+    return SkImageFilters::Tile(*src, *dst, sk_ref_sp(input)).release();
 }
 
 void skialin_bridge_MaskFilter_unref(SkMaskFilter* filter) {
