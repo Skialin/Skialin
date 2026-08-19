@@ -39,7 +39,14 @@ class DirectContextVulkanTest {
             val instanceInfo = VkInstanceCreateInfo.calloc(stack).sType(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO).pApplicationInfo(appInfo)
 
             val pInstance = stack.mallocPointer(1)
-            if (vkCreateInstance(instanceInfo, null, pInstance) != VK_SUCCESS) {
+            val created =
+                try {
+                    vkCreateInstance(instanceInfo, null, pInstance)
+                } catch (e: LinkageError) {
+                    println("skipping: Vulkan natives unavailable on this machine ($e)")
+                    return
+                }
+            if (created != VK_SUCCESS) {
                 println("skipping: no Vulkan runtime/driver available on this machine")
                 return
             }
