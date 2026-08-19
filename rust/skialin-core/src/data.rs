@@ -41,9 +41,13 @@ impl Data {
     }
 
     pub fn as_bytes(&self) -> &[u8] {
+        let size = self.size();
+        if size == 0 {
+            return &[];
+        }
         unsafe {
             let ptr = (*self.0).bytes();
-            std::slice::from_raw_parts(ptr, self.size())
+            std::slice::from_raw_parts(ptr, size)
         }
     }
 
@@ -52,6 +56,9 @@ impl Data {
     /// concurrently, per `SkData::writable_data`'s own caveat.
     pub fn writable_bytes(&mut self) -> &mut [u8] {
         let len = self.size();
+        if len == 0 {
+            return &mut [];
+        }
         unsafe {
             let ptr = (*self.0).writable_data() as *mut u8;
             std::slice::from_raw_parts_mut(ptr, len)

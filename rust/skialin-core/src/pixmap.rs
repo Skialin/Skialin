@@ -86,7 +86,12 @@ impl Pixmap {
     /// # Safety
     /// The backing memory passed to [`Pixmap::new`] must still be valid.
     pub unsafe fn as_bytes(&self) -> &[u8] {
-        std::slice::from_raw_parts(self.addr(), self.compute_byte_size())
+        let ptr = self.addr();
+        let size = self.compute_byte_size();
+        if ptr.is_null() || size == 0 {
+            return &[];
+        }
+        std::slice::from_raw_parts(ptr, size)
     }
 
     /// Unpremultiplied color at `(x, y)`. Ignores color space; input is not
