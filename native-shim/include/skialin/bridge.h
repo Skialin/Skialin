@@ -119,6 +119,11 @@ SkCanvas* skialin_bridge_Surface_getCanvas(SkSurface* surface);
 
 /* Ref-owned by the caller. Free with skialin_bridge_Image_unref. */
 SkImage* skialin_bridge_Surface_makeImageSnapshot(SkSurface* surface);
+SkImage* skialin_bridge_Surface_makeImageSnapshotArea(SkSurface* surface, const SkIRect* bounds);
+SkImageInfo* skialin_bridge_Surface_imageInfo(SkSurface* surface);
+void skialin_bridge_Surface_notifyContentWillChange(SkSurface* surface, int32_t mode);
+void skialin_bridge_Surface_flush(SkSurface* surface);
+void skialin_bridge_Surface_draw(SkSurface* surface, SkCanvas* canvas, float x, float y, const SkPaint* paint);
 
 /* Image: ref-owned by the caller. Free with skialin_bridge_Image_unref.
  * SkSamplingOptions has no sk_sp members so is passed as 6 flat scalars

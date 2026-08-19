@@ -1,7 +1,7 @@
-use jni::sys::{jboolean, jint, jlong};
+use jni::sys::{jboolean, jfloat, jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{BackendTexture, ColorSpace, DirectContext, GraphiteBackendTexture, GraphiteRecorder, ImageInfo, Surface, SurfaceOrigin, SurfaceProps};
+use skialin_core::{BackendTexture, Canvas, ColorSpace, DirectContext, GraphiteBackendTexture, GraphiteRecorder, IRect, ImageInfo, Paint, Surface, SurfaceOrigin, SurfaceProps};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 
@@ -138,4 +138,60 @@ pub extern "system" fn Java_org_skialin_SurfaceNative_nMakeImageSnapshot(_env: J
         Some(image) => box_ptr(image),
         None => 0,
     }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_SurfaceNative_nMakeImageSnapshotArea(
+    _env: JNIEnv,
+    _class: jni::objects::JClass,
+    ptr: jlong,
+    left: jint,
+    top: jint,
+    right: jint,
+    bottom: jint,
+) -> jlong {
+    match unsafe { borrow_mut::<Surface>(ptr) }.image_snapshot_area(IRect::new(left, top, right, bottom)) {
+        Some(image) => box_ptr(image),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_SurfaceNative_nWidth(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jint {
+    unsafe { borrow_mut::<Surface>(ptr) }.width()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_SurfaceNative_nHeight(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jint {
+    unsafe { borrow_mut::<Surface>(ptr) }.height()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_SurfaceNative_nImageInfo(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jlong {
+    box_ptr(unsafe { borrow_mut::<Surface>(ptr) }.image_info())
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_SurfaceNative_nNotifyContentWillChange(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, mode: jint) {
+    unsafe { borrow_mut::<Surface>(ptr) }.notify_content_will_change(mode);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_SurfaceNative_nFlush(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) {
+    unsafe { borrow_mut::<Surface>(ptr) }.flush();
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_SurfaceNative_nDraw(
+    _env: JNIEnv,
+    _class: jni::objects::JClass,
+    ptr: jlong,
+    canvas_ptr: jlong,
+    x: jfloat,
+    y: jfloat,
+    paint_ptr: jlong,
+) {
+    let mut canvas = unsafe { Canvas::from_raw(canvas_ptr as *mut skialin_core::sys::SkCanvas) };
+    let paint = (paint_ptr != 0).then(|| unsafe { borrow::<Paint>(paint_ptr) });
+    unsafe { borrow_mut::<Surface>(ptr) }.draw(&mut canvas, x, y, paint);
 }

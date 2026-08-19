@@ -108,6 +108,37 @@ impl Surface {
         let ptr = unsafe { sys::skialin_bridge_Surface_makeImageSnapshot(self.0) };
         (!ptr.is_null()).then(|| Image(ptr))
     }
+
+    pub fn image_snapshot_area(&mut self, bounds: crate::IRect) -> Option<Image> {
+        let sk_bounds: sys::SkIRect = bounds.into();
+        let ptr = unsafe { sys::skialin_bridge_Surface_makeImageSnapshotArea(self.0, &sk_bounds) };
+        (!ptr.is_null()).then(|| Image(ptr))
+    }
+
+    pub fn width(&mut self) -> i32 {
+        self.image_info().width()
+    }
+
+    pub fn height(&mut self) -> i32 {
+        self.image_info().height()
+    }
+
+    pub fn image_info(&mut self) -> ImageInfo {
+        unsafe { ImageInfo::from_raw(sys::skialin_bridge_Surface_imageInfo(self.0)) }
+    }
+
+    pub fn notify_content_will_change(&mut self, mode: i32) {
+        unsafe { sys::skialin_bridge_Surface_notifyContentWillChange(self.0, mode) };
+    }
+
+    pub fn flush(&mut self) {
+        unsafe { sys::skialin_bridge_Surface_flush(self.0) };
+    }
+
+    pub fn draw(&mut self, canvas: &mut Canvas, x: f32, y: f32, paint: Option<&crate::Paint>) {
+        let paint_ptr = paint.map_or(std::ptr::null(), |p| &*p.0 as *const sys::SkPaint);
+        unsafe { sys::skialin_bridge_Surface_draw(self.0, canvas.ptr, x, y, paint_ptr) };
+    }
 }
 
 impl Drop for Surface {

@@ -13,6 +13,30 @@ class Surface private constructor(
         return if (ptr == 0L) null else Image(ptr)
     }
 
+    fun imageSnapshot(area: IRect): Image? {
+        val ptr = SurfaceNative.nMakeImageSnapshotArea(nativePtr, area.left, area.top, area.right, area.bottom)
+        return if (ptr == 0L) null else Image(ptr)
+    }
+
+    val width: Int get() = SurfaceNative.nWidth(nativePtr)
+
+    val height: Int get() = SurfaceNative.nHeight(nativePtr)
+
+    val imageInfo: ImageInfo get() = ImageInfo(SurfaceNative.nImageInfo(nativePtr))
+
+    fun notifyContentWillChange(mode: ContentChangeMode = ContentChangeMode.RETAIN) = SurfaceNative.nNotifyContentWillChange(nativePtr, mode.ordinal)
+
+    fun flush() = SurfaceNative.nFlush(nativePtr)
+
+    fun draw(
+        canvas: Canvas,
+        x: Float,
+        y: Float,
+        paint: Paint? = null,
+    ) = SurfaceNative.nDraw(nativePtr, canvas.ptr, x, y, paint?.nativePtr ?: 0L)
+
+    enum class ContentChangeMode { DISCARD, RETAIN }
+
     companion object {
         fun makeRasterN32Premul(
             width: Int,
@@ -164,4 +188,33 @@ private object SurfaceNative {
     external fun nGetCanvas(ptr: Long): Long
 
     external fun nMakeImageSnapshot(ptr: Long): Long
+
+    external fun nMakeImageSnapshotArea(
+        ptr: Long,
+        left: Int,
+        top: Int,
+        right: Int,
+        bottom: Int,
+    ): Long
+
+    external fun nWidth(ptr: Long): Int
+
+    external fun nHeight(ptr: Long): Int
+
+    external fun nImageInfo(ptr: Long): Long
+
+    external fun nNotifyContentWillChange(
+        ptr: Long,
+        mode: Int,
+    )
+
+    external fun nFlush(ptr: Long)
+
+    external fun nDraw(
+        ptr: Long,
+        canvasPtr: Long,
+        x: Float,
+        y: Float,
+        paintPtr: Long,
+    )
 }

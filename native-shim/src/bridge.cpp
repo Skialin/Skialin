@@ -206,6 +206,26 @@ SkImage* skialin_bridge_Surface_makeImageSnapshot(SkSurface* surface) {
     return surface->makeImageSnapshot().release();
 }
 
+SkImage* skialin_bridge_Surface_makeImageSnapshotArea(SkSurface* surface, const SkIRect* bounds) {
+    return surface->makeImageSnapshot(*bounds).release();
+}
+
+SkImageInfo* skialin_bridge_Surface_imageInfo(SkSurface* surface) {
+    return new SkImageInfo(surface->imageInfo());
+}
+
+void skialin_bridge_Surface_notifyContentWillChange(SkSurface* surface, int32_t mode) {
+    surface->notifyContentWillChange(static_cast<SkSurface::ContentChangeMode>(mode));
+}
+
+void skialin_bridge_Surface_flush(SkSurface* surface) {
+    skgpu::ganesh::FlushAndSubmit(surface);
+}
+
+void skialin_bridge_Surface_draw(SkSurface* surface, SkCanvas* canvas, float x, float y, const SkPaint* paint) {
+    surface->draw(canvas, x, y, SkSamplingOptions(), paint);
+}
+
 void skialin_bridge_Image_unref(SkImage* image) {
     SkSafeUnref(image);
 }
