@@ -149,12 +149,20 @@ fn link_skia(skia_dir: &Path) {
     println!("cargo:rustc-link-lib=static=harfbuzz");
     println!("cargo:rustc-link-lib=static=icu");
     println!("cargo:rustc-link-lib=static=skcms");
-    println!("cargo:rustc-link-lib=static=libpng");
+
+    let gn_lib_target = |name: &str| -> String {
+        if cfg!(target_os = "windows") {
+            name.to_string()
+        } else {
+            name.strip_prefix("lib").unwrap_or(name).to_string()
+        }
+    };
+    println!("cargo:rustc-link-lib=static={}", gn_lib_target("libpng"));
     println!("cargo:rustc-link-lib=static=zlib");
     println!("cargo:rustc-link-lib=static=expat");
-    println!("cargo:rustc-link-lib=static=libjpeg");
-    println!("cargo:rustc-link-lib=static=libwebp");
-    println!("cargo:rustc-link-lib=static=libwebp_sse41");
+    println!("cargo:rustc-link-lib=static={}", gn_lib_target("libjpeg"));
+    println!("cargo:rustc-link-lib=static={}", gn_lib_target("libwebp"));
+    println!("cargo:rustc-link-lib=static={}", gn_lib_target("libwebp_sse41"));
     println!("cargo:rustc-link-lib=static=wuffs");
 
     if cfg!(target_os = "windows") {
