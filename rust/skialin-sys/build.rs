@@ -78,6 +78,8 @@ fn main() {
         "SkReduceOrder.cpp",
     ];
 
+    let defines = skia_defines(&skia_lib_dir(&skia_dir));
+
     let shim_build = || {
         let mut build = cc::Build::new();
         build
@@ -87,15 +89,11 @@ fn main() {
             .include(&shim_include)
             .include(skia_dir.join("include/third_party/vulkan"))
             .define("SK_USE_INTERNAL_VULKAN_HEADERS", None)
-            // Skia's GN release build compiles with NDEBUG, which
-            // SkLoadUserConfig.h turns into SK_RELEASE. Without it these
-            // translation units get SK_DEBUG instead, so their copies of Skia's
-            // header-inline code carry asserts and debug-only members that
-            // libskia's do not -- an ODR mismatch that surfaced as
-            // "SkRefCnt.h: fatal error: fRefCnt was 0" once force_link.cpp
-            // started actually emitting those copies.
-            .define("NDEBUG", None)
             .warnings(false);
+        for define in &defines {
+            let mut parts = define.splitn(2, '=');
+            build.define(parts.next().unwrap(), parts.next());
+        }
         // Skia applies gn/skia/BUILD.gn's "no_rtti" config to every one of its
         // own targets, so libskia has no typeinfo for any Skia class. Deriving
         // from SkDrawable with RTTI on leaves the subclass typeinfo referencing
@@ -137,6 +135,7 @@ fn main() {
         .clang_arg(format!("-I{}", shim_include.display()))
         .clang_arg(format!("-I{}", skia_dir.join("include/third_party/vulkan").display()))
         .clang_arg("-DSK_USE_INTERNAL_VULKAN_HEADERS")
+        .clang_args(defines.iter().map(|define| format!("-D{define}")))
         .allowlist_type("Sk.*")
         .allowlist_function("Sk.*")
         .allowlist_function("skialin_bridge_.*")
@@ -158,10 +157,61 @@ fn main() {
     link_skia(&skia_dir);
 }
 
-fn link_skia(skia_dir: &Path) {
-    let lib_dir = env::var("SKIALIN_SKIA_LIB_DIR")
+fn skia_lib_dir(skia_dir: &Path) -> PathBuf {
+    env::var("SKIALIN_SKIA_LIB_DIR")
         .map(PathBuf::from)
-        .unwrap_or_else(|_| skia_dir.join("out/Release"));
+        .unwrap_or_else(|_| skia_dir.join("out/Release"))
+}
+
+/// The feature macros Skia compiled its own translation units with, read back
+/// out of the ninja files `gn gen` wrote. Guessing at this list by hand is how
+/// you end up with a shim whose idea of a Skia class disagrees with libskia's:
+/// `NDEBUG` alone decides `SK_DEBUG` vs `SK_RELEASE`, which adds `SkDEBUGCODE`
+/// members to public classes and asserts to their inline methods, and the
+/// backend switches (`SK_GANESH`, `SK_GRAPHITE`, `SK_GL`, `SK_VULKAN`) gate
+/// declarations inside public headers. `*_IMPLEMENTATION` is the one family to
+/// drop -- it flips `SK_API` from import to export, and only Skia's own build
+/// should set it.
+fn skia_defines(lib_dir: &Path) -> Vec<String> {
+    let ninja_files = [
+        "obj/skia.ninja",
+        "obj/modules/skparagraph/skparagraph.ninja",
+        "obj/modules/skshaper/skshaper.ninja",
+        "obj/modules/skunicode/skunicode_core.ninja",
+        "obj/modules/svg/svg.ninja",
+        "obj/modules/skottie/skottie.ninja",
+    ];
+
+    let mut defines: Vec<String> = Vec::new();
+    for ninja_file in ninja_files {
+        let path = lib_dir.join(ninja_file);
+        let Ok(text) = std::fs::read_to_string(&path) else { continue };
+        println!("cargo:rerun-if-changed={}", path.display());
+        let Some(line) = text.lines().find(|line| line.trim_start().starts_with("defines = ")) else { continue };
+        for define in line.split_whitespace().filter_map(|token| token.strip_prefix("-D")) {
+            let name = define.split('=').next().unwrap_or(define);
+            let ours = name == "NDEBUG" || name == "GPU_TEST_UTILS" || name.starts_with("SK");
+            if !ours || name.ends_with("_IMPLEMENTATION") {
+                continue;
+            }
+            if !defines.iter().any(|existing| existing == define) {
+                defines.push(define.to_string());
+            }
+        }
+    }
+
+    if !defines.iter().any(|define| define == "NDEBUG") {
+        println!(
+            "cargo:warning=skialin-sys: could not read Skia's own -D flags from {}; falling back to NDEBUG only, which risks an ABI mismatch with libskia",
+            lib_dir.display()
+        );
+        defines.push("NDEBUG".to_string());
+    }
+    defines
+}
+
+fn link_skia(skia_dir: &Path) {
+    let lib_dir = skia_lib_dir(skia_dir);
 
     if !lib_dir.is_dir() {
         println!(
