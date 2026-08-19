@@ -324,6 +324,48 @@ class Canvas internal constructor(
         paint: Paint,
     ) = CanvasNative.nDrawVertices(ptr, vertices.nativePtr, mode.ordinal, paint.nativePtr)
 
+    private fun drawMesh(
+        vertexMode: VertexMode,
+        positions: FloatArray,
+        colors: IntArray?,
+        texCoords: FloatArray?,
+        indices: ShortArray?,
+        blendMode: BlendMode,
+        paint: Paint,
+    ) {
+        val vertices =
+            Vertices.makeCopy(vertexMode, positions, texCoords ?: FloatArray(0), colors ?: IntArray(0), indices ?: ShortArray(0))
+                ?: return
+        vertices.use { drawVertices(it, blendMode, paint) }
+    }
+
+    fun drawTriangles(
+        positions: FloatArray,
+        colors: IntArray? = null,
+        texCoords: FloatArray? = null,
+        indices: ShortArray? = null,
+        blendMode: BlendMode = BlendMode.SRC_OVER,
+        paint: Paint,
+    ) = drawMesh(VertexMode.TRIANGLES, positions, colors, texCoords, indices, blendMode, paint)
+
+    fun drawTriangleStrip(
+        positions: FloatArray,
+        colors: IntArray? = null,
+        texCoords: FloatArray? = null,
+        indices: ShortArray? = null,
+        blendMode: BlendMode = BlendMode.SRC_OVER,
+        paint: Paint,
+    ) = drawMesh(VertexMode.TRIANGLE_STRIP, positions, colors, texCoords, indices, blendMode, paint)
+
+    fun drawTriangleFan(
+        positions: FloatArray,
+        colors: IntArray? = null,
+        texCoords: FloatArray? = null,
+        indices: ShortArray? = null,
+        blendMode: BlendMode = BlendMode.SRC_OVER,
+        paint: Paint,
+    ) = drawMesh(VertexMode.TRIANGLE_FAN, positions, colors, texCoords, indices, blendMode, paint)
+
     /** Concatenates a 4x4 local-to-device transform onto the canvas's current matrix. */
     fun concat44(matrix: M44) = CanvasNative.nConcat44(ptr, matrix.nativePtr)
 

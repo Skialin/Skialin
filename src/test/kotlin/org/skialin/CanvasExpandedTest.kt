@@ -179,6 +179,20 @@ class CanvasExpandedTest {
     }
 
     @Test
+    fun drawTriangleConveniencesDoNotCrash() {
+        Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
+            val canvas = surface.canvas()
+            Paint().use { paint ->
+                paint.color = Colors.GREEN
+                val positions = floatArrayOf(0f, 0f, 8f, 0f, 4f, 8f)
+                canvas.drawTriangles(positions, paint = paint)
+                canvas.drawTriangleStrip(positions, paint = paint)
+                canvas.drawTriangleFan(positions, paint = paint)
+            }
+        }
+    }
+
+    @Test
     fun saveLayerWithBackdropDrawsWithoutCrashing() {
         Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
             val canvas = surface.canvas()
