@@ -1,7 +1,10 @@
 use jni::sys::{jboolean, jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{BackendTexture, ColorSpace, ColorType, DirectContext, ImageInfo, Surface, SurfaceOrigin, SurfaceProps};
+use skialin_core::{
+    BackendTexture, ColorSpace, ColorType, DirectContext, GraphiteBackendTexture, GraphiteRecorder, ImageInfo, Surface, SurfaceOrigin,
+    SurfaceProps,
+};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 
@@ -78,6 +81,45 @@ pub extern "system" fn Java_org_skialin_SurfaceNative_nWrapBackendTexture(
     let color_space = (color_space_ptr != 0).then(|| unsafe { borrow::<ColorSpace>(color_space_ptr) });
     let surface_props = (surface_props_ptr != 0).then(|| unsafe { borrow::<SurfaceProps>(surface_props_ptr) });
     match Surface::wrap_backend_texture(context, backend_texture, origin, sample_cnt, color_type, color_space, surface_props) {
+        Some(surface) => box_ptr(surface),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_SurfaceNative_nMakeGraphiteRenderTarget(
+    _env: JNIEnv,
+    _class: jni::objects::JClass,
+    recorder_ptr: jlong,
+    info_ptr: jlong,
+    mipmapped: jboolean,
+    surface_props_ptr: jlong,
+) -> jlong {
+    let recorder = unsafe { borrow_mut::<GraphiteRecorder>(recorder_ptr) };
+    let info = unsafe { borrow::<ImageInfo>(info_ptr) };
+    let surface_props = (surface_props_ptr != 0).then(|| unsafe { borrow::<SurfaceProps>(surface_props_ptr) });
+    match Surface::new_graphite_render_target(recorder, info, mipmapped != 0, surface_props) {
+        Some(surface) => box_ptr(surface),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_SurfaceNative_nWrapGraphiteBackendTexture(
+    _env: JNIEnv,
+    _class: jni::objects::JClass,
+    recorder_ptr: jlong,
+    backend_texture_ptr: jlong,
+    color_type: jint,
+    color_space_ptr: jlong,
+    surface_props_ptr: jlong,
+) -> jlong {
+    let recorder = unsafe { borrow_mut::<GraphiteRecorder>(recorder_ptr) };
+    let backend_texture = unsafe { borrow::<GraphiteBackendTexture>(backend_texture_ptr) };
+    let color_type = crate::color_type::color_type_from_ordinal(color_type);
+    let color_space = (color_space_ptr != 0).then(|| unsafe { borrow::<ColorSpace>(color_space_ptr) });
+    let surface_props = (surface_props_ptr != 0).then(|| unsafe { borrow::<SurfaceProps>(surface_props_ptr) });
+    match Surface::wrap_graphite_backend_texture(recorder, backend_texture, color_type, color_space, surface_props) {
         Some(surface) => box_ptr(surface),
         None => 0,
     }

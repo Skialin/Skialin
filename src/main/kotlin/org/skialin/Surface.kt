@@ -61,6 +61,25 @@ class Surface private constructor(ptr: Long) : Managed(ptr, SurfaceNative::nRele
             )
             return if (ptr == 0L) null else Surface(ptr)
         }
+
+        fun makeGraphiteRenderTarget(recorder: GraphiteRecorder, info: ImageInfo, mipmapped: Boolean = false, surfaceProps: SurfaceProps? = null): Surface? {
+            val ptr = SurfaceNative.nMakeGraphiteRenderTarget(recorder.nativePtr, info.nativePtr, mipmapped, surfaceProps?.nativePtr ?: 0L)
+            return if (ptr == 0L) null else Surface(ptr)
+        }
+
+        /** [backendTexture] must outlive the returned Surface. */
+        fun wrapGraphiteBackendTexture(
+            recorder: GraphiteRecorder,
+            backendTexture: GraphiteBackendTexture,
+            colorType: ColorType,
+            colorSpace: ColorSpace? = null,
+            surfaceProps: SurfaceProps? = null,
+        ): Surface? {
+            val ptr = SurfaceNative.nWrapGraphiteBackendTexture(
+                recorder.nativePtr, backendTexture.nativePtr, colorType.ordinal, colorSpace?.nativePtr ?: 0L, surfaceProps?.nativePtr ?: 0L,
+            )
+            return if (ptr == 0L) null else Surface(ptr)
+        }
     }
 }
 
@@ -90,6 +109,8 @@ private object SurfaceNative {
         colorSpacePtr: Long,
         surfacePropsPtr: Long,
     ): Long
+    external fun nMakeGraphiteRenderTarget(recorderPtr: Long, infoPtr: Long, mipmapped: Boolean, surfacePropsPtr: Long): Long
+    external fun nWrapGraphiteBackendTexture(recorderPtr: Long, backendTexturePtr: Long, colorType: Int, colorSpacePtr: Long, surfacePropsPtr: Long): Long
     external fun nRelease(ptr: Long)
     external fun nGetCanvas(ptr: Long): Long
     external fun nMakeImageSnapshot(ptr: Long): Long

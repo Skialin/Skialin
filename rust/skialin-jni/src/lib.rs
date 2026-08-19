@@ -10,6 +10,8 @@ mod direct_context;
 mod font;
 mod font_collection;
 mod font_mgr;
+mod graphite_backend_texture;
+mod graphite_context;
 mod image;
 mod image_filter;
 mod image_info;
