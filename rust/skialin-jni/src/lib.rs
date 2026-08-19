@@ -27,6 +27,7 @@ mod path_effect;
 mod path_measure;
 mod picture;
 mod pixmap;
+mod render_node;
 mod rrect;
 mod runtime_effect;
 mod shader;

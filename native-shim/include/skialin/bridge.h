@@ -875,4 +875,11 @@ int32_t skialin_bridge_Picture_approximateOpCount(const SkPicture* picture, bool
 
 void skialin_bridge_Canvas_drawPicture(SkCanvas* canvas, const SkPicture* picture);
 
+/* Direct wrapper around SkShadowUtils::DrawShadow. zPlane/light are SkPoint3
+ * (x, y, z) as flat floats. flags matches SkShadowFlags. */
+void skialin_bridge_ShadowUtils_drawShadow(
+    SkCanvas* canvas, const SkPath* path, float zPlaneX, float zPlaneY, float zPlaneZ,
+    float lightX, float lightY, float lightZ, float lightRadius,
+    uint32_t ambientColor, uint32_t spotColor, uint32_t flags);
+
 }  // extern "C"

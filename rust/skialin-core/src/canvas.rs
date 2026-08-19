@@ -254,8 +254,36 @@ impl<'a> Canvas<'a> {
         unsafe { sys::skialin_bridge_Canvas_drawVertices(self.ptr, vertices.0, mode.into(), &*paint.0) };
     }
 
-    /// Concatenates a 4x4 local-to-device transform onto the canvas's current matrix.
     pub fn concat_44(&mut self, matrix: &M44) {
         unsafe { sys::skialin_bridge_Canvas_concat44(self.ptr, matrix.0) };
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn draw_shadow(
+        &mut self,
+        path: &Path,
+        z_plane: (f32, f32, f32),
+        light_pos: (f32, f32, f32),
+        light_radius: f32,
+        ambient_color: Color,
+        spot_color: Color,
+        flags: u32,
+    ) {
+        unsafe {
+            sys::skialin_bridge_ShadowUtils_drawShadow(
+                self.ptr,
+                path.0,
+                z_plane.0,
+                z_plane.1,
+                z_plane.2,
+                light_pos.0,
+                light_pos.1,
+                light_pos.2,
+                light_radius,
+                ambient_color,
+                spot_color,
+                flags,
+            )
+        };
     }
 }

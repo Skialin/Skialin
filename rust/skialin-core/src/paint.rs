@@ -300,6 +300,12 @@ impl Default for Paint {
     }
 }
 
+impl Clone for Paint {
+    fn clone(&self) -> Self {
+        Paint(crate::support::new_boxed_copy(sys::SkPaint_SkPaint2, &*self.0))
+    }
+}
+
 impl Drop for Paint {
     fn drop(&mut self) {
         unsafe { self.0.destruct() };

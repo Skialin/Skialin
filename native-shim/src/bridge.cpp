@@ -7,6 +7,8 @@
 #include "include/core/SkCanvas.h"
 #include "include/core/SkPicture.h"
 #include "include/core/SkPictureRecorder.h"
+#include "include/core/SkPoint3.h"
+#include "include/utils/SkShadowUtils.h"
 #include "include/core/SkImage.h"
 #include "include/core/SkData.h"
 #include "include/core/SkBitmap.h"
@@ -1814,6 +1816,15 @@ int32_t skialin_bridge_Picture_approximateOpCount(const SkPicture* picture, bool
 
 void skialin_bridge_Canvas_drawPicture(SkCanvas* canvas, const SkPicture* picture) {
     canvas->drawPicture(picture);
+}
+
+void skialin_bridge_ShadowUtils_drawShadow(
+    SkCanvas* canvas, const SkPath* path, float zPlaneX, float zPlaneY, float zPlaneZ,
+    float lightX, float lightY, float lightZ, float lightRadius,
+    uint32_t ambientColor, uint32_t spotColor, uint32_t flags) {
+    SkShadowUtils::DrawShadow(
+            canvas, *path, SkPoint3::Make(zPlaneX, zPlaneY, zPlaneZ), SkPoint3::Make(lightX, lightY, lightZ),
+            lightRadius, ambientColor, spotColor, flags);
 }
 
 }  // extern "C"

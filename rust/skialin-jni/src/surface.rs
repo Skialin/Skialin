@@ -1,10 +1,7 @@
 use jni::sys::{jboolean, jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{
-    BackendTexture, ColorSpace, ColorType, DirectContext, GraphiteBackendTexture, GraphiteRecorder, ImageInfo, Surface, SurfaceOrigin,
-    SurfaceProps,
-};
+use skialin_core::{BackendTexture, ColorSpace, DirectContext, GraphiteBackendTexture, GraphiteRecorder, ImageInfo, Surface, SurfaceOrigin, SurfaceProps};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 

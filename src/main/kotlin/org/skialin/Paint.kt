@@ -3,7 +3,10 @@ package org.skialin
 import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
-class Paint : Managed(PaintNative.nMake(), PaintNative::nRelease) {
+class Paint internal constructor(ptr: Long) : Managed(ptr, PaintNative::nRelease) {
+    constructor() : this(PaintNative.nMake())
+
+
     var color: Color
         get() = PaintNative.nGetColor(nativePtr)
         set(value) = PaintNative.nSetColor(nativePtr, value)
