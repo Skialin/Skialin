@@ -58,7 +58,7 @@ fn draws_and_clips_without_crashing() {
     let outer = RRect::make_rect_xy(Rect::new(0.0, 0.0, 32.0, 32.0), 4.0, 4.0);
     let inner = RRect::make_rect_xy(Rect::new(4.0, 4.0, 28.0, 28.0), 2.0, 2.0);
     let mut surface = Surface::new_raster_n32_premul(32, 32).unwrap();
-    let mut canvas = surface.canvas();
+    let mut canvas = surface.canvas;
     let mut paint = Paint::new();
     paint.set_color(color::RED);
     canvas.draw_rrect(&outer, &paint);

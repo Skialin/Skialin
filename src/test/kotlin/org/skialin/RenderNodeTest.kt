@@ -17,8 +17,8 @@ class RenderNodeTest {
                 node.endRecording()
 
                 Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-                    node.drawInto(surface.canvas())
-                    surface.imageSnapshot()!!.use { image ->
+                    node.drawInto(surface.canvas)
+                    surface.makeImageSnapshot()!!.use { image ->
                         val info = ImageInfo.make(16, 16, ColorType.N32, AlphaType.PREMUL)
                         val buffer = java.nio.ByteBuffer.allocateDirect(16 * 16 * 4)
                         assertTrueOrFail(image.readPixels(info, buffer, 16L * 4))
@@ -49,9 +49,9 @@ class RenderNodeTest {
                 node.endRecording()
 
                 Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-                    surface.canvas().clear(Colors.WHITE)
-                    node.drawInto(surface.canvas())
-                    surface.imageSnapshot()!!.use { image ->
+                    surface.canvas.clear(Colors.WHITE)
+                    node.drawInto(surface.canvas)
+                    surface.makeImageSnapshot()!!.use { image ->
                         val info = ImageInfo.make(16, 16, ColorType.N32, AlphaType.PREMUL)
                         val buffer = java.nio.ByteBuffer.allocateDirect(16 * 16 * 4)
                         assertTrueOrFail(image.readPixels(info, buffer, 16L * 4))

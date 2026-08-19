@@ -13,7 +13,7 @@ fn shader_effect_compiles_and_draws() {
     let mut paint = Paint::new();
     paint.set_shader(Some(&shader));
     let mut surface = Surface::new_raster_n32_premul(8, 8).unwrap();
-    let mut canvas = surface.canvas();
+    let mut canvas = surface.canvas;
     canvas.draw_rect(skialin_core::Rect::new(0.0, 0.0, 8.0, 8.0), &paint);
 }
 
@@ -33,7 +33,7 @@ fn shader_effect_with_uniform() {
     let mut paint = Paint::new();
     paint.set_shader(Some(&shader));
     let mut surface = Surface::new_raster_n32_premul(8, 8).unwrap();
-    let mut canvas = surface.canvas();
+    let mut canvas = surface.canvas;
     canvas.draw_rect(skialin_core::Rect::new(0.0, 0.0, 8.0, 8.0), &paint);
 }
 
@@ -78,6 +78,6 @@ fn shader_effect_with_child_shader() {
     let mut paint = Paint::new();
     paint.set_shader(Some(&shader));
     let mut surface = Surface::new_raster_n32_premul(8, 8).unwrap();
-    let mut canvas = surface.canvas();
+    let mut canvas = surface.canvas;
     canvas.draw_rect(skialin_core::Rect::new(0.0, 0.0, 8.0, 8.0), &paint);
 }

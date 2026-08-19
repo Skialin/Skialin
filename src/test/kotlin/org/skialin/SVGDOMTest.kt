@@ -19,8 +19,8 @@ class SVGDOMTest {
             assertEquals(16f to 16f, dom.containerSize)
 
             Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-                dom.render(surface.canvas())
-                surface.imageSnapshot()!!.use { image ->
+                dom.render(surface.canvas)
+                surface.makeImageSnapshot()!!.use { image ->
                     val info = ImageInfo.make(16, 16, ColorType.N32, AlphaType.PREMUL)
                     val buffer = java.nio.ByteBuffer.allocateDirect(16 * 16 * 4)
                     assertTrue(image.readPixels(info, buffer, 16L * 4))
@@ -41,7 +41,7 @@ class SVGDOMTest {
         SVGCanvas(Rect(0f, 0f, 16f, 16f)).use { svgCanvas ->
             Paint().use { paint ->
                 paint.color = Colors.RED
-                svgCanvas.canvas().drawRect(Rect(0f, 0f, 16f, 16f), paint)
+                svgCanvas.canvas.drawRect(Rect(0f, 0f, 16f, 16f), paint)
             }
             val xml = String(svgCanvas.finish())
             assertTrue(xml.contains("<svg"))

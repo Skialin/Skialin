@@ -19,8 +19,8 @@ class SurfaceExpandedTest {
     @Test
     fun imageSnapshotAreaCropsToBounds() {
         Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-            surface.canvas().clear(Colors.RED)
-            surface.imageSnapshot(IRect(0, 0, 4, 4))!!.use { image ->
+            surface.canvas.clear(Colors.RED)
+            surface.makeImageSnapshotArea(IRect(0, 0, 4, 4))!!.use { image ->
                 assertEquals(4, image.width)
                 assertEquals(4, image.height)
             }
@@ -38,8 +38,8 @@ class SurfaceExpandedTest {
     @Test
     fun drawOntoAnotherCanvasDoesNotCrash() {
         Surface.makeRasterN32Premul(4, 4)!!.use { src ->
-            src.canvas().clear(Colors.BLUE)
-            Surface.makeRasterN32Premul(8, 8)!!.use { dst -> src.draw(dst.canvas(), 1f, 1f) }
+            src.canvas.clear(Colors.BLUE)
+            Surface.makeRasterN32Premul(8, 8)!!.use { dst -> src.draw(dst.canvas, 1f, 1f) }
         }
     }
 }

@@ -129,7 +129,7 @@ pub extern "system" fn Java_org_skialin_SurfaceNative_nRelease(_env: JNIEnv, _cl
 
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_SurfaceNative_nGetCanvas(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jlong {
-    unsafe { borrow_mut::<Surface>(ptr) }.canvas().as_raw() as jlong
+    unsafe { borrow_mut::<Surface>(ptr) }.canvas.as_raw() as jlong
 }
 
 #[no_mangle]

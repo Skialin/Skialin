@@ -59,7 +59,7 @@ class RRectTest {
         RRect.makeRectXY(Rect(0f, 0f, 32f, 32f), 4f, 4f).use { outer ->
             RRect.makeRectXY(Rect(4f, 4f, 28f, 28f), 2f, 2f).use { inner ->
                 Surface.makeRasterN32Premul(32, 32)!!.use { surface ->
-                    val canvas = surface.canvas()
+                    val canvas = surface.canvas
                     Paint().use { paint ->
                         paint.color = Colors.RED
                         canvas.drawRRect(outer, paint)

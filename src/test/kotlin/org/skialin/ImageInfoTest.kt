@@ -59,8 +59,8 @@ class ImageInfoTest {
     fun surfaceMakeRasterWithImageInfo() {
         ImageInfo.makeN32Premul(20, 20).use { info ->
             Surface.makeRaster(info)!!.use { surface ->
-                surface.canvas().clear(Colors.WHITE)
-                surface.imageSnapshot()!!.use { image ->
+                surface.canvas.clear(Colors.WHITE)
+                surface.makeImageSnapshot()!!.use { image ->
                     assertEquals(20, image.width)
                     assertEquals(20, image.height)
                 }

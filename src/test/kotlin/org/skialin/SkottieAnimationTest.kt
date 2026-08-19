@@ -36,7 +36,7 @@ class SkottieAnimationTest {
             animation.seek(0.5f)
             animation.seekFrame(15.0)
             Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-                animation.render(surface.canvas(), Rect(0f, 0f, 16f, 16f))
+                animation.render(surface.canvas, Rect(0f, 0f, 16f, 16f))
             }
         }
     }

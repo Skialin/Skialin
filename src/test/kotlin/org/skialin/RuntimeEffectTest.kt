@@ -20,7 +20,7 @@ class RuntimeEffectTest {
                 Paint().use { paint ->
                     paint.setShader(shader)
                     Surface.makeRasterN32Premul(8, 8)!!.use { surface ->
-                        surface.canvas().drawRect(Rect(0f, 0f, 8f, 8f), paint)
+                        surface.canvas.drawRect(Rect(0f, 0f, 8f, 8f), paint)
                     }
                 }
             }
@@ -48,7 +48,7 @@ class RuntimeEffectTest {
                 Paint().use { paint ->
                     paint.setShader(shader)
                     Surface.makeRasterN32Premul(8, 8)!!.use { surface ->
-                        surface.canvas().drawRect(Rect(0f, 0f, 8f, 8f), paint)
+                        surface.canvas.drawRect(Rect(0f, 0f, 8f, 8f), paint)
                     }
                 }
             }
@@ -93,7 +93,7 @@ class RuntimeEffectTest {
                     Paint().use { paint ->
                         paint.setShader(shader)
                         Surface.makeRasterN32Premul(8, 8)!!.use { surface ->
-                            surface.canvas().drawRect(Rect(0f, 0f, 8f, 8f), paint)
+                            surface.canvas.drawRect(Rect(0f, 0f, 8f, 8f), paint)
                         }
                     }
                 }

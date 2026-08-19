@@ -16,7 +16,7 @@ class CanvasExpandedTest {
     @Test
     fun skewAndMatrixRoundtrip() {
         Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-            val canvas = surface.canvas()
+            val canvas = surface.canvas
             canvas.skew(0.1f, 0f)
             val matrix = canvas.getTotalMatrix()
             canvas.setMatrix(matrix)
@@ -29,7 +29,7 @@ class CanvasExpandedTest {
     @Test
     fun quickRejectRectOutsideClip() {
         Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-            val canvas = surface.canvas()
+            val canvas = surface.canvas
             canvas.clipRect(Rect(0f, 0f, 8f, 8f))
             assertTrue(canvas.quickReject(Rect(100f, 100f, 200f, 200f)))
             assertFalse(canvas.quickReject(Rect(0f, 0f, 4f, 4f)))
@@ -39,7 +39,7 @@ class CanvasExpandedTest {
     @Test
     fun drawRoundRectAndArc() {
         Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-            val canvas = surface.canvas()
+            val canvas = surface.canvas
             Paint().use { paint ->
                 paint.color = Colors.RED
                 canvas.drawRoundRect(Rect(0f, 0f, 16f, 16f), 2f, 2f, paint)
@@ -51,7 +51,7 @@ class CanvasExpandedTest {
     @Test
     fun drawPointsVariants() {
         Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-            val canvas = surface.canvas()
+            val canvas = surface.canvas
             Paint().use { paint ->
                 paint.color = Colors.BLUE
                 val pts = arrayOf(Point(1f, 1f), Point(5f, 5f), Point(10f, 2f))
@@ -66,7 +66,7 @@ class CanvasExpandedTest {
     fun drawImageAndImageRect() {
         makeImage().use { image ->
             Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-                val canvas = surface.canvas()
+                val canvas = surface.canvas
                 canvas.drawImage(image, 0f, 0f)
                 Paint().use { paint ->
                     paint.isAntiAlias = true
@@ -80,7 +80,7 @@ class CanvasExpandedTest {
     @Test
     fun saveLayerReturnsIncrementingCount() {
         Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-            val canvas = surface.canvas()
+            val canvas = surface.canvas
             val countBefore = canvas.save()
             val layerCount = canvas.saveLayer(Rect(0f, 0f, 16f, 16f))
             assertTrue(layerCount > countBefore)
@@ -92,7 +92,7 @@ class CanvasExpandedTest {
     fun drawImageNineDoesNotCrash() {
         makeImage().use { image ->
             Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-                val canvas = surface.canvas()
+                val canvas = surface.canvas
                 canvas.drawImageNine(image, IRect(1, 1, 3, 3), Rect(0f, 0f, 16f, 16f))
             }
         }
@@ -101,7 +101,7 @@ class CanvasExpandedTest {
     @Test
     fun drawPatchDoesNotCrash() {
         Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-            val canvas = surface.canvas()
+            val canvas = surface.canvas
             Paint().use { paint ->
                 paint.color = Colors.RED
                 val cubics =
@@ -128,14 +128,14 @@ class CanvasExpandedTest {
     @Test
     fun drawAnnotationDoesNotCrash() {
         Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-            surface.canvas().drawAnnotation(Rect(0f, 0f, 16f, 16f), "url", null)
+            surface.canvas.drawAnnotation(Rect(0f, 0f, 16f, 16f), "url", null)
         }
     }
 
     @Test
     fun newDrawAndTransformGapsDoNotCrash() {
         Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-            val canvas = surface.canvas()
+            val canvas = surface.canvas
             canvas.clear(Colors.WHITE)
             Paint().use { paint ->
                 paint.color = Colors.BLACK
@@ -155,7 +155,7 @@ class CanvasExpandedTest {
     @Test
     fun readWritePixelsRoundtrip() {
         Surface.makeRasterN32Premul(4, 4)!!.use { surface ->
-            val canvas = surface.canvas()
+            val canvas = surface.canvas
             canvas.clear(Colors.RED)
             Bitmap().use { bitmap ->
                 bitmap.allocPixels(4, 4)
@@ -172,7 +172,7 @@ class CanvasExpandedTest {
             val picture = recorder.finishRecordingAsPicture()!!
             picture.use {
                 Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-                    Paint().use { paint -> surface.canvas().drawPicture(picture, Matrix33.IDENTITY, paint) }
+                    Paint().use { paint -> surface.canvas.drawPicture(picture, Matrix33.IDENTITY, paint) }
                 }
             }
         }
@@ -181,7 +181,7 @@ class CanvasExpandedTest {
     @Test
     fun drawTriangleConveniencesDoNotCrash() {
         Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-            val canvas = surface.canvas()
+            val canvas = surface.canvas
             Paint().use { paint ->
                 paint.color = Colors.GREEN
                 val positions = floatArrayOf(0f, 0f, 8f, 0f, 4f, 8f)
@@ -209,7 +209,7 @@ class CanvasExpandedTest {
     @Test
     fun saveLayerWithBackdropDrawsWithoutCrashing() {
         Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-            val canvas = surface.canvas()
+            val canvas = surface.canvas
             canvas.clear(Colors.WHITE)
             ImageFilter.makeBlur(2f, 2f)!!.use { backdrop ->
                 val layerCount = canvas.saveLayer(Rect(0f, 0f, 16f, 16f), null, backdrop)

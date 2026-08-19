@@ -38,7 +38,7 @@ fn image_filter_blur_draws_without_crashing() {
     paint.set_image_filter(Some(&filter));
 
     let mut surface = Surface::new_raster_n32_premul(32, 32).unwrap();
-    let mut canvas = surface.canvas();
+    let mut canvas = surface.canvas;
     let mut builder = PathBuilder::new();
     builder.add_rect(skialin_core::Rect::new(4.0, 4.0, 20.0, 20.0), PathDirection::Clockwise);
     let path: Path = builder.snapshot();
@@ -75,6 +75,6 @@ fn mask_filter_blur_draws_without_crashing() {
     paint.set_mask_filter(Some(&filter));
 
     let mut surface = Surface::new_raster_n32_premul(32, 32).unwrap();
-    let mut canvas = surface.canvas();
+    let mut canvas = surface.canvas;
     canvas.draw_circle(skialin_core::Point::new(16.0, 16.0), 8.0, &paint);
 }

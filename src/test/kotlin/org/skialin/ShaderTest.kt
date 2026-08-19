@@ -23,7 +23,7 @@ class ShaderTest {
     @Test
     fun attachesToPaintAndDraws() {
         Surface.makeRasterN32Premul(8, 8)!!.use { surface ->
-            val canvas = surface.canvas()
+            val canvas = surface.canvas
             Paint().use { paint ->
                 Shader.makeColor(Colors.GREEN).use { shader ->
                     paint.setShader(shader)

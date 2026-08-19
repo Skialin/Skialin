@@ -19,7 +19,7 @@ class TextLineAndBlobBuilderTest {
             assertTrue(line.glyphs.isNotEmpty())
 
             Surface.makeRasterN32Premul(32, 32)!!.use { surface ->
-                Paint().use { paint -> surface.canvas().drawTextLine(line, 1f, 16f, paint) }
+                Paint().use { paint -> surface.canvas.drawTextLine(line, 1f, 16f, paint) }
             }
         }
     }
@@ -32,7 +32,7 @@ class TextLineAndBlobBuilderTest {
                 builder.appendRun(font, glyphs, 0f, 0f)
                 builder.build()!!.use { blob ->
                     Surface.makeRasterN32Premul(32, 32)!!.use { surface ->
-                        Paint().use { paint -> surface.canvas().drawTextBlob(blob, 1f, 16f, paint) }
+                        Paint().use { paint -> surface.canvas.drawTextBlob(blob, 1f, 16f, paint) }
                     }
                 }
             }

@@ -28,10 +28,10 @@ class DrawableTest {
     fun onDrawIsCalledAndPixelsMatch() {
         RedSquareDrawable().use { drawable ->
             Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-                surface.canvas().clear(Colors.WHITE)
-                surface.canvas().drawDrawable(drawable)
+                surface.canvas.clear(Colors.WHITE)
+                surface.canvas.drawDrawable(drawable)
 
-                surface.imageSnapshot()!!.use { image ->
+                surface.makeImageSnapshot()!!.use { image ->
                     val info = ImageInfo.make(16, 16, ColorType.N32, AlphaType.PREMUL)
                     val buffer = java.nio.ByteBuffer.allocateDirect(16 * 16 * 4)
                     image.readPixels(info, buffer, 16L * 4)
@@ -52,10 +52,10 @@ class DrawableTest {
                 canvas.drawDrawable(drawable)
                 recorder.finishRecordingAsPicture()!!.use { picture ->
                     Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-                        surface.canvas().clear(Colors.WHITE)
-                        picture.playback(surface.canvas())
+                        surface.canvas.clear(Colors.WHITE)
+                        picture.playback(surface.canvas)
 
-                        surface.imageSnapshot()!!.use { image ->
+                        surface.makeImageSnapshot()!!.use { image ->
                             val info = ImageInfo.make(16, 16, ColorType.N32, AlphaType.PREMUL)
                             val buffer = java.nio.ByteBuffer.allocateDirect(16 * 16 * 4)
                             image.readPixels(info, buffer, 16L * 4)

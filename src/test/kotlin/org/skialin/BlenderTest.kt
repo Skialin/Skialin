@@ -11,7 +11,7 @@ class BlenderTest {
                 paint.setBlender(blender)
                 assertNotNull(paint.getBlender())
                 Surface.makeRasterN32Premul(8, 8)!!.use { surface ->
-                    surface.canvas().drawRect(Rect(0f, 0f, 8f, 8f), paint)
+                    surface.canvas.drawRect(Rect(0f, 0f, 8f, 8f), paint)
                 }
             }
         }

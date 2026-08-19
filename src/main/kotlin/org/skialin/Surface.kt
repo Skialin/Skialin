@@ -3,17 +3,29 @@ package org.skialin
 import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
+/**
+ * [Surface] is responsible for managing the pixels that a canvas draws into.
+ * 
+ * The pixels can be allocated either in CPU memory (a raster surface) or on the GPU. [Surface] takes care of allocating a [Canvas] that will draw into the surface. Call [Surface.canvas] to use that canvas (but don't delete it, it is owned by the surface). [Surface] always has non-zero dimensions. If there is a request for a new surface, and either of the requested dimensions are zero, then nullptr will be returned.
+ * 
+ * Clients should not subclass [Surface] as there is a lot of internal machinery that is not publicly accessible.
+ */
 class Surface private constructor(
     ptr: Long,
 ) : Managed(ptr, SurfaceNative::nRelease) {
-    fun canvas(): Canvas = Canvas(SurfaceNative.nGetCanvas(nativePtr))
+    /**
+     * Returns [Canvas] that draws into [Surface].
+     * 
+     * Subsequent calls return the same [Canvas]. [Canvas] returned is managed and owned by [Surface], and is deleted when [Surface] is deleted.
+     */
+    val canvas get() = Canvas(SurfaceNative.nGetCanvas(nativePtr))
 
-    fun imageSnapshot(): Image? {
+    fun makeImageSnapshot(): Image? {
         val ptr = SurfaceNative.nMakeImageSnapshot(nativePtr)
         return if (ptr == 0L) null else Image(ptr)
     }
 
-    fun imageSnapshot(area: IRect): Image? {
+    fun makeImageSnapshotArea(area: IRect): Image? {
         val ptr = SurfaceNative.nMakeImageSnapshotArea(nativePtr, area.left, area.top, area.right, area.bottom)
         return if (ptr == 0L) null else Image(ptr)
     }
@@ -52,7 +64,6 @@ class Surface private constructor(
             return if (ptr == 0L) null else Surface(ptr)
         }
 
-        /** Must be called on the thread [context]'s GL context is current on. */
         fun makeRenderTarget(
             context: DirectContext,
             budgeted: Boolean,
@@ -77,12 +88,6 @@ class Surface private constructor(
             return if (ptr == 0L) null else Surface(ptr)
         }
 
-        /**
-         * Wraps an existing GPU texture as a render target instead of
-         * allocating a new one. Must be called on the thread [context]'s
-         * GL context is current on. [backendTexture] must outlive the
-         * returned Surface.
-         */
         fun wrapBackendTexture(
             context: DirectContext,
             backendTexture: BackendTexture,
@@ -115,7 +120,6 @@ class Surface private constructor(
             return if (ptr == 0L) null else Surface(ptr)
         }
 
-        /** [backendTexture] must outlive the returned Surface. */
         fun wrapGraphiteBackendTexture(
             recorder: GraphiteRecorder,
             backendTexture: GraphiteBackendTexture,

@@ -9,7 +9,7 @@ class SmokeTest {
     @Test
     fun drawsRedRectangleOntoRasterSurface() {
         Surface.makeRasterN32Premul(64, 64)!!.use { surface ->
-            val canvas = surface.canvas()
+            val canvas = surface.canvas
             canvas.clear(Colors.WHITE)
 
             Paint().use { paint ->
@@ -18,7 +18,7 @@ class SmokeTest {
                 canvas.drawRect(Rect(8f, 8f, 56f, 56f), paint)
             }
 
-            surface.imageSnapshot()!!.use { image ->
+            surface.makeImageSnapshot()!!.use { image ->
                 assertEquals(64, image.width)
                 assertEquals(64, image.height)
                 assertTrue(image.encodeToPng()!!.isNotEmpty())

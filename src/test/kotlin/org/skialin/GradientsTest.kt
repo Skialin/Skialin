@@ -32,7 +32,7 @@ class GradientsTest {
             Paint().use { paint ->
                 paint.setShader(shader)
                 Surface.makeRasterN32Premul(32, 32)!!.use { surface ->
-                    surface.canvas().drawRect(Rect(0f, 0f, 32f, 32f), paint)
+                    surface.canvas.drawRect(Rect(0f, 0f, 32f, 32f), paint)
                 }
             }
         }
@@ -49,7 +49,7 @@ class GradientsTest {
             Paint().use { paint ->
                 paint.setShader(shader)
                 Surface.makeRasterN32Premul(32, 32)!!.use { surface ->
-                    surface.canvas().drawRect(Rect(0f, 0f, 32f, 32f), paint)
+                    surface.canvas.drawRect(Rect(0f, 0f, 32f, 32f), paint)
                 }
             }
         }
@@ -61,7 +61,7 @@ class GradientsTest {
             Paint().use { paint ->
                 paint.setShader(shader)
                 Surface.makeRasterN32Premul(32, 32)!!.use { surface ->
-                    surface.canvas().drawRect(Rect(0f, 0f, 32f, 32f), paint)
+                    surface.canvas.drawRect(Rect(0f, 0f, 32f, 32f), paint)
                 }
             }
         }

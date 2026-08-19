@@ -61,7 +61,7 @@ class FiltersTest {
             Paint().use { paint ->
                 paint.setImageFilter(filter)
                 Surface.makeRasterN32Premul(32, 32)!!.use { surface ->
-                    surface.canvas().drawRect(Rect(4f, 4f, 20f, 20f), paint)
+                    surface.canvas.drawRect(Rect(4f, 4f, 20f, 20f), paint)
                 }
             }
         }
@@ -135,7 +135,7 @@ class FiltersTest {
             Paint().use { paint ->
                 paint.setMaskFilter(filter)
                 Surface.makeRasterN32Premul(32, 32)!!.use { surface ->
-                    surface.canvas().drawCircle(Point(16f, 16f), 8f, paint)
+                    surface.canvas.drawCircle(Point(16f, 16f), 8f, paint)
                 }
             }
         }

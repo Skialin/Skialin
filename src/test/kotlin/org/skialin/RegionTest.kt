@@ -53,7 +53,7 @@ class RegionTest {
             Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
                 Paint().use { paint ->
                     paint.color = Colors.RED
-                    val canvas = surface.canvas()
+                    val canvas = surface.canvas
                     canvas.drawRegion(region, paint)
                     canvas.clipRegion(region)
                 }

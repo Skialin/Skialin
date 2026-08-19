@@ -74,7 +74,7 @@ class M44Test {
         val colors = intArrayOf(Colors.RED, Colors.GREEN, Colors.BLUE)
         Vertices.makeCopy(VertexMode.TRIANGLES, positions, colors = colors)!!.use { vertices ->
             Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-                Paint().use { paint -> surface.canvas().drawVertices(vertices, BlendMode.SRC_OVER, paint) }
+                Paint().use { paint -> surface.canvas.drawVertices(vertices, BlendMode.SRC_OVER, paint) }
             }
         }
     }
@@ -117,7 +117,7 @@ class M44Test {
     @Test
     fun concat44DrawsWithoutCrashing() {
         Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
-            val canvas = surface.canvas()
+            val canvas = surface.canvas
             M44.makeTranslate(2f, 2f).use { canvas.concat44(it) }
             Paint().use { paint ->
                 paint.color = Colors.RED

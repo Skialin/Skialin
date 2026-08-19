@@ -56,7 +56,7 @@ class TextBlobTest {
                 Surface.makeRasterN32Premul(64, 64)!!.use { surface ->
                     Paint().use { paint ->
                         paint.color = Colors.BLACK
-                        surface.canvas().drawTextBlob(blob, 4f, 20f, paint)
+                        surface.canvas.drawTextBlob(blob, 4f, 20f, paint)
                     }
                 }
             }

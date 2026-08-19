@@ -14,7 +14,7 @@ fn dash_draws_without_crashing() {
     paint.set_path_effect(Some(&effect));
 
     let mut surface = Surface::new_raster_n32_premul(32, 32).unwrap();
-    let mut canvas = surface.canvas();
+    let mut canvas = surface.canvas;
     canvas.draw_path(&make_line_path(), &paint);
 }
 

@@ -122,7 +122,7 @@ class ParagraphTest {
                         builder.build().use { paragraph ->
                             paragraph.layout(200f)
                             Surface.makeRasterN32Premul(200, 100)!!.use { surface ->
-                                paragraph.paint(surface.canvas(), 0f, 0f)
+                                paragraph.paint(surface.canvas, 0f, 0f)
                             }
                         }
                     }
@@ -231,7 +231,7 @@ class ParagraphTest {
                                 paragraph.updateBackgroundPaint(0L, 5L, bg)
                             }
                             Surface.makeRasterN32Premul(200, 100)!!.use { surface ->
-                                paragraph.paint(surface.canvas(), 0f, 0f)
+                                paragraph.paint(surface.canvas, 0f, 0f)
                             }
                         }
                     }

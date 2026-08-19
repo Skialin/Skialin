@@ -10,7 +10,7 @@ fn make_image() -> Image {
 #[test]
 fn skew_and_matrix_roundtrip() {
     let mut surface = Surface::new_raster_n32_premul(16, 16).unwrap();
-    let mut canvas = surface.canvas();
+    let mut canvas = surface.canvas;
     canvas.skew(0.1, 0.0);
     let matrix = canvas.total_matrix();
     canvas.set_matrix(&matrix);
@@ -22,7 +22,7 @@ fn skew_and_matrix_roundtrip() {
 #[test]
 fn quick_reject_rect_outside_clip() {
     let mut surface = Surface::new_raster_n32_premul(16, 16).unwrap();
-    let mut canvas = surface.canvas();
+    let mut canvas = surface.canvas;
     canvas.clip_rect(Rect::new(0.0, 0.0, 8.0, 8.0), skialin_core::ClipOp::Intersect, false);
     assert!(canvas.quick_reject_rect(Rect::new(100.0, 100.0, 200.0, 200.0)));
     assert!(!canvas.quick_reject_rect(Rect::new(0.0, 0.0, 4.0, 4.0)));
@@ -31,7 +31,7 @@ fn quick_reject_rect_outside_clip() {
 #[test]
 fn draw_round_rect_and_arc() {
     let mut surface = Surface::new_raster_n32_premul(16, 16).unwrap();
-    let mut canvas = surface.canvas();
+    let mut canvas = surface.canvas;
     let mut paint = Paint::new();
     paint.set_color(color::RED);
     canvas.draw_round_rect(Rect::new(0.0, 0.0, 16.0, 16.0), 2.0, 2.0, &paint);
@@ -41,7 +41,7 @@ fn draw_round_rect_and_arc() {
 #[test]
 fn draw_points_variants() {
     let mut surface = Surface::new_raster_n32_premul(16, 16).unwrap();
-    let mut canvas = surface.canvas();
+    let mut canvas = surface.canvas;
     let mut paint = Paint::new();
     paint.set_color(color::BLUE);
     let pts = [Point::new(1.0, 1.0), Point::new(5.0, 5.0), Point::new(10.0, 2.0)];
@@ -54,7 +54,7 @@ fn draw_points_variants() {
 fn draw_image_and_image_rect() {
     let image = make_image();
     let mut surface = Surface::new_raster_n32_premul(16, 16).unwrap();
-    let mut canvas = surface.canvas();
+    let mut canvas = surface.canvas;
     canvas.draw_image(&image, 0.0, 0.0, SamplingOptions::default(), None);
 
     let mut paint = Paint::new();
@@ -66,7 +66,7 @@ fn draw_image_and_image_rect() {
 #[test]
 fn save_layer_returns_incrementing_count() {
     let mut surface = Surface::new_raster_n32_premul(16, 16).unwrap();
-    let mut canvas = surface.canvas();
+    let mut canvas = surface.canvas;
     let count_before = canvas.save();
     let layer_count = canvas.save_layer(Some(Rect::new(0.0, 0.0, 16.0, 16.0)), None);
     assert!(layer_count > count_before);
@@ -76,7 +76,7 @@ fn save_layer_returns_incrementing_count() {
 #[test]
 fn save_layer_with_backdrop_draws_without_crashing() {
     let mut surface = Surface::new_raster_n32_premul(16, 16).unwrap();
-    let mut canvas = surface.canvas();
+    let mut canvas = surface.canvas;
     canvas.clear(color::WHITE);
     let backdrop = ImageFilter::blur(2.0, 2.0, TileMode::Decal, None).unwrap();
     let layer_count = canvas.save_layer_with_backdrop(Some(Rect::new(0.0, 0.0, 16.0, 16.0)), None, Some(&backdrop), 0);

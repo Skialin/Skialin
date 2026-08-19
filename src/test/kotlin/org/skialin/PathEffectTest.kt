@@ -18,7 +18,7 @@ class PathEffectTest {
                 paint.style = PaintStyle.STROKE
                 paint.setPathEffect(effect)
                 Surface.makeRasterN32Premul(32, 32)!!.use { surface ->
-                    surface.canvas().drawPath(makeSquarePath(), paint)
+                    surface.canvas.drawPath(makeSquarePath(), paint)
                 }
             }
         }

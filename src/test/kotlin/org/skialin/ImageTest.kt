@@ -11,16 +11,16 @@ import kotlin.test.assertTrue
 class ImageTest {
     private fun redSquareImage(): Image {
         val surface = Surface.makeRasterN32Premul(16, 16)!!
-        surface.canvas().clear(Colors.RED)
-        return surface.imageSnapshot()!!
+        surface.canvas.clear(Colors.RED)
+        return surface.makeImageSnapshot()!!
     }
 
     /** isOpaque reflects the alpha-type tag, not actual pixel content. */
     private fun opaqueRedSquareImage(): Image {
         val info = ImageInfo.make(16, 16, ColorType.N32, AlphaType.OPAQUE)
         val surface = Surface.makeRaster(info)!!
-        surface.canvas().clear(Colors.RED)
-        return surface.imageSnapshot()!!
+        surface.canvas.clear(Colors.RED)
+        return surface.makeImageSnapshot()!!
     }
 
     @Test

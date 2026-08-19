@@ -28,7 +28,7 @@ fn renders_without_crashing() {
     animation.seek_frame(15.0);
 
     let mut surface = Surface::new_raster_n32_premul(16, 16).unwrap();
-    animation.render(&mut surface.canvas(), Some(Rect::new(0.0, 0.0, 16.0, 16.0)));
+    animation.render(&mut surface.canvas, Some(Rect::new(0.0, 0.0, 16.0, 16.0)));
 }
 
 #[test]

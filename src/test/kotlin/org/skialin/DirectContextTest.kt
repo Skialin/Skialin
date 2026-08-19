@@ -57,11 +57,11 @@ class DirectContextTest {
                         surfaceOrigin = SurfaceOrigin.TOP_LEFT,
                     ) ?: fail("makeRenderTarget failed")
                 surface.use {
-                    surface.canvas().clear(Colors.RED)
+                    surface.canvas.clear(Colors.RED)
                     context.flush()
                     context.submit(syncCpu = true)
 
-                    surface.imageSnapshot()!!.use { image ->
+                    surface.makeImageSnapshot()!!.use { image ->
                         assertTrue(image.isTextureBacked)
 
                         val buffer = ByteBuffer.allocateDirect(16 * 16 * 4)
