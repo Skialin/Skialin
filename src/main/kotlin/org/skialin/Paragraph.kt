@@ -89,6 +89,19 @@ class Paragraph internal constructor(
 
     /** Layout metrics for every line, in order. */
     fun lineMetrics(): List<LineMetrics> = (0 until lineNumber.toInt()).mapNotNull { lineMetricsAt(it) }
+
+    fun getRectsForRange(
+        start: Int,
+        end: Int,
+        heightStyle: RectHeightStyle = RectHeightStyle.TIGHT,
+        widthStyle: RectWidthStyle = RectWidthStyle.TIGHT,
+    ): List<TextBox> {
+        val flat = ParagraphNative.nGetRectsForRange(nativePtr, start, end, heightStyle.ordinal, widthStyle.ordinal)
+        return (0 until flat.size / 5).map { i ->
+            val direction = if (flat[i * 5 + 4] > 0.5f) ParagraphStyle.TextDirection.LTR else ParagraphStyle.TextDirection.RTL
+            TextBox(Rect(flat[i * 5], flat[i * 5 + 1], flat[i * 5 + 2], flat[i * 5 + 3]), direction)
+        }
+    }
 }
 
 private object ParagraphNative {
@@ -146,4 +159,12 @@ private object ParagraphNative {
         lineNumber: Int,
         out: DoubleArray,
     ): Boolean
+
+    external fun nGetRectsForRange(
+        ptr: Long,
+        start: Int,
+        end: Int,
+        heightStyle: Int,
+        widthStyle: Int,
+    ): FloatArray
 }

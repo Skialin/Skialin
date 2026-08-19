@@ -86,7 +86,7 @@ pub use matrix::Matrix;
 pub use mipmap_mode::MipmapMode;
 pub use paint::{BlendMode, Paint, PaintStyle, StrokeCap, StrokeJoin};
 pub use picture::{Picture, PictureRecorder};
-pub use paragraph::{Affinity, GlyphPosition, LineMetrics, Paragraph};
+pub use paragraph::{Affinity, GlyphPosition, LineMetrics, Paragraph, RectHeightStyle, RectWidthStyle, TextBox};
 pub use paragraph_builder::{ParagraphBuilder, PlaceholderAlignment, PlaceholderBaseline, PlaceholderStyle};
 pub use paragraph_style::{ParagraphStyle, TextAlign, TextDirection, TextHeightBehavior};
 pub use path::{AddPathMode, Path, PathBuilder, PathDirection, PathFillType, PathOp};

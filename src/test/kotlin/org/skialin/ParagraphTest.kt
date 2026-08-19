@@ -128,4 +128,28 @@ class ParagraphTest {
             }
         }
     }
+
+    @Test
+    fun getRectsForRangeReturnsBoxesForText() {
+        fontCollection().use { collection ->
+            ParagraphStyle().use { style ->
+                ParagraphBuilder(style, collection).use { builder ->
+                    TextStyle().use { textStyle ->
+                        textStyle.fontSize = 18f
+                        textStyle.color = Colors.BLACK
+                        builder.pushStyle(textStyle)
+                        builder.addText("Hello, world!")
+                        builder.pop()
+
+                        builder.build().use { paragraph ->
+                            paragraph.layout(200f)
+                            val boxes = paragraph.getRectsForRange(0, 5)
+                            assertTrue(boxes.isNotEmpty())
+                            boxes.forEach { assertTrue(it.rect.right > it.rect.left) }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

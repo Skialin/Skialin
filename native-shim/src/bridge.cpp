@@ -1296,6 +1296,23 @@ bool skialin_bridge_Paragraph_getLineMetricsAt(
     return true;
 }
 
+int32_t skialin_bridge_Paragraph_getRectsForRange(
+    skia::textlayout::Paragraph* paragraph, uint32_t start, uint32_t end, int32_t rectHeightStyle, int32_t rectWidthStyle, float* outBuf, int32_t capacity) {
+    std::vector<skia::textlayout::TextBox> boxes = paragraph->getRectsForRange(
+        start, end, static_cast<skia::textlayout::RectHeightStyle>(rectHeightStyle), static_cast<skia::textlayout::RectWidthStyle>(rectWidthStyle));
+    int32_t count = static_cast<int32_t>(boxes.size());
+    int32_t toWrite = count < capacity ? count : capacity;
+    for (int32_t i = 0; i < toWrite; i++) {
+        const skia::textlayout::TextBox& box = boxes[i];
+        outBuf[i * 5 + 0] = box.rect.fLeft;
+        outBuf[i * 5 + 1] = box.rect.fTop;
+        outBuf[i * 5 + 2] = box.rect.fRight;
+        outBuf[i * 5 + 3] = box.rect.fBottom;
+        outBuf[i * 5 + 4] = box.direction == skia::textlayout::TextDirection::kLtr ? 1.0f : 0.0f;
+    }
+    return count;
+}
+
 void skialin_bridge_ColorFilter_unref(SkColorFilter* filter) {
     SkSafeUnref(filter);
 }

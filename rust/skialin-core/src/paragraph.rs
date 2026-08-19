@@ -149,6 +149,65 @@ impl Paragraph {
         let count = self.line_number();
         (0..count as i32).filter_map(|i| self.line_metrics_at(i)).collect()
     }
+
+    pub fn rects_for_range(&mut self, start: u32, end: u32, height_style: RectHeightStyle, width_style: RectWidthStyle) -> Vec<TextBox> {
+        let count = unsafe { sys::skialin_bridge_Paragraph_getRectsForRange(self.0, start, end, height_style.into(), width_style.into(), std::ptr::null_mut(), 0) };
+        if count <= 0 {
+            return Vec::new();
+        }
+        let mut buf = vec![0f32; count as usize * 5];
+        unsafe { sys::skialin_bridge_Paragraph_getRectsForRange(self.0, start, end, height_style.into(), width_style.into(), buf.as_mut_ptr(), count) };
+        buf.chunks_exact(5)
+            .map(|c| TextBox {
+                rect: crate::Rect::new(c[0], c[1], c[2], c[3]),
+                direction: if c[4] > 0.5 { crate::TextDirection::Ltr } else { crate::TextDirection::Rtl },
+            })
+            .collect()
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RectHeightStyle {
+    Tight,
+    Max,
+    IncludeLineSpacingMiddle,
+    IncludeLineSpacingTop,
+    IncludeLineSpacingBottom,
+    Strut,
+}
+
+impl From<RectHeightStyle> for i32 {
+    fn from(style: RectHeightStyle) -> Self {
+        match style {
+            RectHeightStyle::Tight => 0,
+            RectHeightStyle::Max => 1,
+            RectHeightStyle::IncludeLineSpacingMiddle => 2,
+            RectHeightStyle::IncludeLineSpacingTop => 3,
+            RectHeightStyle::IncludeLineSpacingBottom => 4,
+            RectHeightStyle::Strut => 5,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RectWidthStyle {
+    Tight,
+    Max,
+}
+
+impl From<RectWidthStyle> for i32 {
+    fn from(style: RectWidthStyle) -> Self {
+        match style {
+            RectWidthStyle::Tight => 0,
+            RectWidthStyle::Max => 1,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TextBox {
+    pub rect: crate::Rect,
+    pub direction: crate::TextDirection,
 }
 
 impl Drop for Paragraph {

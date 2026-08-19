@@ -795,6 +795,13 @@ bool skialin_bridge_Paragraph_getLineMetricsAt(
     size_t* startIndex, size_t* endIndex, size_t* endExcludingWhitespaces, size_t* endIncludingNewline, int32_t* hardBreak,
     double* ascent, double* descent, double* unscaledAscent, double* height, double* width, double* left, double* baseline);
 
+/* Writes up to capacity boxes (5 floats each: left,top,right,bottom,direction
+ * where direction is 0=rtl/1=ltr) into outBuf; returns the true box count
+ * (may exceed capacity). rectHeightStyle/rectWidthStyle match
+ * skia::textlayout::RectHeightStyle/RectWidthStyle's declaration order. */
+int32_t skialin_bridge_Paragraph_getRectsForRange(
+    skia::textlayout::Paragraph* paragraph, uint32_t start, uint32_t end, int32_t rectHeightStyle, int32_t rectWidthStyle, float* outBuf, int32_t capacity);
+
 /* ColorFilter: ref-owned by the caller. Free with skialin_bridge_ColorFilter_unref.
  * Routed entirely through the bridge, not direct bindgen calls: bindgen
  * doesn't generate instance methods for SkColorFilter (its SkFlattenable

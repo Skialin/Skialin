@@ -1,7 +1,26 @@
 use jni::sys::{jboolean, jfloat, jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{Affinity, Paragraph};
+use skialin_core::{Affinity, Paragraph, RectHeightStyle, RectWidthStyle, TextDirection};
+
+fn rect_height_style_from_ordinal(ordinal: jint) -> RectHeightStyle {
+    match ordinal {
+        1 => RectHeightStyle::Max,
+        2 => RectHeightStyle::IncludeLineSpacingMiddle,
+        3 => RectHeightStyle::IncludeLineSpacingTop,
+        4 => RectHeightStyle::IncludeLineSpacingBottom,
+        5 => RectHeightStyle::Strut,
+        _ => RectHeightStyle::Tight,
+    }
+}
+
+fn rect_width_style_from_ordinal(ordinal: jint) -> RectWidthStyle {
+    if ordinal == 1 {
+        RectWidthStyle::Max
+    } else {
+        RectWidthStyle::Tight
+    }
+}
 
 use crate::util::{borrow, borrow_mut, drop_ptr};
 
@@ -121,4 +140,34 @@ pub extern "system" fn Java_org_skialin_ParagraphNative_nLineMetricsAt(env: JNIE
         }
         None => false as jboolean,
     }
+}
+
+#[allow(clippy::too_many_arguments)]
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_ParagraphNative_nGetRectsForRange(
+    env: JNIEnv,
+    _class: jni::objects::JClass,
+    ptr: jlong,
+    start: jint,
+    end: jint,
+    height_style: jint,
+    width_style: jint,
+) -> jni::sys::jfloatArray {
+    let boxes = unsafe { borrow_mut::<Paragraph>(ptr) }.rects_for_range(
+        start as u32,
+        end as u32,
+        rect_height_style_from_ordinal(height_style),
+        rect_width_style_from_ordinal(width_style),
+    );
+    let mut flat = Vec::with_capacity(boxes.len() * 5);
+    for b in boxes {
+        flat.push(b.rect.left);
+        flat.push(b.rect.top);
+        flat.push(b.rect.right);
+        flat.push(b.rect.bottom);
+        flat.push(if b.direction == TextDirection::Ltr { 1.0 } else { 0.0 });
+    }
+    let array = env.new_float_array(flat.len() as i32).expect("new_float_array");
+    env.set_float_array_region(&array, 0, &flat).expect("set_float_array_region");
+    array.into_raw()
 }
