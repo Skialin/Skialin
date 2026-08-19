@@ -1,10 +1,10 @@
 use jni::sys::{jboolean, jbyteArray, jfloatArray, jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{Data, FilterMode, Image, ImageInfo, MipmapMode, Pixmap, SamplingOptions, TileMode};
+use skialin_core::{BackendTexture, Data, DirectContext, FilterMode, GraphiteBackendTexture, GraphiteRecorder, Image, ImageInfo, MipmapMode, Pixmap, SamplingOptions, SurfaceOrigin, TileMode};
 
 use crate::color_space::color_space_ptr_from_jlong;
-use crate::color_type::{alpha_type_to_ordinal, color_type_from_ordinal, color_type_to_ordinal};
+use crate::color_type::{alpha_type_from_ordinal, alpha_type_to_ordinal, color_type_from_ordinal, color_type_to_ordinal};
 use crate::util::{borrow, box_ptr, drop_ptr};
 
 fn tile_mode_from_ordinal(ordinal: jint) -> TileMode {
@@ -376,6 +376,50 @@ pub extern "system" fn Java_org_skialin_ImageNative_nReinterpretColorSpace(_env:
         None => return 0,
     };
     match unsafe { borrow::<Image>(ptr) }.reinterpret_color_space(target) {
+        Some(image) => box_ptr(image),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+#[allow(clippy::too_many_arguments)]
+pub extern "system" fn Java_org_skialin_ImageNative_nAdoptTextureFrom(
+    _env: JNIEnv,
+    _class: jni::objects::JClass,
+    context_ptr: jlong,
+    backend_texture_ptr: jlong,
+    texture_origin: jint,
+    color_type: jint,
+    alpha_type: jint,
+    color_space_ptr: jlong,
+) -> jlong {
+    let context = unsafe { crate::util::borrow_mut::<DirectContext>(context_ptr) };
+    let backend_texture = unsafe { borrow::<BackendTexture>(backend_texture_ptr) };
+    let origin = if texture_origin == 0 { SurfaceOrigin::TopLeft } else { SurfaceOrigin::BottomLeft };
+    let color_space = color_space_ptr_from_jlong(color_space_ptr);
+    match Image::adopt_texture_from(context, backend_texture, origin, color_type_from_ordinal(color_type), alpha_type_from_ordinal(alpha_type), color_space) {
+        Some(image) => box_ptr(image),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+#[allow(clippy::too_many_arguments)]
+pub extern "system" fn Java_org_skialin_ImageNative_nWrapGraphiteTexture(
+    _env: JNIEnv,
+    _class: jni::objects::JClass,
+    recorder_ptr: jlong,
+    backend_texture_ptr: jlong,
+    alpha_type: jint,
+    color_space_ptr: jlong,
+    origin: jint,
+    generate_mipmaps_from_base: jboolean,
+) -> jlong {
+    let recorder = unsafe { crate::util::borrow_mut::<GraphiteRecorder>(recorder_ptr) };
+    let backend_texture = unsafe { borrow::<GraphiteBackendTexture>(backend_texture_ptr) };
+    let color_space = color_space_ptr_from_jlong(color_space_ptr);
+    let origin = if origin == 0 { SurfaceOrigin::TopLeft } else { SurfaceOrigin::BottomLeft };
+    match Image::wrap_graphite_texture(recorder, backend_texture, alpha_type_from_ordinal(alpha_type), color_space, origin, generate_mipmaps_from_base != 0) {
         Some(image) => box_ptr(image),
         None => 0,
     }

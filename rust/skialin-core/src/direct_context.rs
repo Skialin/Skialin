@@ -16,6 +16,17 @@ impl From<SurfaceOrigin> for sys::GrSurfaceOrigin {
     }
 }
 
+/// skgpu::Origin has the same declaration order as GrSurfaceOrigin but is a
+/// distinct type (used by Graphite APIs).
+impl From<SurfaceOrigin> for sys::skgpu::Origin {
+    fn from(origin: SurfaceOrigin) -> Self {
+        match origin {
+            SurfaceOrigin::TopLeft => 0,
+            SurfaceOrigin::BottomLeft => 1,
+        }
+    }
+}
+
 /// Wraps a GrDirectContext (Ganesh + OpenGL or Vulkan). The caller must make
 /// a native GL context current on this thread first for `new_gl*`; this type
 /// doesn't create one. Thread-affine after creation for GL: every method

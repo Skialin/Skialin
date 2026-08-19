@@ -1,4 +1,7 @@
-use crate::{sys, AlphaType, Bitmap, ColorSpace, ColorType, Data, FilterMode, IRect, ISize, ImageInfo, Matrix, MipmapMode, Pixmap, SamplingOptions, Shader, TileMode};
+use crate::{
+    sys, AlphaType, BackendTexture, Bitmap, ColorSpace, ColorType, Data, DirectContext, FilterMode, GraphiteBackendTexture, GraphiteRecorder,
+    IRect, ISize, ImageInfo, Matrix, MipmapMode, Pixmap, SamplingOptions, Shader, SurfaceOrigin, TileMode,
+};
 
 impl From<TileMode> for sys::SkTileMode {
     fn from(mode: TileMode) -> Self {
@@ -44,6 +47,48 @@ impl Image {
     /// A deep copy of `pixmap`'s pixels.
     pub fn from_pixmap_copy(pixmap: &Pixmap) -> Option<Self> {
         unsafe { Self::from_raw(sys::skialin_bridge_Image_RasterFromPixmapCopy(pixmap.as_raw())) }
+    }
+
+    pub fn adopt_texture_from(
+        context: &mut DirectContext,
+        backend_texture: &BackendTexture,
+        texture_origin: SurfaceOrigin,
+        color_type: ColorType,
+        alpha_type: AlphaType,
+        color_space: Option<&ColorSpace>,
+    ) -> Option<Self> {
+        let color_space_ptr = color_space.map_or(std::ptr::null_mut(), |cs| cs.0);
+        unsafe {
+            Self::from_raw(sys::skialin_bridge_Image_AdoptTextureFrom(
+                context.0,
+                backend_texture.0,
+                texture_origin.into(),
+                color_type.into(),
+                alpha_type.into(),
+                color_space_ptr,
+            ))
+        }
+    }
+
+    pub fn wrap_graphite_texture(
+        recorder: &mut GraphiteRecorder,
+        backend_texture: &GraphiteBackendTexture,
+        alpha_type: AlphaType,
+        color_space: Option<&ColorSpace>,
+        origin: SurfaceOrigin,
+        generate_mipmaps_from_base: bool,
+    ) -> Option<Self> {
+        let color_space_ptr = color_space.map_or(std::ptr::null_mut(), |cs| cs.0);
+        unsafe {
+            Self::from_raw(sys::skialin_bridge_Image_WrapGraphiteTexture(
+                recorder.0,
+                backend_texture.0,
+                alpha_type.into(),
+                color_space_ptr,
+                origin.into(),
+                generate_mipmaps_from_base,
+            ))
+        }
     }
 
     /// `pixels`' bytes become this image's pixel storage; no copy is made.

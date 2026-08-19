@@ -115,6 +115,40 @@ class Image internal constructor(ptr: Long) : Managed(ptr, ImageNative::nRelease
          */
         fun makeFromData(info: ImageInfo, pixels: Data, rowBytes: Long): Image? =
             ImageNative.nFromData(info.nativePtr, pixels.nativePtr, rowBytes).takeIf { it != 0L }?.let { Image(it) }
+
+        /**
+         * Wraps [backendTexture], transferring ownership to Skia: the
+         * texture is destroyed when the returned image is. `backendTexture`
+         * must not be used afterward.
+         */
+        fun adoptTextureFrom(
+            context: DirectContext,
+            backendTexture: BackendTexture,
+            textureOrigin: SurfaceOrigin,
+            colorType: ColorType,
+            alphaType: AlphaType,
+            colorSpace: ColorSpace? = null,
+        ): Image? {
+            val ptr = ImageNative.nAdoptTextureFrom(
+                context.nativePtr, backendTexture.nativePtr, textureOrigin.ordinal, colorType.ordinal, alphaType.ordinal, colorSpace?.nativePtr ?: 0L,
+            )
+            return if (ptr == 0L) null else Image(ptr)
+        }
+
+        /** [backendTexture] must outlive the returned image. */
+        fun wrapGraphiteTexture(
+            recorder: GraphiteRecorder,
+            backendTexture: GraphiteBackendTexture,
+            alphaType: AlphaType,
+            origin: SurfaceOrigin,
+            colorSpace: ColorSpace? = null,
+            generateMipmapsFromBase: Boolean = false,
+        ): Image? {
+            val ptr = ImageNative.nWrapGraphiteTexture(
+                recorder.nativePtr, backendTexture.nativePtr, alphaType.ordinal, colorSpace?.nativePtr ?: 0L, origin.ordinal, generateMipmapsFromBase,
+            )
+            return if (ptr == 0L) null else Image(ptr)
+        }
     }
 }
 
@@ -168,4 +202,7 @@ private object ImageNative {
     external fun nMakeColorSpace(ptr: Long, targetPtr: Long, mipmapped: Boolean): Long
     external fun nMakeColorTypeAndColorSpace(ptr: Long, targetColorType: Int, targetColorSpacePtr: Long, mipmapped: Boolean): Long
     external fun nReinterpretColorSpace(ptr: Long, targetPtr: Long): Long
+
+    external fun nAdoptTextureFrom(contextPtr: Long, backendTexturePtr: Long, textureOrigin: Int, colorType: Int, alphaType: Int, colorSpacePtr: Long): Long
+    external fun nWrapGraphiteTexture(recorderPtr: Long, backendTexturePtr: Long, alphaType: Int, colorSpacePtr: Long, origin: Int, generateMipmapsFromBase: Boolean): Long
 }

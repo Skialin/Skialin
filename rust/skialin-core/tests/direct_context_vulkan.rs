@@ -4,7 +4,7 @@
 
 use ash::vk;
 use skialin_core::sys;
-use skialin_core::{AlphaType, BackendTexture, ColorType, DirectContext, ImageInfo, Surface, SurfaceOrigin};
+use skialin_core::{AlphaType, BackendTexture, ColorType, DirectContext, Image, ImageInfo, Surface, SurfaceOrigin};
 use std::ffi::{c_char, c_void};
 
 // Raw-pointer signatures (rather than ash's typed `vk::Instance`/`vk::Device`)
@@ -208,4 +208,58 @@ fn wrap_backend_texture_round_trip() {
         fixture.device.destroy_image(image, None);
         fixture.device.free_memory(memory, None);
     }
+}
+
+#[test]
+fn adopt_texture_from_wraps_gpu_image() {
+    let Some(fixture) = VulkanFixture::new() else {
+        eprintln!("skipping: no Vulkan runtime/driver available on this machine");
+        return;
+    };
+    let mut context = fixture.direct_context(fixture.physical_device).expect("DirectContext::new_vulkan failed");
+
+    let format = vk::Format::B8G8R8A8_UNORM;
+    let (image, memory) = fixture.create_image(16, 16, format).expect("create_image failed");
+    let requirements = unsafe { fixture.device.get_image_memory_requirements(image) };
+
+    // check_image_info (GrVkGpu.cpp) requires fAlloc.fMemory whenever
+    // ownership is adopted, since Skia needs it to free the memory once it
+    // destroys the image -- unlike wrap_backend_texture_round_trip, which
+    // borrows and so can leave fAlloc unset.
+    let vk_image_info = sys::GrVkImageInfo {
+        fImage: unsafe { std::mem::transmute(image) },
+        fAlloc: sys::skgpu::VulkanAlloc {
+            fMemory: unsafe { std::mem::transmute(memory) },
+            fOffset: 0,
+            fSize: requirements.size,
+            fFlags: 0,
+            fBackendMemory: 0,
+            fUsesSystemHeap: false,
+        },
+        fImageTiling: sys::VkImageTiling_VK_IMAGE_TILING_OPTIMAL,
+        fImageLayout: sys::VkImageLayout_VK_IMAGE_LAYOUT_UNDEFINED,
+        fFormat: sys::VkFormat_VK_FORMAT_B8G8R8A8_UNORM,
+        fImageUsageFlags: (vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::TRANSFER_SRC | vk::ImageUsageFlags::TRANSFER_DST | vk::ImageUsageFlags::SAMPLED).as_raw(),
+        fSampleCount: 1,
+        fLevelCount: 1,
+        fCurrentQueueFamily: sys::VK_QUEUE_FAMILY_IGNORED as u32,
+        fSharingMode: sys::VkSharingMode_VK_SHARING_MODE_EXCLUSIVE,
+        ..Default::default()
+    };
+    let backend_texture = BackendTexture::new_vk(16, 16, &vk_image_info, "skialin-adopt-test");
+    assert!(backend_texture.is_valid());
+
+    // AdoptTextureFrom takes ownership of both the VkImage and (per fAlloc
+    // above) the VkDeviceMemory: Skia will vkDestroyImage and free the
+    // memory itself once the returned Image is dropped, so this test must
+    // not destroy either manually afterward.
+    let image = Image::adopt_texture_from(&mut context, &backend_texture, SurfaceOrigin::TopLeft, ColorType::N32, AlphaType::Premul, None)
+        .expect("adopt_texture_from failed");
+    assert_eq!(image.width(), 16);
+    assert_eq!(image.height(), 16);
+    assert!(image.is_texture_backed());
+
+    drop(image);
+    context.flush();
+    context.submit(true);
 }
