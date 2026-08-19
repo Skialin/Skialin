@@ -130,6 +130,30 @@ class TextStyle internal constructor(
     ) = TextStyleNative.nAddFontFeature(nativePtr, name, value)
 
     fun clearFontFeatures() = TextStyleNative.nResetFontFeatures(nativePtr)
+
+    val hasForeground: Boolean get() = TextStyleNative.nHasForeground(nativePtr)
+
+    val hasBackground: Boolean get() = TextStyleNative.nHasBackground(nativePtr)
+
+    var foreground: Paint?
+        get() = TextStyleNative.nGetForegroundPaint(nativePtr).takeIf { it != 0L }?.let { Paint(it) }
+        set(value) {
+            if (value == null) {
+                TextStyleNative.nClearForeground(nativePtr)
+            } else {
+                TextStyleNative.nSetForegroundPaint(nativePtr, value.nativePtr)
+            }
+        }
+
+    var background: Paint?
+        get() = TextStyleNative.nGetBackgroundPaint(nativePtr).takeIf { it != 0L }?.let { Paint(it) }
+        set(value) {
+            if (value == null) {
+                TextStyleNative.nClearBackground(nativePtr)
+            } else {
+                TextStyleNative.nSetBackgroundPaint(nativePtr, value.nativePtr)
+            }
+        }
 }
 
 private object TextStyleNative {
@@ -277,4 +301,26 @@ private object TextStyleNative {
     )
 
     external fun nResetFontFeatures(ptr: Long)
+
+    external fun nHasForeground(ptr: Long): Boolean
+
+    external fun nHasBackground(ptr: Long): Boolean
+
+    external fun nGetForegroundPaint(ptr: Long): Long
+
+    external fun nGetBackgroundPaint(ptr: Long): Long
+
+    external fun nSetForegroundPaint(
+        ptr: Long,
+        paintPtr: Long,
+    )
+
+    external fun nSetBackgroundPaint(
+        ptr: Long,
+        paintPtr: Long,
+    )
+
+    external fun nClearForeground(ptr: Long)
+
+    external fun nClearBackground(ptr: Long)
 }

@@ -254,6 +254,48 @@ impl TextStyle {
         unsafe { sys::skialin_bridge_TextStyle_resetFontFeatures(self.0) };
     }
 
+    pub fn has_foreground(&self) -> bool {
+        unsafe { sys::skialin_bridge_TextStyle_hasForeground(self.0) }
+    }
+
+    pub fn has_background(&self) -> bool {
+        unsafe { sys::skialin_bridge_TextStyle_hasBackground(self.0) }
+    }
+
+    pub fn foreground(&self) -> Option<crate::Paint> {
+        if !self.has_foreground() {
+            return None;
+        }
+        let mut paint = crate::Paint::new();
+        unsafe { sys::skialin_bridge_TextStyle_getForegroundPaint(self.0, &mut *paint.0) };
+        Some(paint)
+    }
+
+    pub fn background(&self) -> Option<crate::Paint> {
+        if !self.has_background() {
+            return None;
+        }
+        let mut paint = crate::Paint::new();
+        unsafe { sys::skialin_bridge_TextStyle_getBackgroundPaint(self.0, &mut *paint.0) };
+        Some(paint)
+    }
+
+    pub fn set_foreground_paint(&mut self, paint: &crate::Paint) {
+        unsafe { sys::skialin_bridge_TextStyle_setForegroundPaint(self.0, &*paint.0) };
+    }
+
+    pub fn set_background_paint(&mut self, paint: &crate::Paint) {
+        unsafe { sys::skialin_bridge_TextStyle_setBackgroundPaint(self.0, &*paint.0) };
+    }
+
+    pub fn clear_foreground(&mut self) {
+        unsafe { sys::skialin_bridge_TextStyle_clearForeground(self.0) };
+    }
+
+    pub fn clear_background(&mut self) {
+        unsafe { sys::skialin_bridge_TextStyle_clearBackground(self.0) };
+    }
+
     pub fn typeface(&self) -> Option<Typeface> {
         unsafe { Typeface::from_raw(sys::skialin_bridge_TextStyle_refTypeface(self.0)) }
     }

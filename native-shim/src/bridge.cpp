@@ -1058,6 +1058,38 @@ void skialin_bridge_TextStyle_resetFontFeatures(skia::textlayout::TextStyle* sty
     style->resetFontFeatures();
 }
 
+bool skialin_bridge_TextStyle_hasForeground(const skia::textlayout::TextStyle* style) {
+    return style->hasForeground();
+}
+
+bool skialin_bridge_TextStyle_hasBackground(const skia::textlayout::TextStyle* style) {
+    return style->hasBackground();
+}
+
+void skialin_bridge_TextStyle_getForegroundPaint(const skia::textlayout::TextStyle* style, SkPaint* outPaint) {
+    *outPaint = style->getForeground();
+}
+
+void skialin_bridge_TextStyle_getBackgroundPaint(const skia::textlayout::TextStyle* style, SkPaint* outPaint) {
+    *outPaint = style->getBackground();
+}
+
+void skialin_bridge_TextStyle_setForegroundPaint(skia::textlayout::TextStyle* style, const SkPaint* paint) {
+    style->setForegroundPaint(*paint);
+}
+
+void skialin_bridge_TextStyle_setBackgroundPaint(skia::textlayout::TextStyle* style, const SkPaint* paint) {
+    style->setBackgroundPaint(*paint);
+}
+
+void skialin_bridge_TextStyle_clearForeground(skia::textlayout::TextStyle* style) {
+    style->clearForegroundColor();
+}
+
+void skialin_bridge_TextStyle_clearBackground(skia::textlayout::TextStyle* style) {
+    style->clearBackgroundColor();
+}
+
 SkTypeface* skialin_bridge_TextStyle_refTypeface(const skia::textlayout::TextStyle* style) {
     return style->refTypeface().release();
 }

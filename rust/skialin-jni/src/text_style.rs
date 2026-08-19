@@ -1,7 +1,7 @@
 use jni::sys::{jboolean, jdouble, jfloat, jfloatArray, jint, jlong, jobjectArray, jstring};
 use jni::JNIEnv;
 
-use skialin_core::{FontStyle, Shadow, TextDecoration, TextDecorationMode, TextDecorationStyle, TextStyle, Typeface};
+use skialin_core::{FontStyle, Paint, Shadow, TextDecoration, TextDecorationMode, TextDecorationStyle, TextStyle, Typeface};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 
@@ -232,6 +232,54 @@ pub extern "system" fn Java_org_skialin_TextStyleNative_nAddFontFeature<'l>(mut 
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_TextStyleNative_nResetFontFeatures(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) {
     unsafe { borrow_mut::<TextStyle>(ptr) }.reset_font_features();
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nHasForeground(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jboolean {
+    unsafe { borrow::<TextStyle>(ptr) }.has_foreground() as jboolean
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nHasBackground(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jboolean {
+    unsafe { borrow::<TextStyle>(ptr) }.has_background() as jboolean
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nGetForegroundPaint(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jlong {
+    match unsafe { borrow::<TextStyle>(ptr) }.foreground() {
+        Some(paint) => box_ptr(paint),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nGetBackgroundPaint(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jlong {
+    match unsafe { borrow::<TextStyle>(ptr) }.background() {
+        Some(paint) => box_ptr(paint),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nSetForegroundPaint(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, paint_ptr: jlong) {
+    let paint = unsafe { borrow::<Paint>(paint_ptr) };
+    unsafe { borrow_mut::<TextStyle>(ptr) }.set_foreground_paint(paint);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nSetBackgroundPaint(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, paint_ptr: jlong) {
+    let paint = unsafe { borrow::<Paint>(paint_ptr) };
+    unsafe { borrow_mut::<TextStyle>(ptr) }.set_background_paint(paint);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nClearForeground(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) {
+    unsafe { borrow_mut::<TextStyle>(ptr) }.clear_foreground();
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nClearBackground(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) {
+    unsafe { borrow_mut::<TextStyle>(ptr) }.clear_background();
 }
 
 #[no_mangle]

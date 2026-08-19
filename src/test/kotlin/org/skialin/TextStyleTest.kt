@@ -99,6 +99,30 @@ class TextStyleTest {
     }
 
     @Test
+    fun foregroundAndBackgroundPaintRoundtrip() {
+        TextStyle().use { style ->
+            assertTrue(!style.hasForeground)
+            assertTrue(!style.hasBackground)
+            Paint().use { fg ->
+                fg.color = Colors.RED
+                style.foreground = fg
+            }
+            Paint().use { bg ->
+                bg.color = Colors.BLUE
+                style.background = bg
+            }
+            assertTrue(style.hasForeground)
+            assertTrue(style.hasBackground)
+            style.foreground!!.use { assertEquals(Colors.RED, it.color) }
+            style.background!!.use { assertEquals(Colors.BLUE, it.color) }
+            style.foreground = null
+            style.background = null
+            assertTrue(!style.hasForeground)
+            assertTrue(!style.hasBackground)
+        }
+    }
+
+    @Test
     fun cloneIsIndependent() {
         TextStyle().use { style ->
             style.fontSize = 20f

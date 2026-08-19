@@ -677,6 +677,16 @@ int32_t skialin_bridge_TextStyle_fontFeatureValue(const skia::textlayout::TextSt
 void skialin_bridge_TextStyle_addFontFeature(skia::textlayout::TextStyle* style, const char* name, size_t length, int32_t value);
 void skialin_bridge_TextStyle_resetFontFeatures(skia::textlayout::TextStyle* style);
 
+bool skialin_bridge_TextStyle_hasForeground(const skia::textlayout::TextStyle* style);
+bool skialin_bridge_TextStyle_hasBackground(const skia::textlayout::TextStyle* style);
+/* outPaint must already be a validly-constructed SkPaint (assigned into, not placement-constructed). */
+void skialin_bridge_TextStyle_getForegroundPaint(const skia::textlayout::TextStyle* style, SkPaint* outPaint);
+void skialin_bridge_TextStyle_getBackgroundPaint(const skia::textlayout::TextStyle* style, SkPaint* outPaint);
+void skialin_bridge_TextStyle_setForegroundPaint(skia::textlayout::TextStyle* style, const SkPaint* paint);
+void skialin_bridge_TextStyle_setBackgroundPaint(skia::textlayout::TextStyle* style, const SkPaint* paint);
+void skialin_bridge_TextStyle_clearForeground(skia::textlayout::TextStyle* style);
+void skialin_bridge_TextStyle_clearBackground(skia::textlayout::TextStyle* style);
+
 /* Ref-owned by the caller; null if this TextStyle has no typeface. Free with skialin_bridge_Typeface_unref. */
 SkTypeface* skialin_bridge_TextStyle_refTypeface(const skia::textlayout::TextStyle* style);
 /* typeface may be null to clear it; ref'd by the bridge, not consumed. */
