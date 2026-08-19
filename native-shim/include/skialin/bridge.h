@@ -622,8 +622,8 @@ SkTextBlob* skialin_bridge_TextBlob_Deserialize(const void* data, size_t size);
  * sk_sp<SkTypeface>, a paint-or-id variant), so like SkFont it's routed
  * entirely through the bridge rather than relying on bindgen's per-method
  * symbols. Scoped to the common styling surface for this pass: color, font
- * family/size/style, decoration, spacing, height, typeface, locale.
- * Foreground/background paint, shadows, font features, font arguments, and
+ * family/size/style, decoration, spacing, height, typeface, locale,
+ * shadows, font features, foreground/background paint. Font arguments and
  * placeholders are not yet bound. TextDecoration/-Mode/-Style are passed as
  * plain ints matching the C++ enum's integer values (see TextStyle.h). */
 skia::textlayout::TextStyle* skialin_bridge_TextStyle_new(void);
@@ -661,6 +661,14 @@ float skialin_bridge_TextStyle_getHeight(const skia::textlayout::TextStyle* styl
 void skialin_bridge_TextStyle_setHeight(skia::textlayout::TextStyle* style, float height);
 bool skialin_bridge_TextStyle_getHeightOverride(const skia::textlayout::TextStyle* style);
 void skialin_bridge_TextStyle_setHeightOverride(skia::textlayout::TextStyle* style, bool heightOverride);
+
+/* outColors/outFloats (3 floats per shadow: offsetX, offsetY, blurSigma) are
+ * caller-allocated buffers of `capacity` entries; pass capacity 0 (buffers
+ * may be null) to query the real count first. Returns the real count,
+ * writing at most `capacity` entries. */
+int32_t skialin_bridge_TextStyle_getShadows(const skia::textlayout::TextStyle* style, uint32_t* outColors, float* outFloats, int32_t capacity);
+void skialin_bridge_TextStyle_addShadow(skia::textlayout::TextStyle* style, uint32_t color, float offsetX, float offsetY, double blurSigma);
+void skialin_bridge_TextStyle_resetShadows(skia::textlayout::TextStyle* style);
 
 /* Ref-owned by the caller; null if this TextStyle has no typeface. Free with skialin_bridge_Typeface_unref. */
 SkTypeface* skialin_bridge_TextStyle_refTypeface(const skia::textlayout::TextStyle* style);

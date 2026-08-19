@@ -1,7 +1,7 @@
-use jni::sys::{jboolean, jfloat, jint, jlong, jobjectArray, jstring};
+use jni::sys::{jboolean, jdouble, jfloat, jfloatArray, jint, jlong, jobjectArray, jstring};
 use jni::JNIEnv;
 
-use skialin_core::{FontStyle, TextDecoration, TextDecorationMode, TextDecorationStyle, TextStyle, Typeface};
+use skialin_core::{FontStyle, Shadow, TextDecoration, TextDecorationMode, TextDecorationStyle, TextStyle, Typeface};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 
@@ -175,6 +175,31 @@ pub extern "system" fn Java_org_skialin_TextStyleNative_nHeightOverride(_env: JN
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_TextStyleNative_nSetHeightOverride(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, height_override: jboolean) {
     unsafe { borrow_mut::<TextStyle>(ptr) }.set_height_override(height_override != 0);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nShadows(env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jfloatArray {
+    let shadows = unsafe { borrow::<TextStyle>(ptr) }.shadows();
+    let mut flat = Vec::with_capacity(shadows.len() * 4);
+    for shadow in shadows {
+        flat.push(f32::from_bits(shadow.color));
+        flat.push(shadow.offset_x);
+        flat.push(shadow.offset_y);
+        flat.push(shadow.blur_sigma as f32);
+    }
+    let array = env.new_float_array(flat.len() as i32).expect("new_float_array");
+    env.set_float_array_region(&array, 0, &flat).expect("set_float_array_region");
+    array.into_raw()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nAddShadow(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, color: jint, offset_x: jfloat, offset_y: jfloat, blur_sigma: jdouble) {
+    unsafe { borrow_mut::<TextStyle>(ptr) }.add_shadow(Shadow { color: color as u32, offset_x, offset_y, blur_sigma });
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nResetShadows(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) {
+    unsafe { borrow_mut::<TextStyle>(ptr) }.reset_shadows();
 }
 
 #[no_mangle]

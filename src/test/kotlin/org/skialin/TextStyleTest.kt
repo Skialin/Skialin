@@ -69,6 +69,21 @@ class TextStyleTest {
     }
 
     @Test
+    fun shadowsRoundtrip() {
+        TextStyle().use { style ->
+            assertEquals(emptyList(), style.shadows)
+            style.addShadow(TextStyle.Shadow(Colors.RED, 1f, 2f, 3.0))
+            style.addShadow(TextStyle.Shadow(Colors.BLUE, -1f, 0.5f, 0.0))
+            val shadows = style.shadows
+            assertEquals(2, shadows.size)
+            assertEquals(TextStyle.Shadow(Colors.RED, 1f, 2f, 3.0), shadows[0])
+            assertEquals(TextStyle.Shadow(Colors.BLUE, -1f, 0.5f, 0.0), shadows[1])
+            style.clearShadows()
+            assertEquals(emptyList(), style.shadows)
+        }
+    }
+
+    @Test
     fun cloneIsIndependent() {
         TextStyle().use { style ->
             style.fontSize = 20f

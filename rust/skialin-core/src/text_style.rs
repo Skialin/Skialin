@@ -1,6 +1,5 @@
 use crate::{sys, Color, FontStyle, Typeface};
 
-/// A bitmask of decoration lines. Mirrors skparagraph's `TextDecoration`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TextDecoration(pub i32);
 
@@ -73,6 +72,14 @@ impl From<i32> for TextDecorationStyle {
             _ => TextDecorationStyle::Solid,
         }
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Shadow {
+    pub color: Color,
+    pub offset_x: f32,
+    pub offset_y: f32,
+    pub blur_sigma: f64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -183,7 +190,6 @@ impl TextStyle {
         unsafe { sys::skialin_bridge_TextStyle_setWordSpacing(self.0, word_spacing) };
     }
 
-    /// 0 unless [`set_height_override`](Self::set_height_override) is set.
     pub fn height(&self) -> f32 {
         unsafe { sys::skialin_bridge_TextStyle_getHeight(self.0) }
     }
@@ -198,6 +204,29 @@ impl TextStyle {
 
     pub fn set_height_override(&mut self, height_override: bool) {
         unsafe { sys::skialin_bridge_TextStyle_setHeightOverride(self.0, height_override) };
+    }
+
+    pub fn shadows(&self) -> Vec<Shadow> {
+        let count = unsafe { sys::skialin_bridge_TextStyle_getShadows(self.0, std::ptr::null_mut(), std::ptr::null_mut(), 0) };
+        if count <= 0 {
+            return Vec::new();
+        }
+        let mut colors = vec![0u32; count as usize];
+        let mut floats = vec![0f32; count as usize * 3];
+        unsafe { sys::skialin_bridge_TextStyle_getShadows(self.0, colors.as_mut_ptr(), floats.as_mut_ptr(), count) };
+        colors
+            .into_iter()
+            .zip(floats.chunks_exact(3))
+            .map(|(color, c)| Shadow { color, offset_x: c[0], offset_y: c[1], blur_sigma: c[2] as f64 })
+            .collect()
+    }
+
+    pub fn add_shadow(&mut self, shadow: Shadow) {
+        unsafe { sys::skialin_bridge_TextStyle_addShadow(self.0, shadow.color, shadow.offset_x, shadow.offset_y, shadow.blur_sigma) };
+    }
+
+    pub fn reset_shadows(&mut self) {
+        unsafe { sys::skialin_bridge_TextStyle_resetShadows(self.0) };
     }
 
     pub fn typeface(&self) -> Option<Typeface> {

@@ -1015,6 +1015,28 @@ void skialin_bridge_TextStyle_setHeightOverride(skia::textlayout::TextStyle* sty
     style->setHeightOverride(heightOverride);
 }
 
+int32_t skialin_bridge_TextStyle_getShadows(const skia::textlayout::TextStyle* style, uint32_t* outColors, float* outFloats, int32_t capacity) {
+    std::vector<skia::textlayout::TextShadow> shadows = style->getShadows();
+    int32_t count = static_cast<int32_t>(shadows.size());
+    int32_t toWrite = count < capacity ? count : capacity;
+    for (int32_t i = 0; i < toWrite; i++) {
+        const skia::textlayout::TextShadow& shadow = shadows[i];
+        outColors[i] = shadow.fColor;
+        outFloats[i * 3 + 0] = shadow.fOffset.fX;
+        outFloats[i * 3 + 1] = shadow.fOffset.fY;
+        outFloats[i * 3 + 2] = static_cast<float>(shadow.fBlurSigma);
+    }
+    return count;
+}
+
+void skialin_bridge_TextStyle_addShadow(skia::textlayout::TextStyle* style, uint32_t color, float offsetX, float offsetY, double blurSigma) {
+    style->addShadow(skia::textlayout::TextShadow(static_cast<SkColor>(color), SkPoint::Make(offsetX, offsetY), blurSigma));
+}
+
+void skialin_bridge_TextStyle_resetShadows(skia::textlayout::TextStyle* style) {
+    style->resetShadows();
+}
+
 SkTypeface* skialin_bridge_TextStyle_refTypeface(const skia::textlayout::TextStyle* style) {
     return style->refTypeface().release();
 }

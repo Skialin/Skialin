@@ -3,11 +3,9 @@ package org.skialin
 import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
-/** Character-level styling for a run of paragraph text. Mirrors skparagraph's `TextStyle`. */
 class TextStyle internal constructor(
     ptr: Long,
 ) : Managed(ptr, TextStyleNative::nRelease) {
-    /** A bitmask of decoration lines. */
     object TextDecoration {
         const val NONE = 0x0
         const val UNDERLINE = 0x1
@@ -25,6 +23,13 @@ class TextStyle internal constructor(
         val color: Color,
         val style: DecorationStyle,
         val thicknessMultiplier: Float,
+    )
+
+    data class Shadow(
+        val color: Color,
+        val offsetX: Float,
+        val offsetY: Float,
+        val blurSigma: Double,
     )
 
     constructor() : this(TextStyleNative.nNew())
@@ -77,7 +82,6 @@ class TextStyle internal constructor(
         get() = TextStyleNative.nWordSpacing(nativePtr)
         set(value) = TextStyleNative.nSetWordSpacing(nativePtr, value)
 
-    /** 0 unless [heightOverride] is set. */
     var height: Float
         get() = TextStyleNative.nHeight(nativePtr)
         set(value) = TextStyleNative.nSetHeight(nativePtr, value)
@@ -93,6 +97,20 @@ class TextStyle internal constructor(
     var locale: String
         get() = TextStyleNative.nLocale(nativePtr)
         set(value) = TextStyleNative.nSetLocale(nativePtr, value)
+
+    val shadows: List<Shadow>
+        get() {
+            val flat = TextStyleNative.nShadows(nativePtr)
+            return (0 until flat.size / 4).map { i ->
+                Shadow(flat[i * 4].toRawBits(), flat[i * 4 + 1], flat[i * 4 + 2], flat[i * 4 + 3].toDouble())
+            }
+        }
+
+    fun addShadow(shadow: Shadow) = TextStyleNative.nAddShadow(nativePtr, shadow.color, shadow.offsetX, shadow.offsetY, shadow.blurSigma)
+
+    fun addShadows(shadows: List<Shadow>) = shadows.forEach { addShadow(it) }
+
+    fun clearShadows() = TextStyleNative.nResetShadows(nativePtr)
 }
 
 private object TextStyleNative {
@@ -216,4 +234,16 @@ private object TextStyleNative {
         ptr: Long,
         locale: String,
     )
+
+    external fun nShadows(ptr: Long): FloatArray
+
+    external fun nAddShadow(
+        ptr: Long,
+        color: Int,
+        offsetX: Float,
+        offsetY: Float,
+        blurSigma: Double,
+    )
+
+    external fun nResetShadows(ptr: Long)
 }
