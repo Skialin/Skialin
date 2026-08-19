@@ -3,7 +3,7 @@ use jni::JNIEnv;
 
 use skialin_core::DirectContext;
 
-use crate::util::{borrow_mut, box_ptr, drop_ptr};
+use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 use crate::vulkan_loader;
 
 #[no_mangle]
@@ -59,4 +59,19 @@ pub extern "system" fn Java_org_skialin_DirectContextNative_nFlush(_env: JNIEnv,
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_DirectContextNative_nSubmit(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, sync_cpu: jboolean) {
     unsafe { borrow_mut::<DirectContext>(ptr) }.submit(sync_cpu != 0);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_DirectContextNative_nAbandonContext(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) {
+    unsafe { borrow_mut::<DirectContext>(ptr) }.abandon_context();
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_DirectContextNative_nGetResourceCacheLimit(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jlong {
+    unsafe { borrow::<DirectContext>(ptr) }.resource_cache_limit()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_DirectContextNative_nSetResourceCacheLimit(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, max_resource_bytes: jlong) {
+    unsafe { borrow_mut::<DirectContext>(ptr) }.set_resource_cache_limit(max_resource_bytes);
 }

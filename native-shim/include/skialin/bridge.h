@@ -899,6 +899,9 @@ GrDirectContext* skialin_bridge_DirectContext_MakeGLAssembled(void* ctx, GrGLGet
 void skialin_bridge_DirectContext_unref(GrDirectContext* context);
 void skialin_bridge_DirectContext_flush(GrDirectContext* context);
 void skialin_bridge_DirectContext_submit(GrDirectContext* context, bool syncCpu);
+void skialin_bridge_DirectContext_abandonContext(GrDirectContext* context);
+int64_t skialin_bridge_DirectContext_getResourceCacheLimit(GrDirectContext* context);
+void skialin_bridge_DirectContext_setResourceCacheLimit(GrDirectContext* context, int64_t maxResourceBytes);
 
 /* DirectContext (GrDirectContext, Ganesh + Vulkan). The instance/device/
  * queue are the caller's to create and keep alive for as long as any

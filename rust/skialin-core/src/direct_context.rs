@@ -91,6 +91,18 @@ impl DirectContext {
     pub fn submit(&mut self, sync_cpu: bool) {
         unsafe { sys::skialin_bridge_DirectContext_submit(self.0, sync_cpu) };
     }
+
+    pub fn abandon_context(&mut self) {
+        unsafe { sys::skialin_bridge_DirectContext_abandonContext(self.0) };
+    }
+
+    pub fn resource_cache_limit(&self) -> i64 {
+        unsafe { sys::skialin_bridge_DirectContext_getResourceCacheLimit(self.0) }
+    }
+
+    pub fn set_resource_cache_limit(&mut self, max_resource_bytes: i64) {
+        unsafe { sys::skialin_bridge_DirectContext_setResourceCacheLimit(self.0, max_resource_bytes) };
+    }
 }
 
 impl Drop for DirectContext {

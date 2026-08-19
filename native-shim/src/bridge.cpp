@@ -2061,6 +2061,18 @@ void skialin_bridge_DirectContext_submit(GrDirectContext* context, bool syncCpu)
     context->submit(syncCpu ? GrSyncCpu::kYes : GrSyncCpu::kNo);
 }
 
+void skialin_bridge_DirectContext_abandonContext(GrDirectContext* context) {
+    context->abandonContext();
+}
+
+int64_t skialin_bridge_DirectContext_getResourceCacheLimit(GrDirectContext* context) {
+    return static_cast<int64_t>(context->getResourceCacheLimit());
+}
+
+void skialin_bridge_DirectContext_setResourceCacheLimit(GrDirectContext* context, int64_t maxResourceBytes) {
+    context->setResourceCacheLimit(static_cast<size_t>(maxResourceBytes));
+}
+
 GrDirectContext* skialin_bridge_DirectContext_MakeVulkan(
     VkInstance instance, VkPhysicalDevice physicalDevice, VkDevice device, VkQueue queue,
     uint32_t graphicsQueueIndex, uint32_t maxAPIVersion, void* getProcCtx, SkialinVulkanGetProc getProc,

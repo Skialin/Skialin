@@ -33,6 +33,14 @@ class DirectContext private constructor(
         DirectContextNative.nSubmit(nativePtr, syncCpu)
     }
 
+    fun abandonContext() {
+        DirectContextNative.nAbandonContext(nativePtr)
+    }
+
+    var resourceCacheLimit: Long
+        get() = DirectContextNative.nGetResourceCacheLimit(nativePtr)
+        set(value) = DirectContextNative.nSetResourceCacheLimit(nativePtr, value)
+
     override fun close() {
         if (ptr != 0L) {
             DirectContextNative.nRelease(ptr)
@@ -102,5 +110,14 @@ private object DirectContextNative {
     external fun nSubmit(
         ptr: Long,
         syncCpu: Boolean,
+    )
+
+    external fun nAbandonContext(ptr: Long)
+
+    external fun nGetResourceCacheLimit(ptr: Long): Long
+
+    external fun nSetResourceCacheLimit(
+        ptr: Long,
+        maxResourceBytes: Long,
     )
 }

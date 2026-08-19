@@ -76,4 +76,14 @@ class DirectContextTest {
                 }
             }
         }
+
+    @Test
+    fun resourceCacheLimitRoundtrips() =
+        withGlContext {
+            val context = DirectContext.makeGL() ?: fail("DirectContext.makeGL failed -- no GL driver current?")
+            context.use {
+                context.resourceCacheLimit = 64L * 1024 * 1024
+                assertEquals(64L * 1024 * 1024, context.resourceCacheLimit)
+            }
+        }
 }
