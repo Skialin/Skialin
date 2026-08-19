@@ -165,6 +165,64 @@ class Canvas internal constructor(
         constraint.ordinal,
     )
 
+    /** Draws [image] as a 9-patch: [center] scales to fill the interior of [dst], while the
+     * surrounding edges/corners scale only along one axis (or not at all). */
+    fun drawImageNine(
+        image: Image,
+        center: IRect,
+        dst: Rect,
+        filter: FilterMode = FilterMode.NEAREST,
+        paint: Paint? = null,
+    ) = CanvasNative.nDrawImageNine(
+        ptr,
+        image.nativePtr,
+        intArrayOf(center.left, center.top, center.right, center.bottom),
+        dst.left,
+        dst.top,
+        dst.right,
+        dst.bottom,
+        filter.ordinal,
+        paint?.nativePtr ?: 0L,
+    )
+
+    /** Draws a Coons patch: [cubics] is the 12-point boundary (4 cubic Bezier edges sharing
+     * corner points), [colors] are the 4 corner colors, [texCoords] optionally maps a source
+     * image's 4 corners onto the patch via a shader on [paint]. */
+    fun drawPatch(
+        cubics: Array<Point>,
+        colors: Array<Color>,
+        texCoords: Array<Point>? = null,
+        mode: BlendMode = BlendMode.SRC_OVER,
+        paint: Paint,
+    ) {
+        require(cubics.size == 12) { "cubics must have 12 points" }
+        require(colors.size == 4) { "colors must have 4 entries" }
+        require(texCoords == null || texCoords.size == 4) { "texCoords must have 4 points" }
+        val flatCubics = FloatArray(24)
+        cubics.forEachIndexed { i, p ->
+            flatCubics[i * 2] = p.x
+            flatCubics[i * 2 + 1] = p.y
+        }
+        val flatTex =
+            texCoords?.let { coords ->
+                FloatArray(8).also { flat ->
+                    coords.forEachIndexed { i, p ->
+                        flat[i * 2] = p.x
+                        flat[i * 2 + 1] = p.y
+                    }
+                }
+            }
+        CanvasNative.nDrawPatch(ptr, flatCubics, colors.toIntArray(), flatTex, mode.ordinal, paint.nativePtr)
+    }
+
+    /** Attaches a key/value annotation to the document at [rect] (e.g. a hyperlink or named
+     * destination when drawing into a PDF-backed canvas); a no-op for raster/GPU canvases. */
+    fun drawAnnotation(
+        rect: Rect,
+        key: String,
+        value: Data? = null,
+    ) = CanvasNative.nDrawAnnotation(ptr, rect.left, rect.top, rect.right, rect.bottom, key, value?.nativePtr ?: 0L)
+
     fun drawRRect(
         rrect: RRect,
         paint: Paint,
@@ -429,6 +487,37 @@ private object CanvasNative {
         bounds: FloatArray?,
         paintPtr: Long,
     ): Int
+
+    external fun nDrawImageNine(
+        ptr: Long,
+        imagePtr: Long,
+        center: IntArray,
+        dstLeft: Float,
+        dstTop: Float,
+        dstRight: Float,
+        dstBottom: Float,
+        filter: Int,
+        paintPtr: Long,
+    )
+
+    external fun nDrawPatch(
+        ptr: Long,
+        cubics: FloatArray,
+        colors: IntArray,
+        texCoords: FloatArray?,
+        mode: Int,
+        paintPtr: Long,
+    )
+
+    external fun nDrawAnnotation(
+        ptr: Long,
+        left: Float,
+        top: Float,
+        right: Float,
+        bottom: Float,
+        key: String,
+        valuePtr: Long,
+    )
 
     external fun nDrawRRect(
         ptr: Long,

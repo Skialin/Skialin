@@ -87,4 +87,48 @@ class CanvasExpandedTest {
             canvas.restore()
         }
     }
+
+    @Test
+    fun drawImageNineDoesNotCrash() {
+        makeImage().use { image ->
+            Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
+                val canvas = surface.canvas()
+                canvas.drawImageNine(image, IRect(1, 1, 3, 3), Rect(0f, 0f, 16f, 16f))
+            }
+        }
+    }
+
+    @Test
+    fun drawPatchDoesNotCrash() {
+        Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
+            val canvas = surface.canvas()
+            Paint().use { paint ->
+                paint.color = Colors.RED
+                val cubics =
+                    arrayOf(
+                        Point(0f, 0f),
+                        Point(4f, 0f),
+                        Point(12f, 0f),
+                        Point(16f, 0f),
+                        Point(16f, 4f),
+                        Point(16f, 12f),
+                        Point(16f, 16f),
+                        Point(12f, 16f),
+                        Point(4f, 16f),
+                        Point(0f, 16f),
+                        Point(0f, 12f),
+                        Point(0f, 4f),
+                    )
+                val colors = arrayOf(Colors.RED, Colors.BLUE, Colors.WHITE, Colors.RED)
+                canvas.drawPatch(cubics, colors, paint = paint)
+            }
+        }
+    }
+
+    @Test
+    fun drawAnnotationDoesNotCrash() {
+        Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
+            surface.canvas().drawAnnotation(Rect(0f, 0f, 16f, 16f), "url", null)
+        }
+    }
 }

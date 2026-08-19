@@ -1,7 +1,7 @@
-use jni::sys::{jboolean, jfloat, jfloatArray, jint, jlong};
+use jni::sys::{jboolean, jfloat, jfloatArray, jint, jintArray, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{Canvas, ClipOp, Image, Matrix, Paint, Path, Point, PointMode, RRect, Rect, Region, SamplingOptions, SrcRectConstraint, TextBlob, Vertices, M44};
+use skialin_core::{Canvas, ClipOp, Color, Data, FilterMode, Image, IRect, Matrix, Paint, Path, Point, PointMode, RRect, Rect, Region, SamplingOptions, SrcRectConstraint, TextBlob, Vertices, M44};
 
 use crate::paint::blend_mode_from_ordinal;
 use crate::util::borrow;
@@ -377,4 +377,79 @@ pub extern "system" fn Java_org_skialin_CanvasNative_nSaveLayer(env: JNIEnv, _cl
     };
     let paint = (paint_ptr != 0).then(|| unsafe { borrow::<Paint>(paint_ptr) });
     canvas_from_ptr(ptr).save_layer(bounds_rect, paint)
+}
+
+#[allow(clippy::too_many_arguments)]
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nDrawImageNine(
+    env: JNIEnv,
+    _class: jni::objects::JClass,
+    ptr: jlong,
+    image_ptr: jlong,
+    center: jintArray,
+    dst_left: jfloat,
+    dst_top: jfloat,
+    dst_right: jfloat,
+    dst_bottom: jfloat,
+    filter: jint,
+    paint_ptr: jlong,
+) {
+    let array = unsafe { jni::objects::JIntArray::from_raw(center) };
+    let mut values = [0i32; 4];
+    env.get_int_array_region(&array, 0, &mut values).expect("get_int_array_region");
+    let center_rect = IRect::new(values[0], values[1], values[2], values[3]);
+    let filter_mode = if filter == 1 { FilterMode::Linear } else { FilterMode::Nearest };
+    let paint = (paint_ptr != 0).then(|| unsafe { borrow::<Paint>(paint_ptr) });
+    canvas_from_ptr(ptr).draw_image_nine(unsafe { borrow::<Image>(image_ptr) }, center_rect, Rect::new(dst_left, dst_top, dst_right, dst_bottom), filter_mode, paint);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nDrawPatch(
+    env: JNIEnv,
+    _class: jni::objects::JClass,
+    ptr: jlong,
+    cubics: jfloatArray,
+    colors: jintArray,
+    tex_coords: jfloatArray,
+    mode: jint,
+    paint_ptr: jlong,
+) {
+    let cubics_array = unsafe { jni::objects::JFloatArray::from_raw(cubics) };
+    let mut cubics_flat = [0f32; 24];
+    env.get_float_array_region(&cubics_array, 0, &mut cubics_flat).expect("get_float_array_region");
+    let cubics_points: [Point; 12] = std::array::from_fn(|i| Point::new(cubics_flat[i * 2], cubics_flat[i * 2 + 1]));
+
+    let colors_array = unsafe { jni::objects::JIntArray::from_raw(colors) };
+    let mut colors_flat = [0i32; 4];
+    env.get_int_array_region(&colors_array, 0, &mut colors_flat).expect("get_int_array_region");
+    let colors_argb: [Color; 4] = std::array::from_fn(|i| colors_flat[i] as u32);
+
+    let tex = if tex_coords.is_null() {
+        None
+    } else {
+        let tex_array = unsafe { jni::objects::JFloatArray::from_raw(tex_coords) };
+        let mut tex_flat = [0f32; 8];
+        env.get_float_array_region(&tex_array, 0, &mut tex_flat).expect("get_float_array_region");
+        Some(std::array::from_fn::<Point, 4, _>(|i| Point::new(tex_flat[i * 2], tex_flat[i * 2 + 1])))
+    };
+
+    let paint = unsafe { borrow::<Paint>(paint_ptr) };
+    canvas_from_ptr(ptr).draw_patch(cubics_points, colors_argb, tex, blend_mode_from_ordinal(mode), paint);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nDrawAnnotation<'l>(
+    mut env: JNIEnv<'l>,
+    _class: jni::objects::JClass<'l>,
+    ptr: jlong,
+    left: jfloat,
+    top: jfloat,
+    right: jfloat,
+    bottom: jfloat,
+    key: jni::objects::JString<'l>,
+    value_ptr: jlong,
+) {
+    let key: String = env.get_string(&key).expect("get_string").into();
+    let value = (value_ptr != 0).then(|| unsafe { borrow::<Data>(value_ptr) });
+    canvas_from_ptr(ptr).draw_annotation(Rect::new(left, top, right, bottom), &key, value);
 }

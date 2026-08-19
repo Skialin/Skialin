@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::paint::BlendMode;
 use crate::path::Path;
-use crate::{sys, Color, Image, Matrix, Paint, Point, RRect, Rect, Region, SamplingOptions, TextBlob, Vertices, M44};
+use crate::{sys, Color, Data, FilterMode, Image, IRect, Matrix, Paint, Point, RRect, Rect, Region, SamplingOptions, TextBlob, Vertices, M44};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum PointMode {
@@ -223,6 +223,16 @@ impl<'a> Canvas<'a> {
         }
     }
 
+    /// Draws `image` as a 9-patch: the `center` region scales to fill the
+    /// interior of `dst` while the surrounding edges/corners scale only
+    /// along one axis (or not at all), keeping border art crisp.
+    pub fn draw_image_nine(&mut self, image: &Image, center: IRect, dst: Rect, filter: FilterMode, paint: Option<&Paint>) {
+        let sk_center: sys::SkIRect = center.into();
+        let sk_dst: sys::SkRect = dst.into();
+        let paint_ptr = paint.map_or(std::ptr::null(), |p| &*p.0 as *const sys::SkPaint);
+        unsafe { self.as_mut().drawImageNine(image.0, &sk_center, &sk_dst, filter.into(), paint_ptr) };
+    }
+
     /// Saves the canvas state, then redirects drawing to a new layer.
     /// `bounds`, if given, is a hint for the layer's extent. Returns the
     /// new save count, for [`Self::restore_to_count`].
@@ -260,6 +270,27 @@ impl<'a> Canvas<'a> {
 
     pub fn draw_vertices(&mut self, vertices: &Vertices, mode: BlendMode, paint: &Paint) {
         unsafe { sys::skialin_bridge_Canvas_drawVertices(self.ptr, vertices.0, mode.into(), &*paint.0) };
+    }
+
+    /// Draws a Coons patch: `cubics` is the 12-point boundary (4 cubic
+    /// Bezier edges sharing corner points), `colors` are the 4 corner
+    /// colors, `tex_coords` optionally maps a source image's 4 corners onto
+    /// the patch (via a shader on `paint`).
+    pub fn draw_patch(&mut self, cubics: [Point; 12], colors: [Color; 4], tex_coords: Option<[Point; 4]>, mode: BlendMode, paint: &Paint) {
+        let sk_cubics: Vec<sys::SkPoint> = cubics.iter().map(|&p| p.into()).collect();
+        let sk_tex: Option<[sys::SkPoint; 4]> = tex_coords.map(|coords| std::array::from_fn(|i| coords[i].into()));
+        let tex_ptr = sk_tex.as_ref().map_or(std::ptr::null(), |t| t.as_ptr());
+        unsafe { self.as_mut().drawPatch(sk_cubics.as_ptr(), colors.as_ptr(), tex_ptr, mode.into(), &*paint.0) };
+    }
+
+    /// Attaches a key/value annotation to the document at `rect` (e.g. a
+    /// hyperlink or named destination when drawing into a PDF-backed
+    /// canvas); a no-op for raster/GPU canvases.
+    pub fn draw_annotation(&mut self, rect: Rect, key: &str, value: Option<&Data>) {
+        let sk_rect: sys::SkRect = rect.into();
+        let key_cstr = std::ffi::CString::new(key).expect("annotation key must not contain a NUL byte");
+        let value_ptr = value.map_or(std::ptr::null_mut(), |d| d.0);
+        unsafe { self.as_mut().drawAnnotation(&sk_rect, key_cstr.as_ptr(), value_ptr) };
     }
 
     pub fn concat_44(&mut self, matrix: &M44) {
