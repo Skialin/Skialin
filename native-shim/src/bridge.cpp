@@ -59,6 +59,7 @@
 #include "include/gpu/ganesh/GrTypes.h"
 #include "include/gpu/ganesh/SkSurfaceGanesh.h"
 #include "include/gpu/ganesh/gl/GrGLDirectContext.h"
+#include "include/gpu/ganesh/gl/GrGLBackendSurface.h"
 #include "include/gpu/ganesh/vk/GrVkBackendSurface.h"
 #include "include/gpu/ganesh/vk/GrVkDirectContext.h"
 #include "include/gpu/graphite/BackendTexture.h"
@@ -1649,6 +1650,11 @@ GrBackendTexture* skialin_bridge_BackendTexture_MakeVk(int32_t width, int32_t he
     return new GrBackendTexture(GrBackendTextures::MakeVk(width, height, *imageInfo, labelView));
 }
 
+GrBackendTexture* skialin_bridge_BackendTexture_MakeGL(int32_t width, int32_t height, skgpu::Mipmapped mipmapped, const GrGLTextureInfo* glInfo, const char* label, size_t labelLength) {
+    std::string_view labelView = label ? std::string_view(label, labelLength) : std::string_view();
+    return new GrBackendTexture(GrBackendTextures::MakeGL(width, height, mipmapped, *glInfo, labelView));
+}
+
 void skialin_bridge_BackendTexture_delete(GrBackendTexture* texture) {
     delete texture;
 }
@@ -1825,6 +1831,18 @@ void skialin_bridge_ShadowUtils_drawShadow(
     SkShadowUtils::DrawShadow(
             canvas, *path, SkPoint3::Make(zPlaneX, zPlaneY, zPlaneZ), SkPoint3::Make(lightX, lightY, lightZ),
             lightRadius, ambientColor, spotColor, flags);
+}
+
+SkImage* skialin_bridge_Image_AdoptTextureFrom(
+    GrDirectContext* context, const GrBackendTexture* backendTexture, GrSurfaceOrigin textureOrigin,
+    SkColorType colorType, SkAlphaType alphaType, SkColorSpace* colorSpace) {
+    return SkImages::AdoptTextureFrom(context, *backendTexture, textureOrigin, colorType, alphaType, sk_ref_sp(colorSpace)).release();
+}
+
+SkImage* skialin_bridge_Image_WrapGraphiteTexture(
+    skgpu::graphite::Recorder* recorder, const skgpu::graphite::BackendTexture* backendTexture,
+    SkAlphaType alphaType, SkColorSpace* colorSpace, skgpu::Origin origin, SkImages::GenerateMipmapsFromBase generateMipmapsFromBase) {
+    return SkImages::WrapTexture(recorder, *backendTexture, alphaType, sk_ref_sp(colorSpace), origin, generateMipmapsFromBase).release();
 }
 
 }  // extern "C"

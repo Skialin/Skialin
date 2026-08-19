@@ -39,6 +39,16 @@ class BackendTexture internal constructor(ptr: Long) : Managed(ptr, BackendTextu
             )
             return BackendTexture(ptr)
         }
+
+        /**
+         * Wraps a caller-owned GL texture (not allocated or freed by Skia).
+         * `target` is typically `GL_TEXTURE_2D` (0x0DE1); `format` a sized
+         * internal format like `GL_RGBA8` (0x8058).
+         */
+        fun makeGL(width: Int, height: Int, mipmapped: Boolean, target: Int, id: Int, format: Int, isProtected: Boolean = false, label: String = ""): BackendTexture {
+            val ptr = BackendTextureNative.nMakeGL(width, height, mipmapped, target, id, format, isProtected, label)
+            return BackendTexture(ptr)
+        }
     }
 }
 
@@ -62,6 +72,7 @@ private object BackendTextureNative {
         sharingMode: Int,
         label: String,
     ): Long
+    external fun nMakeGL(width: Int, height: Int, mipmapped: Boolean, target: Int, id: Int, format: Int, isProtected: Boolean, label: String): Long
     external fun nRelease(ptr: Long)
     external fun nWidth(ptr: Long): Int
     external fun nHeight(ptr: Long): Int

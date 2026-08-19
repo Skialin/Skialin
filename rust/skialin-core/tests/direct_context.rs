@@ -3,7 +3,7 @@
 //! equivalent (GLX/EGL/CGL) test, or a GLFW-based one like the Kotlin test.
 #![cfg(windows)]
 
-use skialin_core::{AlphaType, ColorType, DirectContext, ImageInfo, Surface, SurfaceOrigin};
+use skialin_core::{sys, AlphaType, BackendTexture, ColorType, DirectContext, Image, ImageInfo, Surface, SurfaceOrigin};
 use std::ptr;
 use windows_sys::Win32::Foundation::HWND;
 use windows_sys::Win32::Graphics::Gdi::{ReleaseDC, HDC};
@@ -122,4 +122,67 @@ fn render_target_round_trip() {
     // ColorType::N32 is Bgra8888: opaque red is B=0, G=0, R=255, A=255.
     assert_eq!(&pixels[0..4], &[0, 0, 255, 255]);
     assert_eq!(&pixels[pixels.len() - 4..], &[0, 0, 255, 255]);
+}
+
+// GL 1.1 core functions, always exported by opengl32.dll -- no
+// wglGetProcAddress loading needed, unlike GL 1.2+/extension functions.
+#[allow(non_snake_case)]
+mod gl11 {
+    #[link(name = "opengl32")]
+    extern "system" {
+        pub fn glGenTextures(n: i32, textures: *mut u32);
+        pub fn glBindTexture(target: u32, texture: u32);
+        pub fn glTexImage2D(target: u32, level: i32, internalformat: i32, width: i32, height: i32, border: i32, format: u32, type_: u32, pixels: *const std::ffi::c_void);
+        pub fn glTexParameteri(target: u32, pname: u32, param: i32);
+    }
+}
+
+const GL_TEXTURE_2D: u32 = 0x0DE1;
+const GL_RGBA8: i32 = 0x8058;
+const GL_RGBA: u32 = 0x1908;
+const GL_UNSIGNED_BYTE: u32 = 0x1401;
+const GL_TEXTURE_MIN_FILTER: u32 = 0x2801;
+const GL_TEXTURE_MAG_FILTER: u32 = 0x2800;
+const GL_NEAREST: i32 = 0x2600;
+
+#[test]
+fn adopt_gl_backend_texture_matches_pixels() {
+    let _window = GlWindow::new();
+    let mut context = DirectContext::new_gl().expect("DirectContext::new_gl failed -- no GL driver current?");
+
+    // Opaque red RGBA8 pixel data, uploaded directly via glTexImage2D --
+    // this texture is populated on the CPU side, not drawn into by Skia,
+    // to keep this test independent of the render-target path above.
+    let pixels = vec![255u8, 0, 0, 255].repeat(16 * 16);
+    let mut texture_id = 0u32;
+    unsafe {
+        gl11::glGenTextures(1, &mut texture_id);
+        gl11::glBindTexture(GL_TEXTURE_2D, texture_id);
+        gl11::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        gl11::glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        gl11::glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 16, 16, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels.as_ptr() as *const _);
+    }
+
+    let gl_info = sys::GrGLTextureInfo { fTarget: GL_TEXTURE_2D, fID: texture_id, fFormat: GL_RGBA8 as u32, ..Default::default() };
+    let backend_texture = BackendTexture::new_gl(16, 16, false, &gl_info, "skialin-gl-adopt-test");
+    assert!(backend_texture.is_valid());
+
+    let image = Image::adopt_texture_from(&mut context, &backend_texture, SurfaceOrigin::TopLeft, ColorType::Rgba8888, AlphaType::Premul, None)
+        .expect("adopt_texture_from failed");
+    assert_eq!(image.width(), 16);
+    assert_eq!(image.height(), 16);
+    assert!(image.is_texture_backed());
+
+    let info = ImageInfo::new(16, 16, ColorType::Rgba8888, AlphaType::Premul);
+    let mut out_pixels = vec![0u8; 16 * 16 * 4];
+    let ok = unsafe { image.read_pixels(&info, out_pixels.as_mut_ptr(), 16 * 4, 0, 0) };
+    assert!(ok, "read_pixels failed");
+    // RGBA8888: opaque red is R=255, G=0, B=0, A=255.
+    assert_eq!(&out_pixels[0..4], &[255, 0, 0, 255]);
+
+    // adopt_texture_from takes ownership (Skia calls glDeleteTextures once
+    // the image is dropped), so this test must not delete texture_id itself.
+    drop(image);
+    context.flush();
+    context.submit(true);
 }

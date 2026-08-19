@@ -44,6 +44,25 @@ pub extern "system" fn Java_org_skialin_BackendTextureNative_nMakeVk(
 }
 
 #[no_mangle]
+pub extern "system" fn Java_org_skialin_BackendTextureNative_nMakeGL(
+    mut env: JNIEnv,
+    _class: jni::objects::JClass,
+    width: jint,
+    height: jint,
+    mipmapped: jboolean,
+    target: jint,
+    id: jint,
+    format: jint,
+    is_protected: jboolean,
+    label: JString,
+) -> jlong {
+    let label: String = env.get_string(&label).map(|s| s.into()).unwrap_or_default();
+    let gl_info =
+        sys::GrGLTextureInfo { fTarget: target as sys::GrGLenum, fID: id as sys::GrGLuint, fFormat: format as sys::GrGLenum, fProtected: is_protected != 0 };
+    box_ptr(BackendTexture::new_gl(width, height, mipmapped != 0, &gl_info, &label))
+}
+
+#[no_mangle]
 pub extern "system" fn Java_org_skialin_BackendTextureNative_nRelease(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) {
     unsafe { drop_ptr::<BackendTexture>(ptr) };
 }

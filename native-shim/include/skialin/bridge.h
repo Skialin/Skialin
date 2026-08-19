@@ -16,9 +16,13 @@
 #include "include/core/SkSurfaceProps.h"
 #include "include/core/SkTileMode.h"
 #include "include/gpu/ganesh/GrBackendSurface.h"
+#include "include/gpu/ganesh/SkImageGanesh.h"
 #include "include/gpu/ganesh/gl/GrGLAssembleInterface.h"
+#include "include/gpu/ganesh/gl/GrGLTypes.h"
 #include "include/gpu/ganesh/vk/GrVkTypes.h"
+#include "include/gpu/graphite/BackendTexture.h"
 #include "include/gpu/graphite/Context.h"
+#include "include/gpu/graphite/Image.h"
 #include "include/gpu/graphite/Recorder.h"
 #include "include/gpu/graphite/Recording.h"
 #include "include/gpu/graphite/vk/VulkanGraphiteContext.h"
@@ -781,6 +785,8 @@ SkSurface* skialin_bridge_Surface_MakeRenderTarget(
  * null (empty label). imageInfo maps directly onto GrVkImageInfo, which
  * bindgen binds as a plain struct -- construct it directly in Rust. */
 GrBackendTexture* skialin_bridge_BackendTexture_MakeVk(int32_t width, int32_t height, const GrVkImageInfo* imageInfo, const char* label, size_t labelLength);
+/* glInfo maps directly onto GrGLTextureInfo, another plain bindgen-bound struct. */
+GrBackendTexture* skialin_bridge_BackendTexture_MakeGL(int32_t width, int32_t height, skgpu::Mipmapped mipmapped, const GrGLTextureInfo* glInfo, const char* label, size_t labelLength);
 void skialin_bridge_BackendTexture_delete(GrBackendTexture* texture);
 GrBackendTexture* skialin_bridge_BackendTexture_clone(const GrBackendTexture* texture);
 int32_t skialin_bridge_BackendTexture_width(const GrBackendTexture* texture);
@@ -881,5 +887,24 @@ void skialin_bridge_ShadowUtils_drawShadow(
     SkCanvas* canvas, const SkPath* path, float zPlaneX, float zPlaneY, float zPlaneZ,
     float lightX, float lightY, float lightZ, float lightRadius,
     uint32_t ambientColor, uint32_t spotColor, uint32_t flags);
+
+/* Direct wrapper around SkImages::AdoptTextureFrom (SkImageGanesh.h): wraps
+ * an existing GPU texture as an SkImage instead of a Surface, taking
+ * ownership -- Skia deletes the texture once the image is. colorSpace may
+ * be null. Ref-owned; free with skialin_bridge_Image_unref. Null on
+ * failure. */
+SkImage* skialin_bridge_Image_AdoptTextureFrom(
+    GrDirectContext* context, const GrBackendTexture* backendTexture, GrSurfaceOrigin textureOrigin,
+    SkColorType colorType, SkAlphaType alphaType, SkColorSpace* colorSpace);
+
+/* Direct wrapper around SkImages::WrapTexture (graphite/Image.h, despite
+ * living in the same SkImages namespace as the Ganesh factories above):
+ * wraps an existing GPU texture as an SkImage via a Graphite Recorder,
+ * without taking ownership -- the caller keeps the texture alive.
+ * colorSpace may be null. Ref-owned; free with skialin_bridge_Image_unref.
+ * Null on failure. */
+SkImage* skialin_bridge_Image_WrapGraphiteTexture(
+    skgpu::graphite::Recorder* recorder, const skgpu::graphite::BackendTexture* backendTexture,
+    SkAlphaType alphaType, SkColorSpace* colorSpace, skgpu::Origin origin, SkImages::GenerateMipmapsFromBase generateMipmapsFromBase);
 
 }  // extern "C"

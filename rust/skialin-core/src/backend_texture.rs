@@ -13,6 +13,16 @@ impl BackendTexture {
         BackendTexture(ptr)
     }
 
+    /// `gl_info` is a raw `GrGLTextureInfo`; construct it directly
+    /// (`sys::GrGLTextureInfo { fTarget: ..., fID: ..., ..Default::default() }`).
+    /// `fTarget` is typically `GL_TEXTURE_2D` (0x0DE1) and `fFormat` a
+    /// sized internal format like `GL_RGBA8` (0x8058).
+    pub fn new_gl(width: i32, height: i32, mipmapped: bool, gl_info: &sys::GrGLTextureInfo, label: &str) -> Self {
+        let ptr =
+            unsafe { sys::skialin_bridge_BackendTexture_MakeGL(width, height, mipmapped, gl_info, label.as_ptr() as *const std::ffi::c_char, label.len()) };
+        BackendTexture(ptr)
+    }
+
     pub fn width(&self) -> i32 {
         unsafe { sys::skialin_bridge_BackendTexture_width(self.0) }
     }
