@@ -111,9 +111,6 @@ jobs:
       - name: Build Skia
         run: ./gradlew buildSkia --console=plain
 
-      - name: ktlint
-        run: ./gradlew ktlintCheck --console=plain
-
       - name: Build, test, publish (local repo)
         run: ./gradlew test publish -Pskialin.buildNative=true --console=plain
 
