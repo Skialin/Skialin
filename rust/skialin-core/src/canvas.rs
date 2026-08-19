@@ -36,7 +36,7 @@ impl From<SrcRectConstraint> for sys::SkCanvas_SrcRectConstraint {
     }
 }
 
-fn to_sk_sampling(sampling: SamplingOptions) -> sys::SkSamplingOptions {
+pub(crate) fn to_sk_sampling(sampling: SamplingOptions) -> sys::SkSamplingOptions {
     let (cubic_b, cubic_c) = sampling.cubic.unwrap_or((0.0, 0.0));
     sys::SkSamplingOptions {
         maxAniso: sampling.max_aniso,

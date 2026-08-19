@@ -4,12 +4,6 @@ import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 import java.nio.ByteBuffer
 
-/**
- * [keepAlive] holds whatever object owns this pixmap's backing memory (a
- * direct [ByteBuffer] for [make], or the source [Image] for pixmaps
- * obtained via [Image.peekPixels]), so it can't be GC'd out from under the
- * native pointer while this [Pixmap] is in use.
- */
 class Pixmap private constructor(
     ptr: Long,
     private val keepAlive: Any?,
@@ -27,7 +21,6 @@ class Pixmap private constructor(
 
     fun computeByteSize(): Long = PixmapNative.nComputeByteSize(nativePtr)
 
-    /** Unpremultiplied color at `(x, y)`. Ignores color space; not bounds-checked. */
     fun getColor(
         x: Int,
         y: Int,
@@ -38,14 +31,33 @@ class Pixmap private constructor(
         y: Int,
     ): Float = PixmapNative.nGetAlphaf(nativePtr, x, y)
 
-    /** The intersection with `area`, sharing this pixmap's backing storage, or null if empty. */
     fun extractSubset(area: IRect): Pixmap? {
         val ptr = PixmapNative.nExtractSubset(nativePtr, area.left, area.top, area.right, area.bottom)
         return if (ptr == 0L) null else Pixmap(ptr, keepAlive)
     }
 
+    fun readPixels(
+        dst: Pixmap,
+        srcX: Int = 0,
+        srcY: Int = 0,
+    ): Boolean = PixmapNative.nReadPixels(nativePtr, dst.nativePtr, srcX, srcY)
+
+    fun scalePixels(
+        dst: Pixmap,
+        sampling: SamplingOptions = SamplingOptions.NEAREST,
+    ): Boolean =
+        PixmapNative.nScalePixels(
+            nativePtr,
+            dst.nativePtr,
+            sampling.maxAniso,
+            sampling.useCubic,
+            sampling.cubicB ?: 0f,
+            sampling.cubicC ?: 0f,
+            sampling.filter.ordinal,
+            sampling.mipmap.ordinal,
+        )
+
     companion object {
-        /** `buffer` must be direct (see [ByteBuffer.allocateDirect]) so its address is stable. */
         fun make(
             info: ImageInfo,
             buffer: ByteBuffer,
@@ -56,7 +68,6 @@ class Pixmap private constructor(
             return Pixmap(PixmapNative.nMake(info.nativePtr, addr, rowBytes), buffer)
         }
 
-        /** Wraps a pixmap pointer whose backing memory is kept alive by [keepAlive]. */
         internal fun wrapNative(
             ptr: Long,
             keepAlive: Any?,
@@ -120,4 +131,22 @@ private object PixmapNative {
         right: Int,
         bottom: Int,
     ): Long
+
+    external fun nReadPixels(
+        ptr: Long,
+        dstPtr: Long,
+        srcX: Int,
+        srcY: Int,
+    ): Boolean
+
+    external fun nScalePixels(
+        ptr: Long,
+        dstPtr: Long,
+        maxAniso: Int,
+        useCubic: Boolean,
+        cubicB: Float,
+        cubicC: Float,
+        filter: Int,
+        mipmap: Int,
+    ): Boolean
 }
