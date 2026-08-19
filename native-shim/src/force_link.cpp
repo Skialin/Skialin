@@ -64,6 +64,7 @@ SKIALIN_NOINLINE void touch(const SkPaint& paint, SkPaint& mutablePaint) {
     (void)paint.getStyle();
     (void)paint.isAntiAlias();
     (void)paint.isDither();
+    (void)paint.getAlpha();
     (void)paint.getAlphaf();
     (void)paint.getStrokeMiter();
     mutablePaint.setAntiAlias(false);
