@@ -51,6 +51,7 @@ class SkRRect;
 class SkRegion;
 class SkSVGDOM;
 class SkialinSvgCanvas;
+class SkCodec;
 class SkPathEffect;
 class SkPathMeasure;
 class SkM44;
@@ -114,6 +115,10 @@ SkImage* skialin_bridge_Surface_makeImageSnapshot(SkSurface* surface);
 void skialin_bridge_Image_unref(SkImage* image);
 SkImage* skialin_bridge_Image_MakeFromEncoded(const uint8_t* bytes, size_t length);
 SkData* skialin_bridge_Image_encodeToData(const SkImage* image);
+/* quality: [0, 100]. Null on encode failure. */
+SkData* skialin_bridge_Image_encodeToDataJpeg(const SkImage* image, int32_t quality);
+/* quality: [0, 100]; lossless selects SkWebpEncoder::Compression. Null on encode failure. */
+SkData* skialin_bridge_Image_encodeToDataWebp(const SkImage* image, float quality, bool lossless);
 
 /* SkImage is abstract (pure virtual methods), so bindgen generates no
  * instance methods for it at all, not even the concrete inline ones: every
@@ -382,6 +387,24 @@ SkialinSvgCanvas* skialin_bridge_SVGCanvas_Make(const SkRect* bounds, uint32_t f
 SkCanvas* skialin_bridge_SVGCanvas_getCanvas(SkialinSvgCanvas* svgCanvas);
 /* Ref-owned by the caller; free with skialin_bridge_Data_unref. */
 SkData* skialin_bridge_SVGCanvas_finish(SkialinSvgCanvas* svgCanvas);
+
+/* Codec: owned by the caller. Free with skialin_bridge_Codec_delete. Exposes
+ * multi-frame (animated GIF/WEBP) introspection and explicit per-frame
+ * decoding beyond Image::MakeFromEncoded's implicit first-frame decode.
+ * Null if the bytes aren't a recognized format. */
+SkCodec* skialin_bridge_Codec_MakeFromData(const uint8_t* bytes, size_t length);
+void skialin_bridge_Codec_delete(SkCodec* codec);
+void skialin_bridge_Codec_dimensions(const SkCodec* codec, int32_t* outWidth, int32_t* outHeight);
+/* SkEncodedImageFormat's integer value (matches its declaration order). */
+int32_t skialin_bridge_Codec_getEncodedFormat(const SkCodec* codec);
+int32_t skialin_bridge_Codec_getFrameCount(SkCodec* codec);
+/* False if index is out of range. outDurationMs: frame duration in ms.
+ * outRequiredFrame: -1 if this frame doesn't need blending with a prior one. */
+bool skialin_bridge_Codec_getFrameInfo(const SkCodec* codec, int32_t index, int32_t* outDurationMs, int32_t* outRequiredFrame, bool* outFullyReceived);
+/* Decodes frameIndex (0 for static images) into a caller-owned N32 premul
+ * buffer matching info/rowBytes. Returns SkCodec::Result as an int (0 =
+ * kSuccess, matching SkCodec::Result's declaration order). */
+int32_t skialin_bridge_Codec_getPixels(SkCodec* codec, const SkImageInfo* info, void* pixels, size_t rowBytes, int32_t frameIndex);
 
 /* PathEffect: ref-owned by the caller. Free with skialin_bridge_PathEffect_unref.
  * Routed entirely through the bridge: SkPathEffect's SkFlattenable base

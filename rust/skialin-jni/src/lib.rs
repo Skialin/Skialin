@@ -1,6 +1,7 @@
 mod backend_texture;
 mod bitmap;
 mod canvas;
+mod codec;
 mod color_filter;
 mod color_matrix;
 mod color_space;

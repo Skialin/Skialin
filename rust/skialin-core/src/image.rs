@@ -256,6 +256,19 @@ impl Image {
         self.encode_to_data().map(|data| data.as_bytes().to_vec())
     }
 
+    /// `quality` is `[0, 100]`.
+    pub fn encode_to_jpeg(&self, quality: i32) -> Option<Vec<u8>> {
+        let data = unsafe { Data::from_raw(sys::skialin_bridge_Image_encodeToDataJpeg(self.0, quality)) }?;
+        Some(data.as_bytes().to_vec())
+    }
+
+    /// `quality` is `[0, 100]`; for lossy encoding it's visual quality, for
+    /// lossless it's compression effort (higher = slower, smaller).
+    pub fn encode_to_webp(&self, quality: f32, lossless: bool) -> Option<Vec<u8>> {
+        let data = unsafe { Data::from_raw(sys::skialin_bridge_Image_encodeToDataWebp(self.0, quality, lossless)) }?;
+        Some(data.as_bytes().to_vec())
+    }
+
     pub fn make_subset(&self, subset: IRect, mipmapped: bool) -> Option<Image> {
         unsafe { Self::from_raw(sys::skialin_bridge_Image_makeSubset(self.0, subset.left, subset.top, subset.right, subset.bottom, mipmapped)) }
     }

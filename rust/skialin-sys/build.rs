@@ -152,6 +152,10 @@ fn link_skia(skia_dir: &Path) {
     println!("cargo:rustc-link-lib=static=libpng");
     println!("cargo:rustc-link-lib=static=zlib");
     println!("cargo:rustc-link-lib=static=expat");
+    println!("cargo:rustc-link-lib=static=libjpeg");
+    println!("cargo:rustc-link-lib=static=libwebp");
+    println!("cargo:rustc-link-lib=static=libwebp_sse41");
+    println!("cargo:rustc-link-lib=static=wuffs");
 
     if cfg!(target_os = "windows") {
         for lib in [

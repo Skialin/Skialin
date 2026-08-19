@@ -277,7 +277,21 @@ pub extern "system" fn Java_org_skialin_ImageNative_nRefEncodedData(_env: JNIEnv
 
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_ImageNative_nEncodeToPng(env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jbyteArray {
-    match unsafe { borrow::<Image>(ptr) }.encode_to_png() {
+    bytes_or_null(&env, unsafe { borrow::<Image>(ptr) }.encode_to_png())
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_ImageNative_nEncodeToJpeg(env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, quality: jint) -> jbyteArray {
+    bytes_or_null(&env, unsafe { borrow::<Image>(ptr) }.encode_to_jpeg(quality))
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_ImageNative_nEncodeToWebp(env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, quality: jni::sys::jfloat, lossless: jboolean) -> jbyteArray {
+    bytes_or_null(&env, unsafe { borrow::<Image>(ptr) }.encode_to_webp(quality, lossless != 0))
+}
+
+fn bytes_or_null(env: &JNIEnv, bytes: Option<Vec<u8>>) -> jbyteArray {
+    match bytes {
         Some(bytes) => {
             let array = env.new_byte_array(bytes.len() as i32).expect("new_byte_array");
             let signed: Vec<i8> = bytes.into_iter().map(|b| b as i8).collect();

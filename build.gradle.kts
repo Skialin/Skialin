@@ -118,6 +118,10 @@ val buildSkia =
             "skottie",
             "sksg",
             "jsonreader",
+            "libjpeg",
+            "libwebp",
+            "libwebp_sse41",
+            "wuffs",
         )
     }
 

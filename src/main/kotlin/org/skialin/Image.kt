@@ -129,6 +129,16 @@ class Image internal constructor(
 
     fun encodeToPng(): ByteArray? = ImageNative.nEncodeToPng(nativePtr)
 
+    /** [quality] is `[0, 100]`. */
+    fun encodeToJpeg(quality: Int = 100): ByteArray? = ImageNative.nEncodeToJpeg(nativePtr, quality)
+
+    /** [quality] is `[0, 100]`; for lossy encoding it's visual quality, for lossless it's
+     * compression effort (higher = slower, smaller). */
+    fun encodeToWebp(
+        quality: Float = 100f,
+        lossless: Boolean = false,
+    ): ByteArray? = ImageNative.nEncodeToWebp(nativePtr, quality, lossless)
+
     fun makeSubset(
         subset: IRect,
         mipmapped: Boolean = false,
@@ -342,6 +352,17 @@ private object ImageNative {
     external fun nRefEncodedData(ptr: Long): Long
 
     external fun nEncodeToPng(ptr: Long): ByteArray?
+
+    external fun nEncodeToJpeg(
+        ptr: Long,
+        quality: Int,
+    ): ByteArray?
+
+    external fun nEncodeToWebp(
+        ptr: Long,
+        quality: Float,
+        lossless: Boolean,
+    ): ByteArray?
 
     external fun nMakeSubset(
         ptr: Long,

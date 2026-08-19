@@ -56,6 +56,9 @@
 #include "include/core/SkString.h"
 #include "include/core/SkStream.h"
 #include "include/encode/SkPngEncoder.h"
+#include "include/encode/SkJpegEncoder.h"
+#include "include/encode/SkWebpEncoder.h"
+#include "include/codec/SkCodec.h"
 #include "include/ports/SkTypeface_win.h"
 #include "modules/skcms/skcms.h"
 #include "include/gpu/ganesh/GrBackendSurface.h"
@@ -189,6 +192,19 @@ SkImage* skialin_bridge_Image_MakeFromEncoded(const uint8_t* bytes, size_t lengt
 
 SkData* skialin_bridge_Image_encodeToData(const SkImage* image) {
     return SkPngEncoder::Encode(nullptr, image, {}).release();
+}
+
+SkData* skialin_bridge_Image_encodeToDataJpeg(const SkImage* image, int32_t quality) {
+    SkJpegEncoder::Options options;
+    options.fQuality = quality;
+    return SkJpegEncoder::Encode(nullptr, image, options).release();
+}
+
+SkData* skialin_bridge_Image_encodeToDataWebp(const SkImage* image, float quality, bool lossless) {
+    SkWebpEncoder::Options options;
+    options.fCompression = lossless ? SkWebpEncoder::Compression::kLossless : SkWebpEncoder::Compression::kLossy;
+    options.fQuality = quality;
+    return SkWebpEncoder::Encode(nullptr, image, options).release();
 }
 
 SkImage* skialin_bridge_Bitmap_asImage(const SkBitmap* bitmap) {
@@ -1721,6 +1737,46 @@ SkData* skialin_bridge_SVGCanvas_finish(SkialinSvgCanvas* svgCanvas) {
     SkData* result = svgCanvas->stream.detachAsData().release();
     delete svgCanvas;
     return result;
+}
+
+SkCodec* skialin_bridge_Codec_MakeFromData(const uint8_t* bytes, size_t length) {
+    auto result = SkCodec::MakeFromData(SkData::MakeWithCopy(bytes, length));
+    return result.release();
+}
+
+void skialin_bridge_Codec_delete(SkCodec* codec) {
+    delete codec;
+}
+
+void skialin_bridge_Codec_dimensions(const SkCodec* codec, int32_t* outWidth, int32_t* outHeight) {
+    SkISize size = codec->dimensions();
+    *outWidth = size.width();
+    *outHeight = size.height();
+}
+
+int32_t skialin_bridge_Codec_getEncodedFormat(const SkCodec* codec) {
+    return static_cast<int32_t>(codec->getEncodedFormat());
+}
+
+int32_t skialin_bridge_Codec_getFrameCount(SkCodec* codec) {
+    return codec->getFrameCount();
+}
+
+bool skialin_bridge_Codec_getFrameInfo(const SkCodec* codec, int32_t index, int32_t* outDurationMs, int32_t* outRequiredFrame, bool* outFullyReceived) {
+    SkCodec::FrameInfo info;
+    if (!codec->getFrameInfo(index, &info)) {
+        return false;
+    }
+    *outDurationMs = info.fDuration;
+    *outRequiredFrame = info.fRequiredFrame;
+    *outFullyReceived = info.fFullyReceived;
+    return true;
+}
+
+int32_t skialin_bridge_Codec_getPixels(SkCodec* codec, const SkImageInfo* info, void* pixels, size_t rowBytes, int32_t frameIndex) {
+    SkCodec::Options options;
+    options.fFrameIndex = frameIndex;
+    return static_cast<int32_t>(codec->getPixels(*info, pixels, rowBytes, &options));
 }
 
 GrDirectContext* skialin_bridge_DirectContext_MakeGL(void) {
