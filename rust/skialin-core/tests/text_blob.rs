@@ -46,6 +46,24 @@ fn from_pos_text_matches_glyph_count() {
 }
 
 #[test]
+fn rsxform_intercepts_and_serialize_roundtrip() {
+    let font = make_font();
+    let xforms = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 20.0, 0.0];
+    let blob = skialin_core::TextBlob::from_rsxform("Hi", &xforms, &font, TextEncoding::Utf8).unwrap();
+    assert!(blob.bounds().right > blob.bounds().left);
+
+    let plain_blob = skialin_core::TextBlob::from_text("Hi", &font, TextEncoding::Utf8).unwrap();
+    let b = plain_blob.bounds();
+    let intervals = plain_blob.get_intercepts(b.top, b.bottom, None);
+    assert!(intervals.len() % 2 == 0);
+
+    let data = plain_blob.serialize_to_data();
+    assert!(data.size() > 0);
+    let restored = skialin_core::TextBlob::from_data(&data).unwrap();
+    assert_eq!(restored.bounds().right, plain_blob.bounds().right);
+}
+
+#[test]
 fn draws_without_crashing() {
     let font = make_font();
     let blob = skialin_core::TextBlob::from_text("Hi", &font, TextEncoding::Utf8).unwrap();

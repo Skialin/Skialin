@@ -61,3 +61,28 @@ fn metrics_are_nonzero_for_a_positive_size() {
     assert!(metrics.descent - metrics.ascent > 0.0);
     assert!(font.spacing() > 0.0);
 }
+
+#[test]
+fn bounds_positions_and_glyph_path_are_consistent() {
+    let mgr = FontMgr::system();
+    let name = mgr.family_name(0);
+    let typeface = mgr.match_family_style(Some(&name), FontStyle::normal()).unwrap();
+    let font = Font::from_typeface(&typeface, 18.0);
+
+    let glyphs = font.text_to_glyphs("Hi");
+    let bounds = font.bounds(&glyphs, None);
+    assert_eq!(bounds.len(), 2);
+
+    let positions = font.positions(&glyphs, skialin_core::Point::new(0.0, 0.0));
+    assert_eq!(positions.len(), 2);
+    assert_eq!(positions[0].x, 0.0);
+
+    let xpos = font.x_positions(&glyphs, 0.0);
+    assert_eq!(xpos.len(), 2);
+    assert_eq!(xpos[0], 0.0);
+
+    let with_bigger_size = font.make_with_size(36.0);
+    assert_eq!(with_bigger_size.size(), 36.0);
+
+    assert!(font.glyph_path(glyphs[0]).is_some());
+}

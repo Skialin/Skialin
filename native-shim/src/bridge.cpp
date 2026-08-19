@@ -25,6 +25,7 @@
 #include "include/core/SkFontMgr.h"
 #include "include/core/SkFont.h"
 #include "include/core/SkTextBlob.h"
+#include "include/core/SkSerialProcs.h"
 #include "modules/skparagraph/include/TextStyle.h"
 #include "modules/skparagraph/include/ParagraphStyle.h"
 #include "modules/skparagraph/include/FontCollection.h"
@@ -770,6 +771,18 @@ void skialin_bridge_Font_setTypeface(SkFont* font, SkTypeface* typeface) {
     font->setTypeface(sk_ref_sp(typeface));
 }
 
+SkPath* skialin_bridge_Font_getPath(const SkFont* font, uint16_t glyphID) {
+    auto path = font->getPath(glyphID);
+    if (!path) {
+        return nullptr;
+    }
+    return new SkPath(*path);
+}
+
+SkFont* skialin_bridge_Font_makeWithSize(const SkFont* font, float size) {
+    return new SkFont(font->makeWithSize(size));
+}
+
 void skialin_bridge_TextBlob_unref(SkTextBlob* blob) {
     SkSafeUnref(blob);
 }
@@ -784,6 +797,20 @@ SkTextBlob* skialin_bridge_TextBlob_MakeFromPosTextH(const void* text, size_t by
 
 SkTextBlob* skialin_bridge_TextBlob_MakeFromPosText(const void* text, size_t byteLength, const SkPoint* pos, size_t posLength, const SkFont* font, int32_t encoding) {
     return SkTextBlob::MakeFromPosText(text, byteLength, {pos, posLength}, *font, static_cast<SkTextEncoding>(encoding)).release();
+}
+
+SkTextBlob* skialin_bridge_TextBlob_MakeFromRSXform(const void* text, size_t byteLength, const SkRSXform* xform, size_t xformLength, const SkFont* font, int32_t encoding) {
+    return SkTextBlob::MakeFromRSXform(text, byteLength, {xform, xformLength}, *font, static_cast<SkTextEncoding>(encoding)).release();
+}
+
+SkData* skialin_bridge_TextBlob_serialize(const SkTextBlob* blob) {
+    SkSerialProcs procs;
+    return blob->serialize(procs).release();
+}
+
+SkTextBlob* skialin_bridge_TextBlob_Deserialize(const void* data, size_t size) {
+    SkDeserialProcs procs;
+    return SkTextBlob::Deserialize(data, size, procs).release();
 }
 
 using skia::textlayout::TextStyle;

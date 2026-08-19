@@ -9,6 +9,7 @@
  * owns a plain pointer with clear, explicit lifetime rules. */
 
 #include "include/core/SkImageInfo.h"
+#include "include/core/SkRSXform.h"
 #include "include/core/SkMatrix.h"
 #include "include/core/SkPoint.h"
 #include "include/core/SkRect.h"
@@ -580,6 +581,8 @@ SkFont* skialin_bridge_Font_MakeWithTypeface(SkTypeface* typeface, float size);
 void skialin_bridge_Font_delete(SkFont* font);
 /* Ref-owned by the caller; null if this Font has no typeface. Free with skialin_bridge_Typeface_unref. */
 SkTypeface* skialin_bridge_Font_refTypeface(const SkFont* font);
+SkPath* skialin_bridge_Font_getPath(const SkFont* font, uint16_t glyphID);
+SkFont* skialin_bridge_Font_makeWithSize(const SkFont* font, float size);
 /* typeface may be null to clear it; ref'd by the bridge, not consumed. */
 void skialin_bridge_Font_setTypeface(SkFont* font, SkTypeface* typeface);
 
@@ -595,6 +598,9 @@ SkTextBlob* skialin_bridge_TextBlob_MakeFromText(const void* text, size_t byteLe
 SkTextBlob* skialin_bridge_TextBlob_MakeFromPosTextH(const void* text, size_t byteLength, const float* xpos, size_t xposLength, float constY, const SkFont* font, int32_t encoding);
 /* pos.length must equal the glyph/character count implied by text/byteLength/encoding. */
 SkTextBlob* skialin_bridge_TextBlob_MakeFromPosText(const void* text, size_t byteLength, const SkPoint* pos, size_t posLength, const SkFont* font, int32_t encoding);
+SkTextBlob* skialin_bridge_TextBlob_MakeFromRSXform(const void* text, size_t byteLength, const SkRSXform* xform, size_t xformLength, const SkFont* font, int32_t encoding);
+SkData* skialin_bridge_TextBlob_serialize(const SkTextBlob* blob);
+SkTextBlob* skialin_bridge_TextBlob_Deserialize(const void* data, size_t size);
 
 /* TextStyle (skia::textlayout::TextStyle): heap-allocated with `new`/`delete`.
  * A plain value class with non-trivial members (std::vector<SkString>,

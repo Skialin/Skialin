@@ -197,9 +197,6 @@ pub extern "system" fn Java_org_skialin_FontNative_nWidths<'l>(env: JNIEnv<'l>, 
     array.into_raw()
 }
 
-/// Writes [top, ascent, descent, bottom, leading, avgCharWidth,
-/// maxCharWidth, xMin, xMax, xHeight, capHeight] into `out`, an
-/// 11-element float array allocated by the caller.
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_FontNative_nMetrics(env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, out: jfloatArray) {
     let metrics = unsafe { borrow::<Font>(ptr) }.metrics();
@@ -223,4 +220,69 @@ pub extern "system" fn Java_org_skialin_FontNative_nMetrics(env: JNIEnv, _class:
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_FontNative_nSpacing(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jfloat {
     unsafe { borrow::<Font>(ptr) }.spacing()
+}
+
+fn read_glyphs(env: &JNIEnv, glyphs: jshortArray) -> Vec<u16> {
+    let array = unsafe { jni::objects::JShortArray::from_raw(glyphs) };
+    let len = env.get_array_length(&array).expect("get_array_length") as usize;
+    let mut buf = vec![0i16; len];
+    env.get_short_array_region(&array, 0, &mut buf).expect("get_short_array_region");
+    buf.into_iter().map(|g| g as u16).collect()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_FontNative_nBounds(env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, glyphs: jshortArray, paint_ptr: jlong) -> jfloatArray {
+    let glyphs = read_glyphs(&env, glyphs);
+    let paint = (paint_ptr != 0).then(|| unsafe { borrow::<skialin_core::Paint>(paint_ptr) });
+    let bounds = unsafe { borrow::<Font>(ptr) }.bounds(&glyphs, paint);
+    let mut flat = Vec::with_capacity(bounds.len() * 4);
+    for b in bounds {
+        flat.extend_from_slice(&[b.left, b.top, b.right, b.bottom]);
+    }
+    let array = env.new_float_array(flat.len() as i32).expect("new_float_array");
+    env.set_float_array_region(&array, 0, &flat).expect("set_float_array_region");
+    array.into_raw()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_FontNative_nPositions(
+    env: JNIEnv,
+    _class: jni::objects::JClass,
+    ptr: jlong,
+    glyphs: jshortArray,
+    origin_x: jfloat,
+    origin_y: jfloat,
+) -> jfloatArray {
+    let glyphs = read_glyphs(&env, glyphs);
+    let positions = unsafe { borrow::<Font>(ptr) }.positions(&glyphs, skialin_core::Point::new(origin_x, origin_y));
+    let mut flat = Vec::with_capacity(positions.len() * 2);
+    for p in positions {
+        flat.push(p.x);
+        flat.push(p.y);
+    }
+    let array = env.new_float_array(flat.len() as i32).expect("new_float_array");
+    env.set_float_array_region(&array, 0, &flat).expect("set_float_array_region");
+    array.into_raw()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_FontNative_nXPositions(env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, glyphs: jshortArray, origin: jfloat) -> jfloatArray {
+    let glyphs = read_glyphs(&env, glyphs);
+    let xpos = unsafe { borrow::<Font>(ptr) }.x_positions(&glyphs, origin);
+    let array = env.new_float_array(xpos.len() as i32).expect("new_float_array");
+    env.set_float_array_region(&array, 0, &xpos).expect("set_float_array_region");
+    array.into_raw()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_FontNative_nGetPath(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, glyph: jni::sys::jshort) -> jlong {
+    match unsafe { borrow::<Font>(ptr) }.glyph_path(glyph as u16) {
+        Some(path) => box_ptr(path),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_FontNative_nMakeWithSize(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, size: jfloat) -> jlong {
+    box_ptr(unsafe { borrow::<Font>(ptr) }.make_with_size(size))
 }

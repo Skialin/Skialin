@@ -79,6 +79,36 @@ class Font internal constructor(
         FontNative.nMetrics(nativePtr, out)
         return FontMetrics(out[0], out[1], out[2], out[3], out[4], out[5], out[6], out[7], out[8], out[9], out[10])
     }
+
+    fun getBounds(
+        glyphs: ShortArray,
+        paint: Paint? = null,
+    ): Array<Rect> {
+        val flat = FontNative.nBounds(nativePtr, glyphs, paint?.nativePtr ?: 0L)
+        return Array(flat.size / 4) { i -> Rect(flat[i * 4], flat[i * 4 + 1], flat[i * 4 + 2], flat[i * 4 + 3]) }
+    }
+
+    fun getPositions(
+        glyphs: ShortArray,
+        origin: Point = Point(0f, 0f),
+    ): Array<Point> {
+        val flat = FontNative.nPositions(nativePtr, glyphs, origin.x, origin.y)
+        return Array(flat.size / 2) { i -> Point(flat[i * 2], flat[i * 2 + 1]) }
+    }
+
+    fun getXPositions(
+        glyphs: ShortArray,
+        origin: Float = 0f,
+    ): FloatArray = FontNative.nXPositions(nativePtr, glyphs, origin)
+
+    fun getPath(glyph: Short): Path? {
+        val ptr = FontNative.nGetPath(nativePtr, glyph)
+        return if (ptr == 0L) null else Path(ptr)
+    }
+
+    fun getPaths(glyphs: ShortArray): Array<Path?> = Array(glyphs.size) { i -> getPath(glyphs[i]) }
+
+    fun makeWithSize(size: Float): Font = Font(FontNative.nMakeWithSize(nativePtr, size))
 }
 
 private object FontNative {
@@ -205,4 +235,33 @@ private object FontNative {
     )
 
     external fun nSpacing(ptr: Long): Float
+
+    external fun nBounds(
+        ptr: Long,
+        glyphs: ShortArray,
+        paintPtr: Long,
+    ): FloatArray
+
+    external fun nPositions(
+        ptr: Long,
+        glyphs: ShortArray,
+        originX: Float,
+        originY: Float,
+    ): FloatArray
+
+    external fun nXPositions(
+        ptr: Long,
+        glyphs: ShortArray,
+        origin: Float,
+    ): FloatArray
+
+    external fun nGetPath(
+        ptr: Long,
+        glyph: Short,
+    ): Long
+
+    external fun nMakeWithSize(
+        ptr: Long,
+        size: Float,
+    ): Long
 }

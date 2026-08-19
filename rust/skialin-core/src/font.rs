@@ -268,6 +268,34 @@ impl Font {
     pub fn spacing(&self) -> f32 {
         unsafe { sys::SkFont_getSpacing(self.0) }
     }
+
+    pub fn bounds(&self, glyphs: &[u16], paint: Option<&crate::Paint>) -> Vec<crate::Rect> {
+        let mut bounds = vec![sys::SkRect::default(); glyphs.len()];
+        let paint_ptr = paint.map_or(std::ptr::null(), |p| &*p.0 as *const sys::SkPaint);
+        let empty_widths = span_mut::<f32>(&mut []);
+        unsafe { sys::SkFont_getWidthsBounds(self.0, span(glyphs), empty_widths, span_mut(&mut bounds), paint_ptr) };
+        bounds.into_iter().map(Into::into).collect()
+    }
+
+    pub fn positions(&self, glyphs: &[u16], origin: crate::Point) -> Vec<crate::Point> {
+        let mut pos = vec![sys::SkPoint::default(); glyphs.len()];
+        unsafe { sys::SkFont_getPos(self.0, span(glyphs), span_mut(&mut pos), origin.into()) };
+        pos.into_iter().map(Into::into).collect()
+    }
+
+    pub fn x_positions(&self, glyphs: &[u16], origin: f32) -> Vec<f32> {
+        let mut xpos = vec![0f32; glyphs.len()];
+        unsafe { sys::SkFont_getXPos(self.0, span(glyphs), span_mut(&mut xpos), origin) };
+        xpos
+    }
+
+    pub fn glyph_path(&self, glyph: u16) -> Option<crate::Path> {
+        unsafe { crate::Path::from_raw(sys::skialin_bridge_Font_getPath(self.0, glyph)) }
+    }
+
+    pub fn make_with_size(&self, size: f32) -> Self {
+        unsafe { Self::from_raw(sys::skialin_bridge_Font_makeWithSize(self.0, size)).expect("makeWithSize never returns null") }
+    }
 }
 
 impl Default for Font {

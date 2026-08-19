@@ -1,7 +1,7 @@
 use jni::sys::{jfloat, jfloatArray, jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{Font, Point, TextBlob, TextEncoding};
+use skialin_core::{Data, Font, Paint, Point, TextBlob, TextEncoding};
 
 use crate::util::{borrow, box_ptr, drop_ptr};
 
@@ -92,4 +92,48 @@ pub extern "system" fn Java_org_skialin_TextBlobNative_nBounds(env: JNIEnv, _cla
     let values = [bounds.left, bounds.top, bounds.right, bounds.bottom];
     let array = unsafe { jni::objects::JFloatArray::from_raw(out) };
     env.set_float_array_region(&array, 0, &values).expect("set_float_array_region");
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextBlobNative_nFromRSXform<'l>(
+    mut env: JNIEnv<'l>,
+    _class: jni::objects::JClass<'l>,
+    text: jni::objects::JString<'l>,
+    xforms: jfloatArray,
+    font_ptr: jlong,
+    encoding: jint,
+) -> jlong {
+    let text: String = env.get_string(&text).expect("get_string").into();
+    let array = unsafe { jni::objects::JFloatArray::from_raw(xforms) };
+    let len = env.get_array_length(&array).expect("get_array_length") as usize;
+    let mut buf = vec![0f32; len];
+    env.get_float_array_region(&array, 0, &mut buf).expect("get_float_array_region");
+    let font = unsafe { borrow::<Font>(font_ptr) };
+    match TextBlob::from_rsxform(&text, &buf, font, encoding_from_ordinal(encoding)) {
+        Some(blob) => box_ptr(blob),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextBlobNative_nGetIntercepts(env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, lower: jfloat, upper: jfloat, paint_ptr: jlong) -> jfloatArray {
+    let paint = (paint_ptr != 0).then(|| unsafe { borrow::<Paint>(paint_ptr) });
+    let intervals = unsafe { borrow::<TextBlob>(ptr) }.get_intercepts(lower, upper, paint);
+    let array = env.new_float_array(intervals.len() as i32).expect("new_float_array");
+    env.set_float_array_region(&array, 0, &intervals).expect("set_float_array_region");
+    array.into_raw()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextBlobNative_nSerializeToData(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jlong {
+    box_ptr(unsafe { borrow::<TextBlob>(ptr) }.serialize_to_data())
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextBlobNative_nFromData(_env: JNIEnv, _class: jni::objects::JClass, data_ptr: jlong) -> jlong {
+    let data = unsafe { borrow::<Data>(data_ptr) };
+    match TextBlob::from_data(data) {
+        Some(blob) => box_ptr(blob),
+        None => 0,
+    }
 }

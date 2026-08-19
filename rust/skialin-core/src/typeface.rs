@@ -49,6 +49,25 @@ impl Typeface {
         let data = unsafe { Data::from_raw(sys::skialin_bridge_Typeface_familyName(self.0)) }.expect("familyName never returns null");
         String::from_utf8_lossy(data.as_bytes()).into_owned()
     }
+
+    pub fn table_tags(&self) -> Vec<u32> {
+        let count = unsafe { sys::SkTypeface_countTables(self.0) };
+        let mut tags = vec![0u32; count.max(0) as usize];
+        let span = sys::SkSpan { _phantom_0: std::marker::PhantomData, fPtr: tags.as_mut_ptr(), fSize: tags.len() };
+        unsafe { sys::SkTypeface_readTableTags(self.0, span) };
+        tags
+    }
+
+    pub fn table_size(&self, tag: u32) -> usize {
+        unsafe { sys::SkTypeface_getTableSize(self.0, tag) }
+    }
+
+    pub fn table_data(&self, tag: u32, offset: usize, length: usize) -> Vec<u8> {
+        let mut buf = vec![0u8; length];
+        let copied = unsafe { sys::SkTypeface_getTableData(self.0, tag, offset, length, buf.as_mut_ptr().cast()) };
+        buf.truncate(copied);
+        buf
+    }
 }
 
 impl Drop for Typeface {

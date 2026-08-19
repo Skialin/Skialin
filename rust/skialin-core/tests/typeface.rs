@@ -29,3 +29,15 @@ fn family_name_is_empty_string_for_empty_typeface() {
     let typeface = Typeface::empty();
     assert_eq!(typeface.family_name(), "");
 }
+
+#[test]
+fn table_tags_are_consistent_with_table_size() {
+    let mgr = skialin_core::FontMgr::system();
+    let name = mgr.family_name(0);
+    let typeface = mgr.match_family_style(Some(&name), FontStyle::normal()).unwrap();
+    for tag in typeface.table_tags() {
+        let size = typeface.table_size(tag);
+        let data = typeface.table_data(tag, 0, size);
+        assert_eq!(data.len(), size);
+    }
+}

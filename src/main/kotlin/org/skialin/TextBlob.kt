@@ -63,7 +63,30 @@ class TextBlob internal constructor(
             val ptr = TextBlobNative.nFromPosText(text, flat, font.nativePtr, encoding.ordinal)
             return if (ptr == 0L) null else TextBlob(ptr)
         }
+
+        fun makeFromRSXform(
+            text: String,
+            xforms: FloatArray,
+            font: Font,
+            encoding: Encoding = Encoding.UTF8,
+        ): TextBlob? {
+            val ptr = TextBlobNative.nFromRSXform(text, xforms, font.nativePtr, encoding.ordinal)
+            return if (ptr == 0L) null else TextBlob(ptr)
+        }
+
+        fun makeFromData(data: Data): TextBlob? {
+            val ptr = TextBlobNative.nFromData(data.nativePtr)
+            return if (ptr == 0L) null else TextBlob(ptr)
+        }
     }
+
+    fun getIntercepts(
+        lower: Float,
+        upper: Float,
+        paint: Paint? = null,
+    ): FloatArray = TextBlobNative.nGetIntercepts(nativePtr, lower, upper, paint?.nativePtr ?: 0L)
+
+    fun serializeToData(): Data = Data(TextBlobNative.nSerializeToData(nativePtr))
 }
 
 private object TextBlobNative {
@@ -100,4 +123,22 @@ private object TextBlobNative {
         ptr: Long,
         out: FloatArray,
     )
+
+    external fun nFromRSXform(
+        text: String,
+        xforms: FloatArray,
+        fontPtr: Long,
+        encoding: Int,
+    ): Long
+
+    external fun nGetIntercepts(
+        ptr: Long,
+        lower: Float,
+        upper: Float,
+        paintPtr: Long,
+    ): FloatArray
+
+    external fun nSerializeToData(ptr: Long): Long
+
+    external fun nFromData(dataPtr: Long): Long
 }

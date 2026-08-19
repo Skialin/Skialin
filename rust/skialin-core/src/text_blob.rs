@@ -36,6 +36,29 @@ impl TextBlob {
     pub fn unique_id(&self) -> u32 {
         unsafe { sys::SkTextBlob_uniqueID(self.0) }
     }
+
+    pub fn from_rsxform(text: &str, xforms: &[f32], font: &Font, encoding: TextEncoding) -> Option<Self> {
+        let sk_xforms: Vec<sys::SkRSXform> = xforms.chunks_exact(4).map(|c| sys::SkRSXform { fSCos: c[0], fSSin: c[1], fTx: c[2], fTy: c[3] }).collect();
+        unsafe { Self::from_raw(sys::skialin_bridge_TextBlob_MakeFromRSXform(text.as_ptr().cast(), text.len(), sk_xforms.as_ptr(), sk_xforms.len(), font.0, encoding.into())) }
+    }
+
+    pub fn get_intercepts(&self, lower: f32, upper: f32, paint: Option<&crate::Paint>) -> Vec<f32> {
+        let bounds = [lower, upper];
+        let paint_ptr = paint.map_or(std::ptr::null(), |p| &*p.0 as *const sys::SkPaint);
+        let count = unsafe { sys::SkTextBlob_getIntercepts(self.0, bounds.as_ptr(), std::ptr::null_mut(), paint_ptr) };
+        let mut intervals = vec![0f32; count as usize];
+        unsafe { sys::SkTextBlob_getIntercepts(self.0, bounds.as_ptr(), intervals.as_mut_ptr(), paint_ptr) };
+        intervals
+    }
+
+    pub fn serialize_to_data(&self) -> crate::Data {
+        unsafe { crate::Data::from_raw(sys::skialin_bridge_TextBlob_serialize(self.0)) }.expect("serialize never returns null")
+    }
+
+    pub fn from_data(data: &crate::Data) -> Option<Self> {
+        let bytes = data.as_bytes();
+        unsafe { Self::from_raw(sys::skialin_bridge_TextBlob_Deserialize(bytes.as_ptr().cast(), bytes.len())) }
+    }
 }
 
 impl Drop for TextBlob {

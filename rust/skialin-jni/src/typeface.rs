@@ -1,4 +1,4 @@
-use jni::sys::{jboolean, jint, jlong, jstring};
+use jni::sys::{jboolean, jbyteArray, jint, jintArray, jlong, jstring};
 use jni::JNIEnv;
 
 use skialin_core::Typeface;
@@ -69,4 +69,27 @@ pub extern "system" fn Java_org_skialin_TypefaceNative_nSlant(_env: JNIEnv, _cla
 pub extern "system" fn Java_org_skialin_TypefaceNative_nFamilyName<'l>(env: JNIEnv<'l>, _class: jni::objects::JClass<'l>, ptr: jlong) -> jstring {
     let name = unsafe { borrow::<Typeface>(ptr) }.family_name();
     env.new_string(name).expect("new_string").into_raw()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TypefaceNative_nTableTags(env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jintArray {
+    let tags = unsafe { borrow::<Typeface>(ptr) }.table_tags();
+    let signed: Vec<i32> = tags.into_iter().map(|t| t as i32).collect();
+    let array = env.new_int_array(signed.len() as i32).expect("new_int_array");
+    env.set_int_array_region(&array, 0, &signed).expect("set_int_array_region");
+    array.into_raw()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TypefaceNative_nTableSize(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, tag: jint) -> jlong {
+    unsafe { borrow::<Typeface>(ptr) }.table_size(tag as u32) as jlong
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TypefaceNative_nTableData(env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, tag: jint, offset: jlong, length: jlong) -> jbyteArray {
+    let data = unsafe { borrow::<Typeface>(ptr) }.table_data(tag as u32, offset as usize, length as usize);
+    let signed: Vec<i8> = data.into_iter().map(|b| b as i8).collect();
+    let array = env.new_byte_array(signed.len() as i32).expect("new_byte_array");
+    env.set_byte_array_region(&array, 0, &signed).expect("set_byte_array_region");
+    array.into_raw()
 }

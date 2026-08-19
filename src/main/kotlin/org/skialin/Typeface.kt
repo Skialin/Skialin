@@ -25,6 +25,16 @@ class Typeface internal constructor(
 
     fun unicharToGlyph(unichar: Int): Int = TypefaceNative.nUnicharToGlyph(nativePtr, unichar)
 
+    val tableTags: IntArray get() = TypefaceNative.nTableTags(nativePtr)
+
+    fun getTableSize(tag: Int): Long = TypefaceNative.nTableSize(nativePtr, tag)
+
+    fun getTableData(
+        tag: Int,
+        offset: Long = 0L,
+        length: Long = getTableSize(tag),
+    ): ByteArray = TypefaceNative.nTableData(nativePtr, tag, offset, length)
+
     companion object {
         fun makeEmpty(): Typeface = Typeface(TypefaceNative.nMakeEmpty())
     }
@@ -63,4 +73,18 @@ private object TypefaceNative {
     external fun nSlant(ptr: Long): Int
 
     external fun nFamilyName(ptr: Long): String
+
+    external fun nTableTags(ptr: Long): IntArray
+
+    external fun nTableSize(
+        ptr: Long,
+        tag: Int,
+    ): Long
+
+    external fun nTableData(
+        ptr: Long,
+        tag: Int,
+        offset: Long,
+        length: Long,
+    ): ByteArray
 }
