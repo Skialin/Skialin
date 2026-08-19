@@ -123,6 +123,28 @@ impl From<BlendMode> for sys::SkBlendMode {
     }
 }
 
+impl From<sys::SkBlendMode> for BlendMode {
+    fn from(mode: sys::SkBlendMode) -> Self {
+        match mode {
+            sys::SkBlendMode_kClear => BlendMode::Clear,
+            sys::SkBlendMode_kSrc => BlendMode::Src,
+            sys::SkBlendMode_kDst => BlendMode::Dst,
+            sys::SkBlendMode_kDstOver => BlendMode::DstOver,
+            sys::SkBlendMode_kSrcIn => BlendMode::SrcIn,
+            sys::SkBlendMode_kDstIn => BlendMode::DstIn,
+            sys::SkBlendMode_kSrcOut => BlendMode::SrcOut,
+            sys::SkBlendMode_kDstOut => BlendMode::DstOut,
+            sys::SkBlendMode_kSrcATop => BlendMode::SrcAtop,
+            sys::SkBlendMode_kDstATop => BlendMode::DstAtop,
+            sys::SkBlendMode_kXor => BlendMode::Xor,
+            sys::SkBlendMode_kPlus => BlendMode::Plus,
+            sys::SkBlendMode_kModulate => BlendMode::Modulate,
+            sys::SkBlendMode_kScreen => BlendMode::Screen,
+            _ => BlendMode::SrcOver,
+        }
+    }
+}
+
 pub struct Paint(pub(crate) Box<sys::SkPaint>);
 
 impl Paint {
@@ -233,6 +255,14 @@ impl Paint {
         let ptr = effect.map_or(std::ptr::null_mut(), |e| e.0);
         unsafe { sys::skialin_bridge_Paint_setPathEffect(&mut *self.0, ptr) };
         self
+    }
+
+    pub fn path_effect(&self) -> Option<crate::PathEffect> {
+        unsafe { crate::PathEffect::from_raw(sys::skialin_bridge_Paint_refPathEffect(&*self.0)) }
+    }
+
+    pub fn blend_mode(&self) -> BlendMode {
+        unsafe { self.0.getBlendMode_or(sys::SkBlendMode_kSrcOver as sys::SkBlendMode) }.into()
     }
 
     /// Resets this paint to its default (freshly-constructed) state.

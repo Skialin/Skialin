@@ -71,4 +71,20 @@ class PaintExpandedTest {
             }
         }
     }
+
+    @Test
+    fun pathEffectAndBlendModeGettersRoundtrip() {
+        Paint().use { paint ->
+            assertNull(paint.getPathEffect())
+            assertEquals(BlendMode.SRC_OVER, paint.blendMode)
+
+            PathEffect.makeCorner(3f)!!.use { effect ->
+                paint.setPathEffect(effect)
+                paint.getPathEffect().use { assertNotNull(it) }
+            }
+
+            paint.setBlendMode(BlendMode.SCREEN)
+            assertEquals(BlendMode.SCREEN, paint.blendMode)
+        }
+    }
 }

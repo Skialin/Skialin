@@ -1441,6 +1441,10 @@ SkMaskFilter* skialin_bridge_Paint_refMaskFilter(const SkPaint* paint) {
     return paint->refMaskFilter().release();
 }
 
+SkPathEffect* skialin_bridge_Paint_refPathEffect(const SkPaint* paint) {
+    return paint->refPathEffect().release();
+}
+
 namespace {
 void radiiFromFlat(const float* radii8, SkVector out[4]) {
     for (int i = 0; i < 4; ++i) {

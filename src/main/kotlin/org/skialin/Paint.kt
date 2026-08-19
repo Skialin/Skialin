@@ -64,6 +64,10 @@ class Paint internal constructor(
 
     fun getMaskFilter(): MaskFilter? = PaintNative.nGetMaskFilter(nativePtr).takeIf { it != 0L }?.let { MaskFilter(it) }
 
+    fun getPathEffect(): PathEffect? = PaintNative.nGetPathEffect(nativePtr).takeIf { it != 0L }?.let { PathEffect(it) }
+
+    val blendMode: BlendMode get() = BlendMode.entries[PaintNative.nGetBlendMode(nativePtr)]
+
     /** Resets this paint to its default (freshly-constructed) state. */
     fun reset() = PaintNative.nReset(nativePtr)
 
@@ -185,6 +189,10 @@ private object PaintNative {
     external fun nGetImageFilter(ptr: Long): Long
 
     external fun nGetMaskFilter(ptr: Long): Long
+
+    external fun nGetPathEffect(ptr: Long): Long
+
+    external fun nGetBlendMode(ptr: Long): Int
 
     external fun nReset(ptr: Long)
 

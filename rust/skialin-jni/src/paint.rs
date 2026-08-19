@@ -61,6 +61,14 @@ pub(crate) fn blend_mode_from_ordinal(ordinal: jint) -> BlendMode {
     MODES.get(ordinal as usize).copied().unwrap_or(SrcOver)
 }
 
+fn blend_mode_to_ordinal(mode: BlendMode) -> jint {
+    use BlendMode::*;
+    const MODES: [BlendMode; 15] = [
+        Clear, Src, Dst, SrcOver, DstOver, SrcIn, DstIn, SrcOut, DstOut, SrcAtop, DstAtop, Xor, Plus, Modulate, Screen,
+    ];
+    MODES.iter().position(|&m| m == mode).unwrap_or(3) as jint
+}
+
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_PaintNative_nMake(_env: JNIEnv, _class: jni::objects::JClass) -> jlong {
     box_ptr(Paint::new())
@@ -196,6 +204,19 @@ pub extern "system" fn Java_org_skialin_PaintNative_nGetMaskFilter(_env: JNIEnv,
         Some(filter) => box_ptr(filter),
         None => 0,
     }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nGetPathEffect(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jlong {
+    match unsafe { borrow::<Paint>(ptr) }.path_effect() {
+        Some(effect) => box_ptr(effect),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PaintNative_nGetBlendMode(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jint {
+    blend_mode_to_ordinal(unsafe { borrow::<Paint>(ptr) }.blend_mode())
 }
 
 #[no_mangle]

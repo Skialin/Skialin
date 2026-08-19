@@ -865,6 +865,7 @@ SkShader* skialin_bridge_Paint_refShader(const SkPaint* paint);
 SkColorFilter* skialin_bridge_Paint_refColorFilter(const SkPaint* paint);
 SkImageFilter* skialin_bridge_Paint_refImageFilter(const SkPaint* paint);
 SkMaskFilter* skialin_bridge_Paint_refMaskFilter(const SkPaint* paint);
+SkPathEffect* skialin_bridge_Paint_refPathEffect(const SkPaint* paint);
 
 /* DirectContext (GrDirectContext, Ganesh + OpenGL). Wraps whatever native GL
  * context is current on the calling thread; creating that context (WGL/GLX/
