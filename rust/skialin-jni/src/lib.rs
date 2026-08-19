@@ -35,6 +35,8 @@ mod shader;
 mod strut_style;
 mod surface;
 mod surface_props;
+mod svg_canvas;
+mod svg_dom;
 mod text_blob;
 mod text_style;
 mod typeface;

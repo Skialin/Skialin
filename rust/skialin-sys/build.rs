@@ -137,6 +137,11 @@ fn link_skia(skia_dir: &Path) {
 
     println!("cargo:rustc-link-search=native={}", lib_dir.display());
     println!("cargo:rustc-link-lib=static=skparagraph");
+    println!("cargo:rustc-link-lib=static=svg");
+    println!("cargo:rustc-link-lib=static=skottie");
+    println!("cargo:rustc-link-lib=static=skresources");
+    println!("cargo:rustc-link-lib=static=sksg");
+    println!("cargo:rustc-link-lib=static=jsonreader");
     println!("cargo:rustc-link-lib=static=skshaper");
     println!("cargo:rustc-link-lib=static=skunicode_core");
     println!("cargo:rustc-link-lib=static=skunicode_icu");

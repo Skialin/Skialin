@@ -40,6 +40,9 @@
 #include "include/effects/SkRuntimeEffect.h"
 #include "include/core/SkRRect.h"
 #include "include/core/SkRegion.h"
+#include "modules/svg/include/SkSVGDOM.h"
+#include "modules/svg/include/SkSVGSVG.h"
+#include "include/svg/SkSVGCanvas.h"
 #include "include/core/SkPathEffect.h"
 #include "include/effects/SkDashPathEffect.h"
 #include "include/effects/SkCornerPathEffect.h"
@@ -1673,6 +1676,51 @@ float skialin_bridge_SurfaceProps_textGamma(const SkSurfaceProps* props) {
 
 bool skialin_bridge_SurfaceProps_equals(const SkSurfaceProps* a, const SkSurfaceProps* b) {
     return *a == *b;
+}
+
+SkSVGDOM* skialin_bridge_SVGDOM_MakeFromStream(const uint8_t* bytes, size_t length) {
+    SkMemoryStream stream(bytes, length, false);
+    return SkSVGDOM::MakeFromStream(stream).release();
+}
+
+void skialin_bridge_SVGDOM_unref(SkSVGDOM* dom) {
+    SkSafeUnref(dom);
+}
+
+void skialin_bridge_SVGDOM_setContainerSize(SkSVGDOM* dom, float width, float height) {
+    dom->setContainerSize(SkSize::Make(width, height));
+}
+
+void skialin_bridge_SVGDOM_getContainerSize(const SkSVGDOM* dom, float* outWidth, float* outHeight) {
+    const SkSize& size = dom->containerSize();
+    *outWidth = size.width();
+    *outHeight = size.height();
+}
+
+void skialin_bridge_SVGDOM_render(const SkSVGDOM* dom, SkCanvas* canvas) {
+    dom->render(canvas);
+}
+
+struct SkialinSvgCanvas {
+    SkDynamicMemoryWStream stream;
+    std::unique_ptr<SkCanvas> canvas;
+};
+
+SkialinSvgCanvas* skialin_bridge_SVGCanvas_Make(const SkRect* bounds, uint32_t flags) {
+    auto* svgCanvas = new SkialinSvgCanvas();
+    svgCanvas->canvas = SkSVGCanvas::Make(*bounds, &svgCanvas->stream, flags);
+    return svgCanvas;
+}
+
+SkCanvas* skialin_bridge_SVGCanvas_getCanvas(SkialinSvgCanvas* svgCanvas) {
+    return svgCanvas->canvas.get();
+}
+
+SkData* skialin_bridge_SVGCanvas_finish(SkialinSvgCanvas* svgCanvas) {
+    svgCanvas->canvas.reset();
+    SkData* result = svgCanvas->stream.detachAsData().release();
+    delete svgCanvas;
+    return result;
 }
 
 GrDirectContext* skialin_bridge_DirectContext_MakeGL(void) {

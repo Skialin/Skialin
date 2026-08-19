@@ -49,6 +49,8 @@ class SkMaskFilter;
 class SkRuntimeEffect;
 class SkRRect;
 class SkRegion;
+class SkSVGDOM;
+class SkialinSvgCanvas;
 class SkPathEffect;
 class SkPathMeasure;
 class SkM44;
@@ -362,6 +364,24 @@ SkPixelGeometry skialin_bridge_SurfaceProps_pixelGeometry(const SkSurfaceProps* 
 float skialin_bridge_SurfaceProps_textContrast(const SkSurfaceProps* props);
 float skialin_bridge_SurfaceProps_textGamma(const SkSurfaceProps* props);
 bool skialin_bridge_SurfaceProps_equals(const SkSurfaceProps* a, const SkSurfaceProps* b);
+
+/* SVGDOM: ref-owned by the caller. Free with skialin_bridge_SVGDOM_unref.
+ * Null if the bytes don't parse as SVG. */
+SkSVGDOM* skialin_bridge_SVGDOM_MakeFromStream(const uint8_t* bytes, size_t length);
+void skialin_bridge_SVGDOM_unref(SkSVGDOM* dom);
+void skialin_bridge_SVGDOM_setContainerSize(SkSVGDOM* dom, float width, float height);
+void skialin_bridge_SVGDOM_getContainerSize(const SkSVGDOM* dom, float* outWidth, float* outHeight);
+void skialin_bridge_SVGDOM_render(const SkSVGDOM* dom, SkCanvas* canvas);
+
+/* SVGCanvas: records SkCanvas draw calls as SVG XML. Owned by the caller;
+ * free with skialin_bridge_SVGCanvas_finish, which also flushes and returns
+ * the recorded XML. skialin_bridge_SVGCanvas_getCanvas is borrowed for the
+ * SVGCanvas's lifetime and must not be freed independently -- draw into it
+ * via the normal Canvas bridge/bindgen calls. */
+SkialinSvgCanvas* skialin_bridge_SVGCanvas_Make(const SkRect* bounds, uint32_t flags);
+SkCanvas* skialin_bridge_SVGCanvas_getCanvas(SkialinSvgCanvas* svgCanvas);
+/* Ref-owned by the caller; free with skialin_bridge_Data_unref. */
+SkData* skialin_bridge_SVGCanvas_finish(SkialinSvgCanvas* svgCanvas);
 
 /* PathEffect: ref-owned by the caller. Free with skialin_bridge_PathEffect_unref.
  * Routed entirely through the bridge: SkPathEffect's SkFlattenable base

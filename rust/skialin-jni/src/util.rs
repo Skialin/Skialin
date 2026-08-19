@@ -19,3 +19,9 @@ pub(crate) unsafe fn borrow_mut<'a, T>(ptr: i64) -> &'a mut T {
 pub(crate) unsafe fn drop_ptr<T>(ptr: i64) {
     drop(Box::from_raw(ptr as *mut T));
 }
+
+/// # Safety
+/// `ptr` must have come from `box_ptr::<T>` and must not be used again after.
+pub(crate) unsafe fn take_ptr<T>(ptr: i64) -> T {
+    *Box::from_raw(ptr as *mut T)
+}

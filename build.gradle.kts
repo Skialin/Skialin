@@ -113,6 +113,11 @@ val buildSkia =
             "harfbuzz",
             "icu",
             "pathops",
+            "svg",
+            "skresources",
+            "skottie",
+            "sksg",
+            "jsonreader",
         )
     }
 
