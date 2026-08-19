@@ -1,3 +1,4 @@
+mod backend_texture;
 mod bitmap;
 mod canvas;
 mod color_filter;

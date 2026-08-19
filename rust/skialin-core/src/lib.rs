@@ -1,5 +1,6 @@
 pub use skialin_sys as sys;
 
+pub mod backend_texture;
 pub mod bitmap;
 pub mod canvas;
 pub mod color;
@@ -14,6 +15,8 @@ pub mod font;
 pub mod font_collection;
 pub mod font_mgr;
 pub mod font_style;
+pub mod graphite_backend_texture;
+pub mod graphite_context;
 pub mod image;
 pub mod image_filter;
 pub mod image_info;
@@ -46,6 +49,7 @@ pub mod tile_mode;
 pub mod typeface;
 pub mod vertices;
 
+pub use backend_texture::BackendTexture;
 pub use bitmap::{AlphaType, Bitmap};
 pub use canvas::{Canvas, ClipOp, PointMode, SrcRectConstraint};
 pub use color::Color;
@@ -60,6 +64,8 @@ pub use font::{Edging, Font, FontMetrics, Hinting, TextEncoding};
 pub use font_collection::FontCollection;
 pub use font_mgr::FontMgr;
 pub use font_style::{FontStyle, Slant};
+pub use graphite_backend_texture::GraphiteBackendTexture;
+pub use graphite_context::{GraphiteContext, GraphiteRecorder, GraphiteRecording};
 pub use image::Image;
 pub use image_filter::ImageFilter;
 pub use image_info::ImageInfo;

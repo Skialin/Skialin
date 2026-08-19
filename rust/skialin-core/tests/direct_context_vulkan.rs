@@ -4,7 +4,7 @@
 
 use ash::vk;
 use skialin_core::sys;
-use skialin_core::{AlphaType, ColorType, DirectContext, ImageInfo, Surface, SurfaceOrigin};
+use skialin_core::{AlphaType, BackendTexture, ColorType, DirectContext, ImageInfo, Surface, SurfaceOrigin};
 use std::ffi::{c_char, c_void};
 
 // Raw-pointer signatures (rather than ash's typed `vk::Instance`/`vk::Device`)
@@ -63,6 +63,34 @@ impl VulkanFixture {
             queue_family_index,
             proc_addrs: ProcAddrs { get_instance_proc_addr, get_device_proc_addr },
         })
+    }
+
+    /// A caller-owned VkImage + backing memory, the same shape a real
+    /// embedder (e.g. a windowing/compositor integration) would hand Skia
+    /// to render into. Skia neither allocates nor frees these.
+    fn create_image(&self, width: u32, height: u32, format: vk::Format) -> Option<(vk::Image, vk::DeviceMemory)> {
+        let image_info = vk::ImageCreateInfo::default()
+            .image_type(vk::ImageType::TYPE_2D)
+            .format(format)
+            .extent(vk::Extent3D { width, height, depth: 1 })
+            .mip_levels(1)
+            .array_layers(1)
+            .samples(vk::SampleCountFlags::TYPE_1)
+            .tiling(vk::ImageTiling::OPTIMAL)
+            .usage(vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::TRANSFER_SRC | vk::ImageUsageFlags::TRANSFER_DST | vk::ImageUsageFlags::SAMPLED)
+            .sharing_mode(vk::SharingMode::EXCLUSIVE)
+            .initial_layout(vk::ImageLayout::UNDEFINED);
+        let image = unsafe { self.device.create_image(&image_info, None) }.ok()?;
+
+        let requirements = unsafe { self.device.get_image_memory_requirements(image) };
+        let memory_properties = unsafe { self.instance.get_physical_device_memory_properties(self.physical_device) };
+        let memory_type_index = (0..memory_properties.memory_type_count).find(|&i| requirements.memory_type_bits & (1 << i) != 0)?;
+
+        let alloc_info = vk::MemoryAllocateInfo::default().allocation_size(requirements.size).memory_type_index(memory_type_index);
+        let memory = unsafe { self.device.allocate_memory(&alloc_info, None) }.ok()?;
+        unsafe { self.device.bind_image_memory(image, memory, 0) }.ok()?;
+
+        Some((image, memory))
     }
 
     fn direct_context(&self, physical_device: vk::PhysicalDevice) -> Option<DirectContext> {
@@ -126,4 +154,58 @@ fn render_target_round_trip() {
     // ColorType::N32 is Bgra8888: opaque red is B=0, G=0, R=255, A=255.
     assert_eq!(&pixels[0..4], &[0, 0, 255, 255]);
     assert_eq!(&pixels[pixels.len() - 4..], &[0, 0, 255, 255]);
+}
+
+#[test]
+fn wrap_backend_texture_round_trip() {
+    let Some(fixture) = VulkanFixture::new() else {
+        eprintln!("skipping: no Vulkan runtime/driver available on this machine");
+        return;
+    };
+    let mut context = fixture.direct_context(fixture.physical_device).expect("DirectContext::new_vulkan failed");
+
+    let format = vk::Format::B8G8R8A8_UNORM;
+    let (image, memory) = fixture.create_image(16, 16, format).expect("create_image failed");
+
+    let vk_image_info = sys::GrVkImageInfo {
+        fImage: unsafe { std::mem::transmute(image) },
+        fImageTiling: sys::VkImageTiling_VK_IMAGE_TILING_OPTIMAL,
+        fImageLayout: sys::VkImageLayout_VK_IMAGE_LAYOUT_UNDEFINED,
+        fFormat: sys::VkFormat_VK_FORMAT_B8G8R8A8_UNORM,
+        fImageUsageFlags: (vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::TRANSFER_SRC | vk::ImageUsageFlags::TRANSFER_DST | vk::ImageUsageFlags::SAMPLED).as_raw(),
+        fSampleCount: 1,
+        fLevelCount: 1,
+        fCurrentQueueFamily: sys::VK_QUEUE_FAMILY_IGNORED as u32,
+        fSharingMode: sys::VkSharingMode_VK_SHARING_MODE_EXCLUSIVE,
+        ..Default::default()
+    };
+    let backend_texture = BackendTexture::new_vk(16, 16, &vk_image_info, "skialin-test-texture");
+    assert!(backend_texture.is_valid());
+
+    let mut surface = Surface::wrap_backend_texture(&mut context, &backend_texture, SurfaceOrigin::TopLeft, 0, ColorType::N32, None, None)
+        .expect("wrap_backend_texture failed");
+
+    surface.canvas().clear(0xFFFF0000);
+    context.flush();
+    context.submit(true);
+
+    let info = ImageInfo::new(16, 16, ColorType::N32, AlphaType::Premul);
+    let image_snapshot = surface.image_snapshot().unwrap();
+    assert!(image_snapshot.is_texture_backed());
+
+    let mut pixels = vec![0u8; 16 * 16 * 4];
+    let ok = unsafe { image_snapshot.read_pixels(&info, pixels.as_mut_ptr(), 16 * 4, 0, 0) };
+    assert!(ok, "read_pixels failed");
+    assert_eq!(&pixels[0..4], &[0, 0, 255, 255]);
+    assert_eq!(&pixels[pixels.len() - 4..], &[0, 0, 255, 255]);
+
+    drop(surface);
+    drop(image_snapshot);
+    drop(backend_texture);
+    context.flush();
+    context.submit(true);
+    unsafe {
+        fixture.device.destroy_image(image, None);
+        fixture.device.free_memory(memory, None);
+    }
 }

@@ -39,6 +39,28 @@ class Surface private constructor(ptr: Long) : Managed(ptr, SurfaceNative::nRele
             )
             return if (ptr == 0L) null else Surface(ptr)
         }
+
+        /**
+         * Wraps an existing GPU texture as a render target instead of
+         * allocating a new one. Must be called on the thread [context]'s
+         * GL context is current on. [backendTexture] must outlive the
+         * returned Surface.
+         */
+        fun wrapBackendTexture(
+            context: DirectContext,
+            backendTexture: BackendTexture,
+            origin: SurfaceOrigin,
+            sampleCnt: Int,
+            colorType: ColorType,
+            colorSpace: ColorSpace? = null,
+            surfaceProps: SurfaceProps? = null,
+        ): Surface? {
+            val ptr = SurfaceNative.nWrapBackendTexture(
+                context.nativePtr, backendTexture.nativePtr, origin.ordinal, sampleCnt, colorType.ordinal,
+                colorSpace?.nativePtr ?: 0L, surfaceProps?.nativePtr ?: 0L,
+            )
+            return if (ptr == 0L) null else Surface(ptr)
+        }
     }
 }
 
@@ -58,6 +80,15 @@ private object SurfaceNative {
         surfacePropsPtr: Long,
         shouldCreateWithMips: Boolean,
         isProtected: Boolean,
+    ): Long
+    external fun nWrapBackendTexture(
+        contextPtr: Long,
+        backendTexturePtr: Long,
+        origin: Int,
+        sampleCnt: Int,
+        colorType: Int,
+        colorSpacePtr: Long,
+        surfacePropsPtr: Long,
     ): Long
     external fun nRelease(ptr: Long)
     external fun nGetCanvas(ptr: Long): Long

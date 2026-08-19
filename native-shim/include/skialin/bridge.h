@@ -15,7 +15,13 @@
 #include "include/core/SkSamplingOptions.h"
 #include "include/core/SkSurfaceProps.h"
 #include "include/core/SkTileMode.h"
+#include "include/gpu/ganesh/GrBackendSurface.h"
 #include "include/gpu/ganesh/gl/GrGLAssembleInterface.h"
+#include "include/gpu/ganesh/vk/GrVkTypes.h"
+#include "include/gpu/graphite/Context.h"
+#include "include/gpu/graphite/Recorder.h"
+#include "include/gpu/graphite/Recording.h"
+#include "include/gpu/graphite/vk/VulkanGraphiteContext.h"
 #include "include/gpu/vk/VulkanBackendContext.h"
 
 class SkSurface;
@@ -765,5 +771,83 @@ SkSurface* skialin_bridge_Surface_MakeRenderTarget(
     GrDirectContext* context, skgpu::Budgeted budgeted, const SkImageInfo* info,
     int32_t sampleCount, GrSurfaceOrigin surfaceOrigin, const SkSurfaceProps* surfaceProps,
     bool shouldCreateWithMips, bool isProtected);
+
+/* GrBackendTexture: heap-allocated with new/delete. Its private
+ * type-erased backend-data member defeats bindgen the same way SkFont's
+ * sk_sp does, so this is routed entirely through the bridge. Owned by the
+ * caller; free with skialin_bridge_BackendTexture_delete. label may be
+ * null (empty label). imageInfo maps directly onto GrVkImageInfo, which
+ * bindgen binds as a plain struct -- construct it directly in Rust. */
+GrBackendTexture* skialin_bridge_BackendTexture_MakeVk(int32_t width, int32_t height, const GrVkImageInfo* imageInfo, const char* label, size_t labelLength);
+void skialin_bridge_BackendTexture_delete(GrBackendTexture* texture);
+GrBackendTexture* skialin_bridge_BackendTexture_clone(const GrBackendTexture* texture);
+int32_t skialin_bridge_BackendTexture_width(const GrBackendTexture* texture);
+int32_t skialin_bridge_BackendTexture_height(const GrBackendTexture* texture);
+bool skialin_bridge_BackendTexture_isValid(const GrBackendTexture* texture);
+bool skialin_bridge_BackendTexture_isProtected(const GrBackendTexture* texture);
+bool skialin_bridge_BackendTexture_hasMipmaps(const GrBackendTexture* texture);
+
+/* Direct wrapper around SkSurfaces::WrapBackendTexture (SkSurfaceGanesh.h);
+ * params map 1:1 to the real signature (colorSpace/surfaceProps may be
+ * null, releaseProc may be null to skip the release callback). Wraps an
+ * existing GPU texture (e.g. from skialin_bridge_BackendTexture_MakeVk) as
+ * a render-target Surface instead of allocating a new one. Ref-owned; free
+ * with skialin_bridge_Surface_unref. Null on failure. */
+typedef void (*SkialinTextureReleaseProc)(void* releaseContext);
+SkSurface* skialin_bridge_Surface_WrapBackendTexture(
+    GrDirectContext* context, const GrBackendTexture* backendTexture, GrSurfaceOrigin origin,
+    int32_t sampleCnt, SkColorType colorType, SkColorSpace* colorSpace, const SkSurfaceProps* surfaceProps,
+    SkialinTextureReleaseProc releaseProc, void* releaseContext);
+
+/* Graphite (skgpu::graphite::Context + Recorder + Recording), Vulkan only.
+ * Architecturally distinct from Ganesh: Context owns the GPU device and is
+ * thread-safe/long-lived; Recorder is not thread-safe, one per thread/frame,
+ * records a Recording that gets inserted back into the Context and
+ * submitted. All three are routed entirely through the bridge (none expose
+ * bindgen-usable methods -- Context/Recorder are non-copyable/movable
+ * final classes, Recording is forward-declared-only). Ownership/getProc
+ * semantics for MakeVulkan match skialin_bridge_DirectContext_MakeVulkan. */
+skgpu::graphite::Context* skialin_bridge_GraphiteContext_MakeVulkan(
+    VkInstance instance, VkPhysicalDevice physicalDevice, VkDevice device, VkQueue queue,
+    uint32_t graphicsQueueIndex, uint32_t maxAPIVersion, void* getProcCtx, SkialinVulkanGetProc getProc,
+    bool protectedContext);
+void skialin_bridge_GraphiteContext_delete(skgpu::graphite::Context* context);
+/* Owned by the caller; free with skialin_bridge_GraphiteRecorder_delete. */
+skgpu::graphite::Recorder* skialin_bridge_GraphiteContext_makeRecorder(skgpu::graphite::Context* context);
+/* Returns InsertStatus::V (0 == kSuccess); recording/targetSurface stay
+ * borrowed, not consumed -- free them separately afterward. */
+int32_t skialin_bridge_GraphiteContext_insertRecording(skgpu::graphite::Context* context, skgpu::graphite::Recording* recording, SkSurface* targetSurface);
+bool skialin_bridge_GraphiteContext_submit(skgpu::graphite::Context* context, bool syncToCpu);
+
+void skialin_bridge_GraphiteRecorder_delete(skgpu::graphite::Recorder* recorder);
+/* Owned by the caller; free with skialin_bridge_GraphiteRecording_delete. Null on failure. */
+skgpu::graphite::Recording* skialin_bridge_GraphiteRecorder_snap(skgpu::graphite::Recorder* recorder);
+/* Direct wrapper around SkSurfaces::RenderTarget(Recorder*, ...). Ref-owned;
+ * free with skialin_bridge_Surface_unref. Null on failure. */
+SkSurface* skialin_bridge_GraphiteSurface_MakeRenderTarget(skgpu::graphite::Recorder* recorder, const SkImageInfo* info, skgpu::Mipmapped mipmapped, const SkSurfaceProps* surfaceProps);
+/* Direct wrapper around SkSurfaces::WrapBackendTexture(Recorder*, ...) for
+ * a caller-supplied GPU texture. Ref-owned; free with skialin_bridge_Surface_unref. */
+SkSurface* skialin_bridge_GraphiteSurface_WrapBackendTexture(
+    skgpu::graphite::Recorder* recorder, const skgpu::graphite::BackendTexture* backendTexture, SkColorType colorType,
+    SkColorSpace* colorSpace, const SkSurfaceProps* surfaceProps);
+
+void skialin_bridge_GraphiteRecording_delete(skgpu::graphite::Recording* recording);
+
+/* skgpu::graphite::BackendTexture: same rationale as GrBackendTexture
+ * (heap-allocated, routed entirely through the bridge). Graphite's Vulkan
+ * backend texture shape differs from Ganesh's GrVkImageInfo (splits
+ * texture-creation properties from the live image/layout/allocation), and
+ * skgpu::graphite::VulkanTextureInfo is itself a polymorphic (non-POD)
+ * class bindgen can't bind, so both are built internally here from flat
+ * params rather than exposed as their own bindable type. ycbcrConversion is
+ * not yet exposed (always default/invalid). Owned by the caller; free with
+ * skialin_bridge_GraphiteBackendTexture_delete. */
+skgpu::graphite::BackendTexture* skialin_bridge_GraphiteBackendTexture_MakeVk(
+    int32_t width, int32_t height, int32_t sampleCount, bool mipmapped, uint32_t imageCreateFlags,
+    VkFormat format, VkImageTiling imageTiling, VkImageUsageFlags imageUsageFlags, VkSharingMode sharingMode,
+    VkImageAspectFlags aspectMask, VkImageLayout currentLayout, uint32_t queueFamilyIndex, VkImage image,
+    VkDeviceMemory allocMemory, VkDeviceSize allocOffset, VkDeviceSize allocSize, uint32_t allocFlags);
+void skialin_bridge_GraphiteBackendTexture_delete(skgpu::graphite::BackendTexture* texture);
+bool skialin_bridge_GraphiteBackendTexture_isValid(const skgpu::graphite::BackendTexture* texture);
 
 }  // extern "C"

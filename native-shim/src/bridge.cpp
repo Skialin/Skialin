@@ -50,11 +50,21 @@
 #include "include/encode/SkPngEncoder.h"
 #include "include/ports/SkTypeface_win.h"
 #include "modules/skcms/skcms.h"
+#include "include/gpu/ganesh/GrBackendSurface.h"
 #include "include/gpu/ganesh/GrDirectContext.h"
 #include "include/gpu/ganesh/GrTypes.h"
 #include "include/gpu/ganesh/SkSurfaceGanesh.h"
 #include "include/gpu/ganesh/gl/GrGLDirectContext.h"
+#include "include/gpu/ganesh/vk/GrVkBackendSurface.h"
 #include "include/gpu/ganesh/vk/GrVkDirectContext.h"
+#include "include/gpu/graphite/BackendTexture.h"
+#include "include/gpu/graphite/Context.h"
+#include "include/gpu/graphite/ContextOptions.h"
+#include "include/gpu/graphite/Recorder.h"
+#include "include/gpu/graphite/Recording.h"
+#include "include/gpu/graphite/Surface.h"
+#include "include/gpu/graphite/vk/VulkanGraphiteContext.h"
+#include "include/gpu/graphite/vk/VulkanGraphiteTypes.h"
 #include "src/gpu/GpuTypesPriv.h"
 #include "src/gpu/vk/vulkanmemoryallocator/VulkanMemoryAllocatorPriv.h"
 
@@ -1628,6 +1638,136 @@ SkSurface* skialin_bridge_Surface_MakeRenderTarget(
     bool shouldCreateWithMips, bool isProtected) {
     return SkSurfaces::RenderTarget(context, budgeted, *info, sampleCount, surfaceOrigin, surfaceProps, shouldCreateWithMips, isProtected)
         .release();
+}
+
+GrBackendTexture* skialin_bridge_BackendTexture_MakeVk(int32_t width, int32_t height, const GrVkImageInfo* imageInfo, const char* label, size_t labelLength) {
+    std::string_view labelView = label ? std::string_view(label, labelLength) : std::string_view();
+    return new GrBackendTexture(GrBackendTextures::MakeVk(width, height, *imageInfo, labelView));
+}
+
+void skialin_bridge_BackendTexture_delete(GrBackendTexture* texture) {
+    delete texture;
+}
+
+GrBackendTexture* skialin_bridge_BackendTexture_clone(const GrBackendTexture* texture) {
+    return new GrBackendTexture(*texture);
+}
+
+int32_t skialin_bridge_BackendTexture_width(const GrBackendTexture* texture) {
+    return texture->width();
+}
+
+int32_t skialin_bridge_BackendTexture_height(const GrBackendTexture* texture) {
+    return texture->height();
+}
+
+bool skialin_bridge_BackendTexture_isValid(const GrBackendTexture* texture) {
+    return texture->isValid();
+}
+
+bool skialin_bridge_BackendTexture_isProtected(const GrBackendTexture* texture) {
+    return texture->isProtected();
+}
+
+bool skialin_bridge_BackendTexture_hasMipmaps(const GrBackendTexture* texture) {
+    return texture->hasMipmaps();
+}
+
+SkSurface* skialin_bridge_Surface_WrapBackendTexture(
+    GrDirectContext* context, const GrBackendTexture* backendTexture, GrSurfaceOrigin origin,
+    int32_t sampleCnt, SkColorType colorType, SkColorSpace* colorSpace, const SkSurfaceProps* surfaceProps,
+    SkialinTextureReleaseProc releaseProc, void* releaseContext) {
+    return SkSurfaces::WrapBackendTexture(
+                   context, *backendTexture, origin, sampleCnt, colorType, sk_ref_sp(colorSpace), surfaceProps,
+                   releaseProc, releaseContext)
+        .release();
+}
+
+skgpu::graphite::Context* skialin_bridge_GraphiteContext_MakeVulkan(
+    VkInstance instance, VkPhysicalDevice physicalDevice, VkDevice device, VkQueue queue,
+    uint32_t graphicsQueueIndex, uint32_t maxAPIVersion, void* getProcCtx, SkialinVulkanGetProc getProc,
+    bool protectedContext) {
+    skgpu::VulkanBackendContext backendContext;
+    backendContext.fInstance = instance;
+    backendContext.fPhysicalDevice = physicalDevice;
+    backendContext.fDevice = device;
+    backendContext.fQueue = queue;
+    backendContext.fGraphicsQueueIndex = graphicsQueueIndex;
+    backendContext.fMaxAPIVersion = maxAPIVersion;
+    backendContext.fProtectedContext = protectedContext ? skgpu::Protected::kYes : skgpu::Protected::kNo;
+    backendContext.fGetProc = [getProcCtx, getProc](const char* name, VkInstance inst, VkDevice dev) {
+        return getProc(getProcCtx, name, inst, dev);
+    };
+    backendContext.fMemoryAllocator = skgpu::VulkanMemoryAllocators::Make(backendContext, skgpu::ThreadSafe::kNo);
+    return skgpu::graphite::ContextFactory::MakeVulkan(backendContext, skgpu::graphite::ContextOptions()).release();
+}
+
+void skialin_bridge_GraphiteContext_delete(skgpu::graphite::Context* context) {
+    delete context;
+}
+
+skgpu::graphite::Recorder* skialin_bridge_GraphiteContext_makeRecorder(skgpu::graphite::Context* context) {
+    return context->makeRecorder().release();
+}
+
+int32_t skialin_bridge_GraphiteContext_insertRecording(skgpu::graphite::Context* context, skgpu::graphite::Recording* recording, SkSurface* targetSurface) {
+    skgpu::graphite::InsertRecordingInfo info;
+    info.fRecording = recording;
+    info.fTargetSurface = targetSurface;
+    return static_cast<int32_t>(static_cast<skgpu::graphite::InsertStatus::V>(context->insertRecording(info)));
+}
+
+bool skialin_bridge_GraphiteContext_submit(skgpu::graphite::Context* context, bool syncToCpu) {
+    return context->submit(skgpu::graphite::SubmitInfo(syncToCpu ? skgpu::graphite::SyncToCpu::kYes : skgpu::graphite::SyncToCpu::kNo));
+}
+
+void skialin_bridge_GraphiteRecorder_delete(skgpu::graphite::Recorder* recorder) {
+    delete recorder;
+}
+
+skgpu::graphite::Recording* skialin_bridge_GraphiteRecorder_snap(skgpu::graphite::Recorder* recorder) {
+    return recorder->snap().release();
+}
+
+SkSurface* skialin_bridge_GraphiteSurface_MakeRenderTarget(skgpu::graphite::Recorder* recorder, const SkImageInfo* info, skgpu::Mipmapped mipmapped, const SkSurfaceProps* surfaceProps) {
+    return SkSurfaces::RenderTarget(recorder, *info, mipmapped, surfaceProps).release();
+}
+
+SkSurface* skialin_bridge_GraphiteSurface_WrapBackendTexture(
+    skgpu::graphite::Recorder* recorder, const skgpu::graphite::BackendTexture* backendTexture, SkColorType colorType,
+    SkColorSpace* colorSpace, const SkSurfaceProps* surfaceProps) {
+    return SkSurfaces::WrapBackendTexture(recorder, *backendTexture, colorType, sk_ref_sp(colorSpace), surfaceProps).release();
+}
+
+void skialin_bridge_GraphiteRecording_delete(skgpu::graphite::Recording* recording) {
+    delete recording;
+}
+
+skgpu::graphite::BackendTexture* skialin_bridge_GraphiteBackendTexture_MakeVk(
+    int32_t width, int32_t height, int32_t sampleCount, bool mipmapped, uint32_t imageCreateFlags,
+    VkFormat format, VkImageTiling imageTiling, VkImageUsageFlags imageUsageFlags, VkSharingMode sharingMode,
+    VkImageAspectFlags aspectMask, VkImageLayout currentLayout, uint32_t queueFamilyIndex, VkImage image,
+    VkDeviceMemory allocMemory, VkDeviceSize allocOffset, VkDeviceSize allocSize, uint32_t allocFlags) {
+    skgpu::graphite::VulkanTextureInfo texInfo(
+            static_cast<VkSampleCountFlagBits>(sampleCount),
+            mipmapped ? skgpu::Mipmapped::kYes : skgpu::Mipmapped::kNo,
+            imageCreateFlags, format, imageTiling, imageUsageFlags, sharingMode, aspectMask,
+            skgpu::VulkanYcbcrConversionInfo());
+    skgpu::VulkanAlloc alloc;
+    alloc.fMemory = allocMemory;
+    alloc.fOffset = allocOffset;
+    alloc.fSize = allocSize;
+    alloc.fFlags = allocFlags;
+    return new skgpu::graphite::BackendTexture(skgpu::graphite::BackendTextures::MakeVulkan(
+            SkISize::Make(width, height), texInfo, currentLayout, queueFamilyIndex, image, alloc));
+}
+
+void skialin_bridge_GraphiteBackendTexture_delete(skgpu::graphite::BackendTexture* texture) {
+    delete texture;
+}
+
+bool skialin_bridge_GraphiteBackendTexture_isValid(const skgpu::graphite::BackendTexture* texture) {
+    return texture->isValid();
 }
 
 }  // extern "C"
