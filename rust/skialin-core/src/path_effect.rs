@@ -1,4 +1,21 @@
-use crate::sys;
+use crate::{sys, Matrix, Path};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Path1DStyle {
+    Translate,
+    Rotate,
+    Morph,
+}
+
+impl From<Path1DStyle> for i32 {
+    fn from(style: Path1DStyle) -> Self {
+        match style {
+            Path1DStyle::Translate => 0,
+            Path1DStyle::Rotate => 1,
+            Path1DStyle::Morph => 2,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TrimMode {
@@ -52,6 +69,18 @@ impl PathEffect {
     /// Applies `first` and `second` independently, then draws both results.
     pub fn sum(first: &PathEffect, second: &PathEffect) -> Option<Self> {
         unsafe { Self::from_raw(sys::skialin_bridge_PathEffect_MakeSum(first.0, second.0)) }
+    }
+
+    pub fn path_1d(path: &Path, advance: f32, phase: f32, style: Path1DStyle) -> Option<Self> {
+        unsafe { Self::from_raw(sys::skialin_bridge_PathEffect_MakePath1D(path.0, advance, phase, style.into())) }
+    }
+
+    pub fn path_2d(matrix: &Matrix, path: &Path) -> Option<Self> {
+        unsafe { Self::from_raw(sys::skialin_bridge_PathEffect_MakePath2D(&matrix.0, path.0)) }
+    }
+
+    pub fn line_2d(width: f32, matrix: &Matrix) -> Option<Self> {
+        unsafe { Self::from_raw(sys::skialin_bridge_PathEffect_MakeLine2D(width, &matrix.0)) }
     }
 }
 

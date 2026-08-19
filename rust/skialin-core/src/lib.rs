@@ -90,7 +90,7 @@ pub use paragraph::{Affinity, GlyphPosition, LineMetrics, Paragraph};
 pub use paragraph_builder::{ParagraphBuilder, PlaceholderAlignment, PlaceholderBaseline, PlaceholderStyle};
 pub use paragraph_style::{ParagraphStyle, TextAlign, TextDirection, TextHeightBehavior};
 pub use path::{AddPathMode, Path, PathBuilder, PathDirection, PathFillType, PathOp};
-pub use path_effect::{PathEffect, TrimMode};
+pub use path_effect::{Path1DStyle, PathEffect, TrimMode};
 pub use path_measure::{PathMeasure, PosTan};
 pub use pixmap::Pixmap;
 pub use point::{IPoint, Point};

@@ -50,6 +50,8 @@
 #include "include/effects/SkCornerPathEffect.h"
 #include "include/effects/SkDiscretePathEffect.h"
 #include "include/effects/SkTrimPathEffect.h"
+#include "include/effects/Sk1DPathEffect.h"
+#include "include/effects/Sk2DPathEffect.h"
 #include "include/core/SkPathMeasure.h"
 #include "include/pathops/SkPathOps.h"
 #include "include/core/SkM44.h"
@@ -1545,6 +1547,18 @@ SkPathEffect* skialin_bridge_PathEffect_MakeCompose(SkPathEffect* outer, SkPathE
 
 SkPathEffect* skialin_bridge_PathEffect_MakeSum(SkPathEffect* first, SkPathEffect* second) {
     return SkPathEffect::MakeSum(sk_ref_sp(first), sk_ref_sp(second)).release();
+}
+
+SkPathEffect* skialin_bridge_PathEffect_MakePath1D(const SkPath* path, float advance, float phase, int32_t style) {
+    return SkPath1DPathEffect::Make(*path, advance, phase, static_cast<SkPath1DPathEffect::Style>(style)).release();
+}
+
+SkPathEffect* skialin_bridge_PathEffect_MakePath2D(const SkMatrix* matrix, const SkPath* path) {
+    return SkPath2DPathEffect::Make(*matrix, *path).release();
+}
+
+SkPathEffect* skialin_bridge_PathEffect_MakeLine2D(float width, const SkMatrix* matrix) {
+    return SkLine2DPathEffect::Make(width, *matrix).release();
 }
 
 void skialin_bridge_Paint_setPathEffect(SkPaint* paint, SkPathEffect* effect) {

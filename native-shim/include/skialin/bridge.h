@@ -456,6 +456,9 @@ SkPathEffect* skialin_bridge_PathEffect_MakeDiscrete(float segLength, float devi
 SkPathEffect* skialin_bridge_PathEffect_MakeTrim(float startT, float stopT, int32_t mode);
 SkPathEffect* skialin_bridge_PathEffect_MakeCompose(SkPathEffect* outer, SkPathEffect* inner);
 SkPathEffect* skialin_bridge_PathEffect_MakeSum(SkPathEffect* first, SkPathEffect* second);
+SkPathEffect* skialin_bridge_PathEffect_MakePath1D(const SkPath* path, float advance, float phase, int32_t style);
+SkPathEffect* skialin_bridge_PathEffect_MakePath2D(const SkMatrix* matrix, const SkPath* path);
+SkPathEffect* skialin_bridge_PathEffect_MakeLine2D(float width, const SkMatrix* matrix);
 
 /* Attaches a path effect to paint; the effect may be null to clear it. */
 void skialin_bridge_Paint_setPathEffect(SkPaint* paint, SkPathEffect* effect);
