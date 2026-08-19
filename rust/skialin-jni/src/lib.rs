@@ -33,6 +33,7 @@ mod render_node;
 mod rrect;
 mod runtime_effect;
 mod shader;
+mod skottie;
 mod strut_style;
 mod surface;
 mod surface_props;

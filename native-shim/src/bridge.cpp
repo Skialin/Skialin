@@ -43,6 +43,7 @@
 #include "modules/svg/include/SkSVGDOM.h"
 #include "modules/svg/include/SkSVGSVG.h"
 #include "include/svg/SkSVGCanvas.h"
+#include "modules/skottie/include/Skottie.h"
 #include "include/core/SkPathEffect.h"
 #include "include/effects/SkDashPathEffect.h"
 #include "include/effects/SkCornerPathEffect.h"
@@ -1777,6 +1778,40 @@ int32_t skialin_bridge_Codec_getPixels(SkCodec* codec, const SkImageInfo* info, 
     SkCodec::Options options;
     options.fFrameIndex = frameIndex;
     return static_cast<int32_t>(codec->getPixels(*info, pixels, rowBytes, &options));
+}
+
+skottie::Animation* skialin_bridge_SkottieAnimation_Make(const char* data, size_t length) {
+    return skottie::Animation::Make(data, length).release();
+}
+
+void skialin_bridge_SkottieAnimation_unref(skottie::Animation* animation) {
+    SkSafeUnref(animation);
+}
+
+void skialin_bridge_SkottieAnimation_render(const skottie::Animation* animation, SkCanvas* canvas, const SkRect* dst) {
+    animation->render(canvas, dst);
+}
+
+void skialin_bridge_SkottieAnimation_seek(skottie::Animation* animation, float t) {
+    animation->seek(t);
+}
+
+void skialin_bridge_SkottieAnimation_seekFrame(skottie::Animation* animation, double frame) {
+    animation->seekFrame(frame);
+}
+
+double skialin_bridge_SkottieAnimation_duration(const skottie::Animation* animation) {
+    return animation->duration();
+}
+
+double skialin_bridge_SkottieAnimation_fps(const skottie::Animation* animation) {
+    return animation->fps();
+}
+
+void skialin_bridge_SkottieAnimation_size(const skottie::Animation* animation, float* outWidth, float* outHeight) {
+    const SkSize& size = animation->size();
+    *outWidth = size.width();
+    *outHeight = size.height();
 }
 
 GrDirectContext* skialin_bridge_DirectContext_MakeGL(void) {

@@ -78,6 +78,10 @@ class Paragraph;
 }  // namespace textlayout
 }  // namespace skia
 
+namespace skottie {
+class Animation;
+}  // namespace skottie
+
 extern "C" {
 
 /* By-value returns from a C++ member function are classified differently
@@ -405,6 +409,20 @@ bool skialin_bridge_Codec_getFrameInfo(const SkCodec* codec, int32_t index, int3
  * buffer matching info/rowBytes. Returns SkCodec::Result as an int (0 =
  * kSuccess, matching SkCodec::Result's declaration order). */
 int32_t skialin_bridge_Codec_getPixels(SkCodec* codec, const SkImageInfo* info, void* pixels, size_t rowBytes, int32_t frameIndex);
+
+/* Skottie: a Lottie/Bodymovin JSON animation player. Ref-owned by the
+ * caller; free with skialin_bridge_SkottieAnimation_unref. Null if `data`
+ * doesn't parse as a valid animation. */
+skottie::Animation* skialin_bridge_SkottieAnimation_Make(const char* data, size_t length);
+void skialin_bridge_SkottieAnimation_unref(skottie::Animation* animation);
+/* dst may be null to render at the animation's intrinsic size at the origin. */
+void skialin_bridge_SkottieAnimation_render(const skottie::Animation* animation, SkCanvas* canvas, const SkRect* dst);
+/* t is a normalized [0, 1] progress value. */
+void skialin_bridge_SkottieAnimation_seek(skottie::Animation* animation, float t);
+void skialin_bridge_SkottieAnimation_seekFrame(skottie::Animation* animation, double frame);
+double skialin_bridge_SkottieAnimation_duration(const skottie::Animation* animation);
+double skialin_bridge_SkottieAnimation_fps(const skottie::Animation* animation);
+void skialin_bridge_SkottieAnimation_size(const skottie::Animation* animation, float* outWidth, float* outHeight);
 
 /* PathEffect: ref-owned by the caller. Free with skialin_bridge_PathEffect_unref.
  * Routed entirely through the bridge: SkPathEffect's SkFlattenable base
