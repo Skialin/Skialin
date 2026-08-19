@@ -18,6 +18,25 @@ impl Drawable {
     pub fn as_raw(&self) -> *mut sys::SkDrawable {
         self.0
     }
+
+    pub fn make_picture_snapshot(&mut self) -> Option<crate::Picture> {
+        let ptr = unsafe { sys::skialin_bridge_Drawable_makePictureSnapshot(self.0) };
+        (!ptr.is_null()).then(|| crate::Picture(ptr))
+    }
+
+    pub fn bounds(&mut self) -> crate::Rect {
+        let mut out = sys::SkRect::default();
+        unsafe { sys::skialin_bridge_Drawable_getBounds(self.0, &mut out) };
+        out.into()
+    }
+
+    pub fn generation_id(&mut self) -> u32 {
+        unsafe { sys::skialin_bridge_Drawable_getGenerationID(self.0) }
+    }
+
+    pub fn notify_drawing_changed(&mut self) {
+        unsafe { sys::skialin_bridge_Drawable_notifyDrawingChanged(self.0) };
+    }
 }
 
 impl Drop for Drawable {

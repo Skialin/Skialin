@@ -451,6 +451,10 @@ typedef void (*SkialinDrawableGetBoundsFn)(void* context, SkRect* outBounds);
 typedef void (*SkialinDrawableDisposeFn)(void* context);
 SkDrawable* skialin_bridge_Drawable_Make(void* context, SkialinDrawableDrawFn onDraw, SkialinDrawableGetBoundsFn onGetBounds, SkialinDrawableDisposeFn onDispose);
 void skialin_bridge_Drawable_unref(SkDrawable* drawable);
+SkPicture* skialin_bridge_Drawable_makePictureSnapshot(SkDrawable* drawable);
+void skialin_bridge_Drawable_getBounds(SkDrawable* drawable, SkRect* outBounds);
+uint32_t skialin_bridge_Drawable_getGenerationID(SkDrawable* drawable);
+void skialin_bridge_Drawable_notifyDrawingChanged(SkDrawable* drawable);
 
 /* PathEffect: ref-owned by the caller. Free with skialin_bridge_PathEffect_unref.
  * Routed entirely through the bridge: SkPathEffect's SkFlattenable base

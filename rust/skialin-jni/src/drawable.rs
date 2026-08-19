@@ -2,13 +2,13 @@ use std::os::raw::c_void;
 use std::sync::{Arc, OnceLock};
 
 use jni::objects::{GlobalRef, JObject, JValue};
-use jni::sys::jlong;
+use jni::sys::{jint, jlong};
 use jni::{JNIEnv, JavaVM};
 
 use skialin_core::sys;
 use skialin_core::{Canvas, Drawable, Matrix, Rect};
 
-use crate::util::{borrow, box_ptr, drop_ptr};
+use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 
 /// Shared between the Kotlin-facing [`JniDrawable`] and the C++-side
 /// `SkDrawable`'s opaque context: the two have independent lifetimes (Skia
@@ -92,4 +92,34 @@ pub extern "system" fn Java_org_skialin_CanvasNative_nDrawDrawable(env: JNIEnv, 
     };
     let mut canvas = unsafe { Canvas::from_raw(ptr as *mut sys::SkCanvas) };
     canvas.draw_drawable(&jni_drawable.drawable, matrix.as_ref());
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_DrawableNative_nMakePictureSnapshot(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jlong {
+    let jni_drawable = unsafe { borrow_mut::<JniDrawable>(ptr) };
+    match jni_drawable.drawable.make_picture_snapshot() {
+        Some(picture) => box_ptr(picture),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_DrawableNative_nBounds(env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jni::sys::jfloatArray {
+    let jni_drawable = unsafe { borrow_mut::<JniDrawable>(ptr) };
+    let b = jni_drawable.drawable.bounds();
+    let array = env.new_float_array(4).expect("new_float_array");
+    env.set_float_array_region(&array, 0, &[b.left, b.top, b.right, b.bottom]).expect("set_float_array_region");
+    array.into_raw()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_DrawableNative_nGenerationId(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jint {
+    let jni_drawable = unsafe { borrow_mut::<JniDrawable>(ptr) };
+    jni_drawable.drawable.generation_id() as jint
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_DrawableNative_nNotifyDrawingChanged(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) {
+    let jni_drawable = unsafe { borrow_mut::<JniDrawable>(ptr) };
+    jni_drawable.drawable.notify_drawing_changed();
 }

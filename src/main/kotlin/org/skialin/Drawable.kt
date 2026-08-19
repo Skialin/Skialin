@@ -22,6 +22,18 @@ abstract class Drawable : Managed(DrawableNative.nMake(), DrawableNative::nRelea
     private fun onDrawNative(canvasPtr: Long) = onDraw(Canvas(canvasPtr))
 
     private fun onGetBoundsNative(): FloatArray = onGetBounds().let { floatArrayOf(it.left, it.top, it.right, it.bottom) }
+
+    fun makePictureSnapshot(): Picture? = DrawableNative.nMakePictureSnapshot(nativePtr).takeIf { it != 0L }?.let { Picture(it) }
+
+    val bounds: Rect
+        get() {
+            val b = DrawableNative.nBounds(nativePtr)
+            return Rect(b[0], b[1], b[2], b[3])
+        }
+
+    val generationId: Int get() = DrawableNative.nGenerationId(nativePtr)
+
+    fun notifyDrawingChanged() = DrawableNative.nNotifyDrawingChanged(nativePtr)
 }
 
 private object DrawableNative {
@@ -37,4 +49,12 @@ private object DrawableNative {
         ptr: Long,
         self: Drawable,
     )
+
+    external fun nMakePictureSnapshot(ptr: Long): Long
+
+    external fun nBounds(ptr: Long): FloatArray
+
+    external fun nGenerationId(ptr: Long): Int
+
+    external fun nNotifyDrawingChanged(ptr: Long)
 }

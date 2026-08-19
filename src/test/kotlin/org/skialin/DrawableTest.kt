@@ -2,6 +2,8 @@ package org.skialin
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 private class RedSquareDrawable : Drawable() {
     var drawCalls = 0
@@ -62,6 +64,19 @@ class DrawableTest {
                     }
                 }
             }
+        }
+    }
+
+    @Test
+    fun boundsMakePictureSnapshotAndNotifyDrawingChanged() {
+        RedSquareDrawable().use { drawable ->
+            assertEquals(Rect(0f, 0f, 16f, 16f), drawable.bounds)
+
+            val genBefore = drawable.generationId
+            drawable.notifyDrawingChanged()
+            assertTrue(drawable.generationId != genBefore)
+
+            drawable.makePictureSnapshot()!!.use { picture -> assertNotNull(picture) }
         }
     }
 }

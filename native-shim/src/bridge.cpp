@@ -2037,6 +2037,22 @@ void skialin_bridge_Drawable_unref(SkDrawable* drawable) {
     SkSafeUnref(drawable);
 }
 
+SkPicture* skialin_bridge_Drawable_makePictureSnapshot(SkDrawable* drawable) {
+    return drawable->makePictureSnapshot().release();
+}
+
+void skialin_bridge_Drawable_getBounds(SkDrawable* drawable, SkRect* outBounds) {
+    *outBounds = drawable->getBounds();
+}
+
+uint32_t skialin_bridge_Drawable_getGenerationID(SkDrawable* drawable) {
+    return drawable->getGenerationID();
+}
+
+void skialin_bridge_Drawable_notifyDrawingChanged(SkDrawable* drawable) {
+    drawable->notifyDrawingChanged();
+}
+
 GrDirectContext* skialin_bridge_DirectContext_MakeGL(void) {
     return GrDirectContexts::MakeGL().release();
 }
