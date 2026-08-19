@@ -160,6 +160,10 @@ int32_t skialin_bridge_Canvas_saveLayer(SkCanvas* canvas, const SkRect* bounds, 
     return canvas->saveLayer(rec);
 }
 
+SkM44* skialin_bridge_Canvas_getLocalToDevice(const SkCanvas* canvas) {
+    return new SkM44(canvas->getLocalToDevice());
+}
+
 SkPath* skialin_bridge_PathBuilder_snapshot(const SkPathBuilder* builder, const SkMatrix* matrix) {
     return new SkPath(builder->snapshot(matrix));
 }

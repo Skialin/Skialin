@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::paint::BlendMode;
 use crate::path::Path;
-use crate::{sys, Color, Data, FilterMode, Image, IRect, Matrix, Paint, Point, RRect, Rect, Region, SamplingOptions, TextBlob, Vertices, M44};
+use crate::{sys, Bitmap, Color, Data, FilterMode, Font, Image, IRect, Matrix, Paint, Picture, Point, RRect, Rect, Region, SamplingOptions, TextBlob, Vertices, M44};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum PointMode {
@@ -147,6 +147,40 @@ impl<'a> Canvas<'a> {
 
     pub fn concat(&mut self, matrix: &Matrix) {
         unsafe { self.as_mut().concat(&matrix.0) };
+    }
+
+    pub fn draw_string(&mut self, text: &str, x: f32, y: f32, font: &Font, paint: &Paint) {
+        unsafe { self.as_mut().drawSimpleText(text.as_ptr().cast(), text.len(), sys::SkTextEncoding_kUTF8 as sys::SkTextEncoding, x, y, font.0, &*paint.0) };
+    }
+
+    pub fn save_count(&self) -> i32 {
+        unsafe { sys::SkCanvas_getSaveCount(self.ptr) }
+    }
+
+    pub fn rotate_pivot(&mut self, degrees: f32, px: f32, py: f32) {
+        unsafe { self.as_mut().rotate1(degrees, px, py) };
+    }
+
+    pub fn read_pixels_bitmap(&self, bitmap: &mut Bitmap, src_x: i32, src_y: i32) -> bool {
+        unsafe { sys::SkCanvas_readPixels2(self.ptr, bitmap.as_raw_mut(), src_x, src_y) }
+    }
+
+    pub fn write_pixels_bitmap(&mut self, bitmap: &Bitmap, x: i32, y: i32) -> bool {
+        unsafe { sys::SkCanvas_writePixels1(self.ptr, bitmap.as_raw(), x, y) }
+    }
+
+    pub fn draw_picture_with_matrix(&mut self, picture: &Picture, matrix: Option<&Matrix>, paint: Option<&Paint>) {
+        let matrix_ptr = matrix.map_or(std::ptr::null(), |m| &m.0 as *const sys::SkMatrix);
+        let paint_ptr = paint.map_or(std::ptr::null(), |p| &*p.0 as *const sys::SkPaint);
+        unsafe { sys::SkCanvas_drawPicture2(self.ptr, picture.0, matrix_ptr, paint_ptr) };
+    }
+
+    pub fn draw_drawable_at(&mut self, drawable: &crate::Drawable, x: f32, y: f32) {
+        unsafe { self.as_mut().drawDrawable1(drawable.as_raw(), x, y) };
+    }
+
+    pub fn local_to_device(&self) -> M44 {
+        unsafe { M44::from_raw(sys::skialin_bridge_Canvas_getLocalToDevice(self.ptr)).expect("getLocalToDevice never returns null") }
     }
 
     pub fn clip_rect(&mut self, rect: Rect, op: ClipOp, antialias: bool) {

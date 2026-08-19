@@ -45,6 +45,10 @@ impl Bitmap {
         &mut *self.0
     }
 
+    pub(crate) fn as_raw(&self) -> *const sys::SkBitmap {
+        &*self.0
+    }
+
     pub fn width(&self) -> i32 {
         unsafe { self.0.width() }
     }

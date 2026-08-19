@@ -133,6 +133,52 @@ class CanvasExpandedTest {
     }
 
     @Test
+    fun newDrawAndTransformGapsDoNotCrash() {
+        Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
+            val canvas = surface.canvas()
+            canvas.clear(Colors.WHITE)
+            Paint().use { paint ->
+                paint.color = Colors.BLACK
+                canvas.drawPoint(2f, 2f, paint)
+                canvas.drawLines(arrayOf(Point(0f, 0f), Point(4f, 4f)), paint)
+                canvas.drawPolygon(floatArrayOf(0f, 0f, 4f, 0f, 4f, 4f), paint)
+                Font().use { font -> canvas.drawString("hi", 1f, 8f, font, paint) }
+            }
+            canvas.rotate(10f, 8f, 8f)
+            canvas.concat(Matrix33.IDENTITY)
+            assertTrue(canvas.saveCount >= 1)
+            assertEquals(9, canvas.localToDeviceAsMatrix33.values.size)
+            canvas.localToDevice.use { m44 -> assertEquals(16, m44.rowMajor.size) }
+        }
+    }
+
+    @Test
+    fun readWritePixelsRoundtrip() {
+        Surface.makeRasterN32Premul(4, 4)!!.use { surface ->
+            val canvas = surface.canvas()
+            canvas.clear(Colors.RED)
+            Bitmap().use { bitmap ->
+                bitmap.allocPixels(4, 4)
+                assertTrue(canvas.readPixels(bitmap))
+                assertTrue(canvas.writePixels(bitmap))
+            }
+        }
+    }
+
+    @Test
+    fun drawPictureWithMatrixAndPaintDoesNotCrash() {
+        PictureRecorder().use { recorder ->
+            recorder.beginRecording(Rect(0f, 0f, 16f, 16f))
+            val picture = recorder.finishRecordingAsPicture()!!
+            picture.use {
+                Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
+                    Paint().use { paint -> surface.canvas().drawPicture(picture, Matrix33.IDENTITY, paint) }
+                }
+            }
+        }
+    }
+
+    @Test
     fun saveLayerWithBackdropDrawsWithoutCrashing() {
         Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
             val canvas = surface.canvas()

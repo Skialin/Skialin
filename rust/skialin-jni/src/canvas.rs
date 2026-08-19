@@ -1,10 +1,10 @@
 use jni::sys::{jboolean, jfloat, jfloatArray, jint, jintArray, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{Canvas, ClipOp, Color, Data, FilterMode, Image, ImageFilter, IRect, Matrix, Paint, Path, Point, PointMode, RRect, Rect, Region, SamplingOptions, SrcRectConstraint, TextBlob, Vertices, M44};
+use skialin_core::{Bitmap, Canvas, ClipOp, Color, Data, FilterMode, Font, Image, ImageFilter, IRect, Matrix, Paint, Path, Picture, Point, PointMode, RRect, Rect, Region, SamplingOptions, SrcRectConstraint, TextBlob, Vertices, M44};
 
 use crate::paint::blend_mode_from_ordinal;
-use crate::util::borrow;
+use crate::util::{borrow, borrow_mut, box_ptr};
 
 fn canvas_from_ptr<'a>(ptr: jlong) -> Canvas<'a> {
     unsafe { Canvas::from_raw(ptr as *mut skialin_core::sys::SkCanvas) }
@@ -166,6 +166,7 @@ pub extern "system" fn Java_org_skialin_CanvasNative_nRotate(_env: JNIEnv, _clas
     canvas_from_ptr(ptr).rotate(degrees);
 }
 
+#[allow(clippy::too_many_arguments)]
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_CanvasNative_nClipRect(
     _env: JNIEnv,
@@ -176,13 +177,14 @@ pub extern "system" fn Java_org_skialin_CanvasNative_nClipRect(
     right: jfloat,
     bottom: jfloat,
     op: jint,
+    antialias: jboolean,
 ) {
-    canvas_from_ptr(ptr).clip_rect(Rect::new(left, top, right, bottom), clip_op_from_ordinal(op), false);
+    canvas_from_ptr(ptr).clip_rect(Rect::new(left, top, right, bottom), clip_op_from_ordinal(op), antialias != 0);
 }
 
 #[no_mangle]
-pub extern "system" fn Java_org_skialin_CanvasNative_nClipPath(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, path_ptr: jlong, op: jint) {
-    canvas_from_ptr(ptr).clip_path(unsafe { borrow::<Path>(path_ptr) }, clip_op_from_ordinal(op), false);
+pub extern "system" fn Java_org_skialin_CanvasNative_nClipPath(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, path_ptr: jlong, op: jint, antialias: jboolean) {
+    canvas_from_ptr(ptr).clip_path(unsafe { borrow::<Path>(path_ptr) }, clip_op_from_ordinal(op), antialias != 0);
 }
 
 #[no_mangle]
@@ -341,8 +343,8 @@ pub extern "system" fn Java_org_skialin_CanvasNative_nDrawDRRect(_env: JNIEnv, _
 }
 
 #[no_mangle]
-pub extern "system" fn Java_org_skialin_CanvasNative_nClipRRect(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, rrect_ptr: jlong, op: jint) {
-    canvas_from_ptr(ptr).clip_rrect(unsafe { borrow::<RRect>(rrect_ptr) }, clip_op_from_ordinal(op), false);
+pub extern "system" fn Java_org_skialin_CanvasNative_nClipRRect(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, rrect_ptr: jlong, op: jint, antialias: jboolean) {
+    canvas_from_ptr(ptr).clip_rrect(unsafe { borrow::<RRect>(rrect_ptr) }, clip_op_from_ordinal(op), antialias != 0);
 }
 
 #[no_mangle]
@@ -459,6 +461,80 @@ pub extern "system" fn Java_org_skialin_CanvasNative_nDrawPatch(
 
     let paint = unsafe { borrow::<Paint>(paint_ptr) };
     canvas_from_ptr(ptr).draw_patch(cubics_points, colors_argb, tex, blend_mode_from_ordinal(mode), paint);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nDrawString<'l>(
+    mut env: JNIEnv<'l>,
+    _class: jni::objects::JClass<'l>,
+    ptr: jlong,
+    text: jni::objects::JString<'l>,
+    x: jfloat,
+    y: jfloat,
+    font_ptr: jlong,
+    paint_ptr: jlong,
+) {
+    let text: String = env.get_string(&text).expect("get_string").into();
+    let owned_font;
+    let font: &Font = if font_ptr != 0 {
+        unsafe { borrow::<Font>(font_ptr) }
+    } else {
+        owned_font = Font::new();
+        &owned_font
+    };
+    canvas_from_ptr(ptr).draw_string(&text, x, y, font, unsafe { borrow::<Paint>(paint_ptr) });
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nGetSaveCount(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jint {
+    canvas_from_ptr(ptr).save_count()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nRotatePivot(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, degrees: jfloat, px: jfloat, py: jfloat) {
+    canvas_from_ptr(ptr).rotate_pivot(degrees, px, py);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nReadPixels(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, bitmap_ptr: jlong, src_x: jint, src_y: jint) -> jboolean {
+    canvas_from_ptr(ptr).read_pixels_bitmap(unsafe { borrow_mut::<Bitmap>(bitmap_ptr) }, src_x, src_y) as jboolean
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nWritePixels(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, bitmap_ptr: jlong, x: jint, y: jint) -> jboolean {
+    canvas_from_ptr(ptr).write_pixels_bitmap(unsafe { borrow::<Bitmap>(bitmap_ptr) }, x, y) as jboolean
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nDrawPictureMatrix(env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, picture_ptr: jlong, matrix: jfloatArray, paint_ptr: jlong) {
+    let sk_matrix = if matrix.is_null() {
+        None
+    } else {
+        let array = unsafe { jni::objects::JFloatArray::from_raw(matrix) };
+        let mut values = [0f32; 9];
+        env.get_float_array_region(&array, 0, &mut values).expect("get_float_array_region");
+        Some(Matrix::from_array(values))
+    };
+    let paint = (paint_ptr != 0).then(|| unsafe { borrow::<Paint>(paint_ptr) });
+    canvas_from_ptr(ptr).draw_picture_with_matrix(unsafe { borrow::<Picture>(picture_ptr) }, sk_matrix.as_ref(), paint);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nDrawDrawableAt(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, drawable_ptr: jlong, x: jfloat, y: jfloat) {
+    canvas_from_ptr(ptr).draw_drawable_at(unsafe { borrow::<skialin_core::Drawable>(drawable_ptr) }, x, y);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nConcat(env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, matrix: jfloatArray) {
+    let array = unsafe { jni::objects::JFloatArray::from_raw(matrix) };
+    let mut values = [0f32; 9];
+    env.get_float_array_region(&array, 0, &mut values).expect("get_float_array_region");
+    canvas_from_ptr(ptr).concat(&Matrix::from_array(values));
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nLocalToDevice(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jlong {
+    box_ptr(canvas_from_ptr(ptr).local_to_device())
 }
 
 #[no_mangle]

@@ -66,15 +66,23 @@ class Canvas internal constructor(
 
     fun rotate(degrees: Float) = CanvasNative.nRotate(ptr, degrees)
 
+    fun rotate(
+        degrees: Float,
+        x: Float,
+        y: Float,
+    ) = CanvasNative.nRotatePivot(ptr, degrees, x, y)
+
     fun clipRect(
         rect: Rect,
         op: ClipOp = ClipOp.INTERSECT,
-    ) = CanvasNative.nClipRect(ptr, rect.left, rect.top, rect.right, rect.bottom, op.ordinal)
+        antiAlias: Boolean = false,
+    ) = CanvasNative.nClipRect(ptr, rect.left, rect.top, rect.right, rect.bottom, op.ordinal, antiAlias)
 
     fun clipPath(
         path: Path,
         op: ClipOp = ClipOp.INTERSECT,
-    ) = CanvasNative.nClipPath(ptr, path.nativePtr, op.ordinal)
+        antiAlias: Boolean = false,
+    ) = CanvasNative.nClipPath(ptr, path.nativePtr, op.ordinal, antiAlias)
 
     fun skew(
         sx: Float,
@@ -118,6 +126,46 @@ class Canvas internal constructor(
         }
         CanvasNative.nDrawPoints(ptr, mode.ordinal, flat, paint.nativePtr)
     }
+
+    fun drawPoints(
+        mode: PointMode,
+        points: FloatArray,
+        paint: Paint,
+    ) = CanvasNative.nDrawPoints(ptr, mode.ordinal, points, paint.nativePtr)
+
+    fun drawPoint(
+        x: Float,
+        y: Float,
+        paint: Paint,
+    ) = drawPoints(PointMode.POINTS, floatArrayOf(x, y), paint)
+
+    fun drawLines(
+        points: Array<Point>,
+        paint: Paint,
+    ) = drawPoints(PointMode.LINES, points, paint)
+
+    fun drawLines(
+        points: FloatArray,
+        paint: Paint,
+    ) = drawPoints(PointMode.LINES, points, paint)
+
+    fun drawPolygon(
+        points: Array<Point>,
+        paint: Paint,
+    ) = drawPoints(PointMode.POLYGON, points, paint)
+
+    fun drawPolygon(
+        points: FloatArray,
+        paint: Paint,
+    ) = drawPoints(PointMode.POLYGON, points, paint)
+
+    fun drawString(
+        s: String,
+        x: Float,
+        y: Float,
+        font: Font?,
+        paint: Paint,
+    ) = CanvasNative.nDrawString(ptr, s, x, y, font?.nativePtr ?: 0L, paint.nativePtr)
 
     fun drawImage(
         image: Image,
@@ -228,12 +276,24 @@ class Canvas internal constructor(
         matrix: Matrix33? = null,
     ) = CanvasNative.nDrawDrawable(ptr, drawable.nativePtr, matrix?.values)
 
+    fun drawDrawable(
+        drawable: Drawable,
+        x: Float,
+        y: Float,
+    ) = CanvasNative.nDrawDrawableAt(ptr, drawable.nativePtr, x, y)
+
     fun drawRRect(
         rrect: RRect,
         paint: Paint,
     ) = CanvasNative.nDrawRRect(ptr, rrect.nativePtr, paint.nativePtr)
 
     fun drawPicture(picture: Picture) = CanvasNative.nDrawPicture(ptr, picture.nativePtr)
+
+    fun drawPicture(
+        picture: Picture,
+        matrix: Matrix33? = null,
+        paint: Paint? = null,
+    ) = CanvasNative.nDrawPictureMatrix(ptr, picture.nativePtr, matrix?.values, paint?.nativePtr ?: 0L)
 
     /** Draws the ring between [outer] and [inner]; [inner] must be contained within [outer]. */
     fun drawDRRect(
@@ -245,7 +305,8 @@ class Canvas internal constructor(
     fun clipRRect(
         rrect: RRect,
         op: ClipOp = ClipOp.INTERSECT,
-    ) = CanvasNative.nClipRRect(ptr, rrect.nativePtr, op.ordinal)
+        antiAlias: Boolean = false,
+    ) = CanvasNative.nClipRRect(ptr, rrect.nativePtr, op.ordinal, antiAlias)
 
     fun drawRegion(
         region: Region,
@@ -265,6 +326,26 @@ class Canvas internal constructor(
 
     /** Concatenates a 4x4 local-to-device transform onto the canvas's current matrix. */
     fun concat44(matrix: M44) = CanvasNative.nConcat44(ptr, matrix.nativePtr)
+
+    fun concat(matrix: Matrix33) = CanvasNative.nConcat(ptr, matrix.values)
+
+    val saveCount: Int get() = CanvasNative.nGetSaveCount(ptr)
+
+    val localToDevice: M44 get() = M44(CanvasNative.nLocalToDevice(ptr))
+
+    val localToDeviceAsMatrix33: Matrix33 get() = getTotalMatrix()
+
+    fun readPixels(
+        bitmap: Bitmap,
+        srcX: Int = 0,
+        srcY: Int = 0,
+    ): Boolean = CanvasNative.nReadPixels(ptr, bitmap.nativePtr, srcX, srcY)
+
+    fun writePixels(
+        bitmap: Bitmap,
+        x: Int = 0,
+        y: Int = 0,
+    ): Boolean = CanvasNative.nWritePixels(ptr, bitmap.nativePtr, x, y)
 
     /**
      * Saves the canvas state, then redirects drawing to a new layer. [bounds], if given, is
@@ -400,6 +481,13 @@ private object CanvasNative {
         degrees: Float,
     )
 
+    external fun nRotatePivot(
+        ptr: Long,
+        degrees: Float,
+        x: Float,
+        y: Float,
+    )
+
     external fun nClipRect(
         ptr: Long,
         left: Float,
@@ -407,12 +495,14 @@ private object CanvasNative {
         right: Float,
         bottom: Float,
         op: Int,
+        antiAlias: Boolean,
     )
 
     external fun nClipPath(
         ptr: Long,
         pathPtr: Long,
         op: Int,
+        antiAlias: Boolean,
     )
 
     external fun nSkew(
@@ -556,6 +646,13 @@ private object CanvasNative {
         matrix: FloatArray?,
     )
 
+    external fun nDrawDrawableAt(
+        ptr: Long,
+        drawablePtr: Long,
+        x: Float,
+        y: Float,
+    )
+
     external fun nDrawRRect(
         ptr: Long,
         rrectPtr: Long,
@@ -565,6 +662,13 @@ private object CanvasNative {
     external fun nDrawPicture(
         ptr: Long,
         picturePtr: Long,
+    )
+
+    external fun nDrawPictureMatrix(
+        ptr: Long,
+        picturePtr: Long,
+        matrix: FloatArray?,
+        paintPtr: Long,
     )
 
     external fun nDrawDRRect(
@@ -578,6 +682,7 @@ private object CanvasNative {
         ptr: Long,
         rrectPtr: Long,
         op: Int,
+        antiAlias: Boolean,
     )
 
     external fun nDrawRegion(
@@ -602,5 +707,37 @@ private object CanvasNative {
     external fun nConcat44(
         ptr: Long,
         matrixPtr: Long,
+    )
+
+    external fun nConcat(
+        ptr: Long,
+        matrix: FloatArray,
+    )
+
+    external fun nGetSaveCount(ptr: Long): Int
+
+    external fun nLocalToDevice(ptr: Long): Long
+
+    external fun nReadPixels(
+        ptr: Long,
+        bitmapPtr: Long,
+        srcX: Int,
+        srcY: Int,
+    ): Boolean
+
+    external fun nWritePixels(
+        ptr: Long,
+        bitmapPtr: Long,
+        x: Int,
+        y: Int,
+    ): Boolean
+
+    external fun nDrawString(
+        ptr: Long,
+        text: String,
+        x: Float,
+        y: Float,
+        fontPtr: Long,
+        paintPtr: Long,
     )
 }

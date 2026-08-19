@@ -99,6 +99,7 @@ void skialin_bridge_Canvas_getTotalMatrix(const SkCanvas* canvas, SkMatrix* outM
  * null. backdrop is borrowed (ref'd internally), not consumed. flags is
  * SkCanvas::SaveLayerFlags bits. Returns the new save count. */
 int32_t skialin_bridge_Canvas_saveLayer(SkCanvas* canvas, const SkRect* bounds, const SkPaint* paint, SkImageFilter* backdrop, uint32_t flags);
+SkM44* skialin_bridge_Canvas_getLocalToDevice(const SkCanvas* canvas);
 
 /* Path: ref-owned by the caller. Free with skialin_bridge_Path_delete. */
 SkPath* skialin_bridge_PathBuilder_snapshot(const SkPathBuilder* builder, const SkMatrix* matrix);
