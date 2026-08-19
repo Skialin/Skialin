@@ -16,12 +16,29 @@ class FiltersTest {
 
     @Test
     fun colorFilterMatrixIsUsable() {
-        val identity = floatArrayOf(
-            1f, 0f, 0f, 0f, 0f,
-            0f, 1f, 0f, 0f, 0f,
-            0f, 0f, 1f, 0f, 0f,
-            0f, 0f, 0f, 1f, 0f,
-        )
+        val identity =
+            floatArrayOf(
+                1f,
+                0f,
+                0f,
+                0f,
+                0f,
+                0f,
+                1f,
+                0f,
+                0f,
+                0f,
+                0f,
+                0f,
+                1f,
+                0f,
+                0f,
+                0f,
+                0f,
+                0f,
+                1f,
+                0f,
+            )
         ColorFilter.makeMatrix(identity)!!.use { filter ->
             Paint().use { paint -> paint.setColorFilter(filter) }
         }

@@ -29,13 +29,14 @@ class TextStyleTest {
     @Test
     fun decorationRoundtrips() {
         TextStyle().use { style ->
-            style.decoration = TextStyle.Decoration(
-                TextStyle.TextDecoration.UNDERLINE or TextStyle.TextDecoration.LINE_THROUGH,
-                TextStyle.DecorationMode.GAPS,
-                Colors.BLUE,
-                TextStyle.DecorationStyle.DASHED,
-                2f,
-            )
+            style.decoration =
+                TextStyle.Decoration(
+                    TextStyle.TextDecoration.UNDERLINE or TextStyle.TextDecoration.LINE_THROUGH,
+                    TextStyle.DecorationMode.GAPS,
+                    Colors.BLUE,
+                    TextStyle.DecorationStyle.DASHED,
+                    2f,
+                )
             val decoration = style.decoration
             assertEquals(TextStyle.TextDecoration.UNDERLINE or TextStyle.TextDecoration.LINE_THROUGH, decoration.decoration)
             assertEquals(TextStyle.DecorationMode.GAPS, decoration.mode)

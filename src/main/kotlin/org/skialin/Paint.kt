@@ -3,9 +3,10 @@ package org.skialin
 import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
-class Paint internal constructor(ptr: Long) : Managed(ptr, PaintNative::nRelease) {
+class Paint internal constructor(
+    ptr: Long,
+) : Managed(ptr, PaintNative::nRelease) {
     constructor() : this(PaintNative.nMake())
-
 
     var color: Color
         get() = PaintNative.nGetColor(nativePtr)
@@ -56,8 +57,11 @@ class Paint internal constructor(ptr: Long) : Managed(ptr, PaintNative::nRelease
     }
 
     fun getShader(): Shader? = PaintNative.nGetShader(nativePtr).takeIf { it != 0L }?.let { Shader(it) }
+
     fun getColorFilter(): ColorFilter? = PaintNative.nGetColorFilter(nativePtr).takeIf { it != 0L }?.let { ColorFilter(it) }
+
     fun getImageFilter(): ImageFilter? = PaintNative.nGetImageFilter(nativePtr).takeIf { it != 0L }?.let { ImageFilter(it) }
+
     fun getMaskFilter(): MaskFilter? = PaintNative.nGetMaskFilter(nativePtr).takeIf { it != 0L }?.let { MaskFilter(it) }
 
     /** Resets this paint to its default (freshly-constructed) state. */
@@ -75,7 +79,12 @@ class Paint internal constructor(ptr: Long) : Managed(ptr, PaintNative::nRelease
         get() = PaintNative.nGetAlphaf(nativePtr)
         set(value) = PaintNative.nSetAlphaf(nativePtr, value)
 
-    fun setARGB(a: Int, r: Int, g: Int, b: Int) = PaintNative.nSetARGB(nativePtr, a, r, g, b)
+    fun setARGB(
+        a: Int,
+        r: Int,
+        g: Int,
+        b: Int,
+    ) = PaintNative.nSetARGB(nativePtr, a, r, g, b)
 
     var strokeMiter: Float
         get() = PaintNative.nGetStrokeMiter(nativePtr)
@@ -94,39 +103,128 @@ private object PaintNative {
     }
 
     external fun nMake(): Long
+
     external fun nRelease(ptr: Long)
+
     external fun nGetColor(ptr: Long): Int
-    external fun nSetColor(ptr: Long, color: Int)
+
+    external fun nSetColor(
+        ptr: Long,
+        color: Int,
+    )
+
     external fun nIsAntiAlias(ptr: Long): Boolean
-    external fun nSetAntiAlias(ptr: Long, antiAlias: Boolean)
+
+    external fun nSetAntiAlias(
+        ptr: Long,
+        antiAlias: Boolean,
+    )
+
     external fun nGetStyle(ptr: Long): Int
-    external fun nSetStyle(ptr: Long, style: Int)
+
+    external fun nSetStyle(
+        ptr: Long,
+        style: Int,
+    )
+
     external fun nGetStrokeWidth(ptr: Long): Float
-    external fun nSetStrokeWidth(ptr: Long, width: Float)
+
+    external fun nSetStrokeWidth(
+        ptr: Long,
+        width: Float,
+    )
+
     external fun nGetStrokeCap(ptr: Long): Int
-    external fun nSetStrokeCap(ptr: Long, cap: Int)
+
+    external fun nSetStrokeCap(
+        ptr: Long,
+        cap: Int,
+    )
+
     external fun nGetStrokeJoin(ptr: Long): Int
-    external fun nSetStrokeJoin(ptr: Long, join: Int)
-    external fun nSetBlendMode(ptr: Long, mode: Int)
-    external fun nSetShader(ptr: Long, shaderPtr: Long)
-    external fun nSetColorFilter(ptr: Long, filterPtr: Long)
-    external fun nSetImageFilter(ptr: Long, filterPtr: Long)
-    external fun nSetMaskFilter(ptr: Long, filterPtr: Long)
-    external fun nSetPathEffect(ptr: Long, effectPtr: Long)
+
+    external fun nSetStrokeJoin(
+        ptr: Long,
+        join: Int,
+    )
+
+    external fun nSetBlendMode(
+        ptr: Long,
+        mode: Int,
+    )
+
+    external fun nSetShader(
+        ptr: Long,
+        shaderPtr: Long,
+    )
+
+    external fun nSetColorFilter(
+        ptr: Long,
+        filterPtr: Long,
+    )
+
+    external fun nSetImageFilter(
+        ptr: Long,
+        filterPtr: Long,
+    )
+
+    external fun nSetMaskFilter(
+        ptr: Long,
+        filterPtr: Long,
+    )
+
+    external fun nSetPathEffect(
+        ptr: Long,
+        effectPtr: Long,
+    )
+
     external fun nGetShader(ptr: Long): Long
+
     external fun nGetColorFilter(ptr: Long): Long
+
     external fun nGetImageFilter(ptr: Long): Long
+
     external fun nGetMaskFilter(ptr: Long): Long
+
     external fun nReset(ptr: Long)
+
     external fun nIsDither(ptr: Long): Boolean
-    external fun nSetDither(ptr: Long, dither: Boolean)
+
+    external fun nSetDither(
+        ptr: Long,
+        dither: Boolean,
+    )
+
     external fun nGetAlpha(ptr: Long): Int
-    external fun nSetAlpha(ptr: Long, alpha: Int)
+
+    external fun nSetAlpha(
+        ptr: Long,
+        alpha: Int,
+    )
+
     external fun nGetAlphaf(ptr: Long): Float
-    external fun nSetAlphaf(ptr: Long, alpha: Float)
-    external fun nSetARGB(ptr: Long, a: Int, r: Int, g: Int, b: Int)
+
+    external fun nSetAlphaf(
+        ptr: Long,
+        alpha: Float,
+    )
+
+    external fun nSetARGB(
+        ptr: Long,
+        a: Int,
+        r: Int,
+        g: Int,
+        b: Int,
+    )
+
     external fun nGetStrokeMiter(ptr: Long): Float
-    external fun nSetStrokeMiter(ptr: Long, miterLimit: Float)
+
+    external fun nSetStrokeMiter(
+        ptr: Long,
+        miterLimit: Float,
+    )
+
     external fun nNothingToDraw(ptr: Long): Boolean
+
     external fun nIsSrcOver(ptr: Long): Boolean
 }

@@ -39,7 +39,10 @@ class TextBlobTest {
             val widths = font.widths(glyphs)
             var x = 0f
             val xpos = FloatArray(widths.size)
-            widths.forEachIndexed { i, w -> xpos[i] = x; x += w }
+            widths.forEachIndexed { i, w ->
+                xpos[i] = x
+                x += w
+            }
             TextBlob.makeFromPosTextH("Hi", xpos, 0f, font)!!.use { blob ->
                 assertTrue(blob.bounds.right > blob.bounds.left)
             }

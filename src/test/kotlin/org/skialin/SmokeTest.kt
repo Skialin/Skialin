@@ -29,7 +29,11 @@ class SmokeTest {
     @Test
     fun pathBuilderProducesNonEmptySnapshot() {
         PathBuilder().use { builder ->
-            builder.moveTo(0f, 0f).lineTo(10f, 0f).lineTo(10f, 10f).closePath()
+            builder
+                .moveTo(0f, 0f)
+                .lineTo(10f, 0f)
+                .lineTo(10f, 10f)
+                .closePath()
             assertFalse(builder.isEmpty)
 
             builder.snapshot().use { path ->

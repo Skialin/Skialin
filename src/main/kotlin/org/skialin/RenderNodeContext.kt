@@ -24,7 +24,20 @@ private object RenderNodeContextNative {
         NativeLoader.ensureLoaded()
     }
 
-    external fun nMake(measureDrawBounds: Boolean, snapshotCache: Boolean): Long
+    external fun nMake(
+        measureDrawBounds: Boolean,
+        snapshotCache: Boolean,
+    ): Long
+
     external fun nRelease(ptr: Long)
-    external fun nSetLightingInfo(ptr: Long, centerX: Float, centerY: Float, centerZ: Float, radius: Float, ambientShadowAlpha: Float, spotShadowAlpha: Float)
+
+    external fun nSetLightingInfo(
+        ptr: Long,
+        centerX: Float,
+        centerY: Float,
+        centerZ: Float,
+        radius: Float,
+        ambientShadowAlpha: Float,
+        spotShadowAlpha: Float,
+    )
 }

@@ -4,7 +4,9 @@ import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
 /** Character-level styling for a run of paragraph text. Mirrors skparagraph's `TextStyle`. */
-class TextStyle internal constructor(ptr: Long) : Managed(ptr, TextStyleNative::nRelease) {
+class TextStyle internal constructor(
+    ptr: Long,
+) : Managed(ptr, TextStyleNative::nRelease) {
     /** A bitmask of decoration lines. */
     object TextDecoration {
         const val NONE = 0x0
@@ -14,6 +16,7 @@ class TextStyle internal constructor(ptr: Long) : Managed(ptr, TextStyleNative::
     }
 
     enum class DecorationMode { GAPS, THROUGH }
+
     enum class DecorationStyle { SOLID, DOUBLE, DOTTED, DASHED, WAVY }
 
     data class Decoration(
@@ -41,21 +44,23 @@ class TextStyle internal constructor(ptr: Long) : Managed(ptr, TextStyleNative::
         set(value) = TextStyleNative.nSetFontSize(nativePtr, value)
 
     var fontStyle: FontStyle
-        get() = FontStyle(
-            TextStyleNative.nWeight(nativePtr),
-            TextStyleNative.nWidth(nativePtr),
-            FontStyle.Slant.entries[TextStyleNative.nSlant(nativePtr)],
-        )
+        get() =
+            FontStyle(
+                TextStyleNative.nWeight(nativePtr),
+                TextStyleNative.nWidth(nativePtr),
+                FontStyle.Slant.entries[TextStyleNative.nSlant(nativePtr)],
+            )
         set(value) = TextStyleNative.nSetFontStyle(nativePtr, value.weight, value.width, value.slant.ordinal)
 
     var decoration: Decoration
-        get() = Decoration(
-            TextStyleNative.nDecorationType(nativePtr),
-            DecorationMode.entries[TextStyleNative.nDecorationMode(nativePtr)],
-            TextStyleNative.nDecorationColor(nativePtr),
-            DecorationStyle.entries[TextStyleNative.nDecorationStyle(nativePtr)],
-            TextStyleNative.nDecorationThicknessMultiplier(nativePtr),
-        )
+        get() =
+            Decoration(
+                TextStyleNative.nDecorationType(nativePtr),
+                DecorationMode.entries[TextStyleNative.nDecorationMode(nativePtr)],
+                TextStyleNative.nDecorationColor(nativePtr),
+                DecorationStyle.entries[TextStyleNative.nDecorationStyle(nativePtr)],
+                TextStyleNative.nDecorationThicknessMultiplier(nativePtr),
+            )
         set(value) {
             TextStyleNative.nSetDecoration(nativePtr, value.decoration)
             TextStyleNative.nSetDecorationMode(nativePtr, value.mode.ordinal)
@@ -96,38 +101,119 @@ private object TextStyleNative {
     }
 
     external fun nNew(): Long
+
     external fun nClone(ptr: Long): Long
+
     external fun nRelease(ptr: Long)
+
     external fun nColor(ptr: Long): Int
-    external fun nSetColor(ptr: Long, color: Int)
+
+    external fun nSetColor(
+        ptr: Long,
+        color: Int,
+    )
+
     external fun nFontFamilies(ptr: Long): Array<String>
-    external fun nSetFontFamilies(ptr: Long, families: Array<String>)
+
+    external fun nSetFontFamilies(
+        ptr: Long,
+        families: Array<String>,
+    )
+
     external fun nFontSize(ptr: Long): Float
-    external fun nSetFontSize(ptr: Long, size: Float)
+
+    external fun nSetFontSize(
+        ptr: Long,
+        size: Float,
+    )
+
     external fun nWeight(ptr: Long): Int
+
     external fun nWidth(ptr: Long): Int
+
     external fun nSlant(ptr: Long): Int
-    external fun nSetFontStyle(ptr: Long, weight: Int, width: Int, slant: Int)
+
+    external fun nSetFontStyle(
+        ptr: Long,
+        weight: Int,
+        width: Int,
+        slant: Int,
+    )
+
     external fun nDecorationType(ptr: Long): Int
+
     external fun nDecorationMode(ptr: Long): Int
+
     external fun nDecorationColor(ptr: Long): Int
+
     external fun nDecorationStyle(ptr: Long): Int
+
     external fun nDecorationThicknessMultiplier(ptr: Long): Float
-    external fun nSetDecoration(ptr: Long, decoration: Int)
-    external fun nSetDecorationMode(ptr: Long, mode: Int)
-    external fun nSetDecorationColor(ptr: Long, color: Int)
-    external fun nSetDecorationStyle(ptr: Long, style: Int)
-    external fun nSetDecorationThicknessMultiplier(ptr: Long, multiplier: Float)
+
+    external fun nSetDecoration(
+        ptr: Long,
+        decoration: Int,
+    )
+
+    external fun nSetDecorationMode(
+        ptr: Long,
+        mode: Int,
+    )
+
+    external fun nSetDecorationColor(
+        ptr: Long,
+        color: Int,
+    )
+
+    external fun nSetDecorationStyle(
+        ptr: Long,
+        style: Int,
+    )
+
+    external fun nSetDecorationThicknessMultiplier(
+        ptr: Long,
+        multiplier: Float,
+    )
+
     external fun nLetterSpacing(ptr: Long): Float
-    external fun nSetLetterSpacing(ptr: Long, letterSpacing: Float)
+
+    external fun nSetLetterSpacing(
+        ptr: Long,
+        letterSpacing: Float,
+    )
+
     external fun nWordSpacing(ptr: Long): Float
-    external fun nSetWordSpacing(ptr: Long, wordSpacing: Float)
+
+    external fun nSetWordSpacing(
+        ptr: Long,
+        wordSpacing: Float,
+    )
+
     external fun nHeight(ptr: Long): Float
-    external fun nSetHeight(ptr: Long, height: Float)
+
+    external fun nSetHeight(
+        ptr: Long,
+        height: Float,
+    )
+
     external fun nHeightOverride(ptr: Long): Boolean
-    external fun nSetHeightOverride(ptr: Long, heightOverride: Boolean)
+
+    external fun nSetHeightOverride(
+        ptr: Long,
+        heightOverride: Boolean,
+    )
+
     external fun nTypeface(ptr: Long): Long
-    external fun nSetTypeface(ptr: Long, typefacePtr: Long)
+
+    external fun nSetTypeface(
+        ptr: Long,
+        typefacePtr: Long,
+    )
+
     external fun nLocale(ptr: Long): String
-    external fun nSetLocale(ptr: Long, locale: String)
+
+    external fun nSetLocale(
+        ptr: Long,
+        locale: String,
+    )
 }

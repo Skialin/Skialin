@@ -4,9 +4,15 @@ import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
 /** Laid-out, paintable text. Mirrors skparagraph's `Paragraph`. */
-class Paragraph internal constructor(ptr: Long) : Managed(ptr, ParagraphNative::nRelease) {
+class Paragraph internal constructor(
+    ptr: Long,
+) : Managed(ptr, ParagraphNative::nRelease) {
     enum class Affinity { UPSTREAM, DOWNSTREAM }
-    data class GlyphPosition(val position: Int, val affinity: Affinity)
+
+    data class GlyphPosition(
+        val position: Int,
+        val affinity: Affinity,
+    )
 
     /** Line layout metrics. Mirrors skparagraph's `LineMetrics`, excluding its per-run font metrics map. */
     data class LineMetrics(
@@ -26,7 +32,11 @@ class Paragraph internal constructor(ptr: Long) : Managed(ptr, ParagraphNative::
 
     fun layout(width: Float) = ParagraphNative.nLayout(nativePtr, width)
 
-    fun paint(canvas: Canvas, x: Float, y: Float) = ParagraphNative.nPaint(nativePtr, canvas.ptr, x, y)
+    fun paint(
+        canvas: Canvas,
+        x: Float,
+        y: Float,
+    ) = ParagraphNative.nPaint(nativePtr, canvas.ptr, x, y)
 
     val maxWidth: Float get() = ParagraphNative.nMaxWidth(nativePtr)
     val height: Float get() = ParagraphNative.nHeight(nativePtr)
@@ -43,7 +53,10 @@ class Paragraph internal constructor(ptr: Long) : Managed(ptr, ParagraphNative::
         get() = ParagraphNative.nUnresolvedGlyphs(nativePtr).takeIf { it >= 0 }
 
     /** The glyph at the given coordinate, with the paragraph's top-left as the origin and +y as down. */
-    fun glyphPositionAtCoordinate(dx: Float, dy: Float): GlyphPosition {
+    fun glyphPositionAtCoordinate(
+        dx: Float,
+        dy: Float,
+    ): GlyphPosition {
         val packed = ParagraphNative.nGlyphPositionAtCoordinate(nativePtr, dx, dy)
         return GlyphPosition((packed shr 32).toInt(), if ((packed and 1) == 0L) Affinity.UPSTREAM else Affinity.DOWNSTREAM)
     }
@@ -59,8 +72,18 @@ class Paragraph internal constructor(ptr: Long) : Managed(ptr, ParagraphNative::
         val out = DoubleArray(12)
         if (!ParagraphNative.nLineMetricsAt(nativePtr, lineNumber, out)) return null
         return LineMetrics(
-            out[0].toLong(), out[1].toLong(), out[2].toLong(), out[3].toLong(),
-            out[4] != 0.0, out[5], out[6], out[7], out[8], out[9], out[10], out[11],
+            out[0].toLong(),
+            out[1].toLong(),
+            out[2].toLong(),
+            out[3].toLong(),
+            out[4] != 0.0,
+            out[5],
+            out[6],
+            out[7],
+            out[8],
+            out[9],
+            out[10],
+            out[11],
         )
     }
 
@@ -74,19 +97,53 @@ private object ParagraphNative {
     }
 
     external fun nRelease(ptr: Long)
-    external fun nLayout(ptr: Long, width: Float)
-    external fun nPaint(ptr: Long, canvasPtr: Long, x: Float, y: Float)
+
+    external fun nLayout(
+        ptr: Long,
+        width: Float,
+    )
+
+    external fun nPaint(
+        ptr: Long,
+        canvasPtr: Long,
+        x: Float,
+        y: Float,
+    )
+
     external fun nMaxWidth(ptr: Long): Float
+
     external fun nHeight(ptr: Long): Float
+
     external fun nMinIntrinsicWidth(ptr: Long): Float
+
     external fun nMaxIntrinsicWidth(ptr: Long): Float
+
     external fun nAlphabeticBaseline(ptr: Long): Float
+
     external fun nIdeographicBaseline(ptr: Long): Float
+
     external fun nLongestLine(ptr: Long): Float
+
     external fun nDidExceedMaxLines(ptr: Long): Boolean
+
     external fun nLineNumber(ptr: Long): Long
+
     external fun nUnresolvedGlyphs(ptr: Long): Int
-    external fun nGlyphPositionAtCoordinate(ptr: Long, dx: Float, dy: Float): Long
-    external fun nWordBoundary(ptr: Long, offset: Int): LongArray
-    external fun nLineMetricsAt(ptr: Long, lineNumber: Int, out: DoubleArray): Boolean
+
+    external fun nGlyphPositionAtCoordinate(
+        ptr: Long,
+        dx: Float,
+        dy: Float,
+    ): Long
+
+    external fun nWordBoundary(
+        ptr: Long,
+        offset: Int,
+    ): LongArray
+
+    external fun nLineMetricsAt(
+        ptr: Long,
+        lineNumber: Int,
+        out: DoubleArray,
+    ): Boolean
 }

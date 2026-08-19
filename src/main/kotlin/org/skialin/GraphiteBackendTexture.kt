@@ -3,7 +3,9 @@ package org.skialin
 import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
-class GraphiteBackendTexture internal constructor(ptr: Long) : Managed(ptr, GraphiteBackendTextureNative::nRelease) {
+class GraphiteBackendTexture internal constructor(
+    ptr: Long,
+) : Managed(ptr, GraphiteBackendTextureNative::nRelease) {
     val isValid: Boolean get() = GraphiteBackendTextureNative.nIsValid(nativePtr)
 
     companion object {
@@ -28,10 +30,26 @@ class GraphiteBackendTexture internal constructor(ptr: Long) : Managed(ptr, Grap
             allocSize: Long = 0L,
             allocFlags: Int = 0,
         ): GraphiteBackendTexture {
-            val ptr = GraphiteBackendTextureNative.nMakeVk(
-                width, height, sampleCount, mipmapped, imageCreateFlags, format, imageTiling, imageUsageFlags,
-                sharingMode, aspectMask, currentLayout, queueFamilyIndex, image, allocMemory, allocOffset, allocSize, allocFlags,
-            )
+            val ptr =
+                GraphiteBackendTextureNative.nMakeVk(
+                    width,
+                    height,
+                    sampleCount,
+                    mipmapped,
+                    imageCreateFlags,
+                    format,
+                    imageTiling,
+                    imageUsageFlags,
+                    sharingMode,
+                    aspectMask,
+                    currentLayout,
+                    queueFamilyIndex,
+                    image,
+                    allocMemory,
+                    allocOffset,
+                    allocSize,
+                    allocFlags,
+                )
             return GraphiteBackendTexture(ptr)
         }
     }
@@ -62,6 +80,8 @@ private object GraphiteBackendTextureNative {
         allocSize: Long,
         allocFlags: Int,
     ): Long
+
     external fun nRelease(ptr: Long)
+
     external fun nIsValid(ptr: Long): Boolean
 }

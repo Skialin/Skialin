@@ -8,13 +8,19 @@ import org.skialin.impl.NativeLoader
  *
  * @throws IllegalArgumentException if [sksl] fails to compile.
  */
-class RuntimeEffect private constructor(ptr: Long) : Managed(ptr, RuntimeEffectNative::nRelease) {
+class RuntimeEffect private constructor(
+    ptr: Long,
+) : Managed(ptr, RuntimeEffectNative::nRelease) {
     /**
      * [uniforms] is a raw byte buffer packed to match the SkSL uniform block's layout
      * (the caller is responsible for knowing that layout); pass `null` if the effect
      * declares no uniforms.
      */
-    fun makeShader(uniforms: ByteArray? = null, children: Array<Shader> = emptyArray(), localMatrix: Matrix33? = null): Shader? {
+    fun makeShader(
+        uniforms: ByteArray? = null,
+        children: Array<Shader> = emptyArray(),
+        localMatrix: Matrix33? = null,
+    ): Shader? {
         val childPtrs = LongArray(children.size) { children[it].nativePtr }
         val ptr = RuntimeEffectNative.nMakeShader(nativePtr, uniforms, childPtrs, localMatrix?.values)
         return if (ptr == 0L) null else Shader(ptr)
@@ -25,7 +31,10 @@ class RuntimeEffect private constructor(ptr: Long) : Managed(ptr, RuntimeEffectN
      * (the caller is responsible for knowing that layout); pass `null` if the effect
      * declares no uniforms.
      */
-    fun makeColorFilter(uniforms: ByteArray? = null, children: Array<ColorFilter> = emptyArray()): ColorFilter? {
+    fun makeColorFilter(
+        uniforms: ByteArray? = null,
+        children: Array<ColorFilter> = emptyArray(),
+    ): ColorFilter? {
         val childPtrs = LongArray(children.size) { children[it].nativePtr }
         val ptr = RuntimeEffectNative.nMakeColorFilter(nativePtr, uniforms, childPtrs)
         return if (ptr == 0L) null else ColorFilter(ptr)
@@ -46,8 +55,21 @@ private object RuntimeEffectNative {
     }
 
     external fun nMakeForShader(sksl: String): Long
+
     external fun nMakeForColorFilter(sksl: String): Long
+
     external fun nRelease(ptr: Long)
-    external fun nMakeShader(ptr: Long, uniforms: ByteArray?, children: LongArray, localMatrix: FloatArray?): Long
-    external fun nMakeColorFilter(ptr: Long, uniforms: ByteArray?, children: LongArray): Long
+
+    external fun nMakeShader(
+        ptr: Long,
+        uniforms: ByteArray?,
+        children: LongArray,
+        localMatrix: FloatArray?,
+    ): Long
+
+    external fun nMakeColorFilter(
+        ptr: Long,
+        uniforms: ByteArray?,
+        children: LongArray,
+    ): Long
 }

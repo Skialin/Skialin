@@ -1,7 +1,11 @@
 package org.skialin
 
 /** Weight, width, and slant of a typeface. Mirrors Skia's `SkFontStyle`. */
-data class FontStyle(val weight: Int, val width: Int, val slant: Slant) {
+data class FontStyle(
+    val weight: Int,
+    val width: Int,
+    val slant: Slant,
+) {
     enum class Slant { UPRIGHT, ITALIC, OBLIQUE }
 
     companion object {

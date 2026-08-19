@@ -18,6 +18,11 @@ private object FontCollectionNative {
     }
 
     external fun nNew(): Long
+
     external fun nRelease(ptr: Long)
-    external fun nSetDefaultFontManager(ptr: Long, fontMgrPtr: Long)
+
+    external fun nSetDefaultFontManager(
+        ptr: Long,
+        fontMgrPtr: Long,
+    )
 }

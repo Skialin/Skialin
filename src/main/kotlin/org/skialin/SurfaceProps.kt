@@ -3,7 +3,9 @@ package org.skialin
 import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
-class SurfaceProps internal constructor(ptr: Long) : Managed(ptr, SurfacePropsNative::nRelease) {
+class SurfaceProps internal constructor(
+    ptr: Long,
+) : Managed(ptr, SurfacePropsNative::nRelease) {
     constructor(
         flags: Int = SurfacePropsFlags.DEFAULT,
         pixelGeometry: PixelGeometry = PixelGeometry.UNKNOWN,
@@ -22,6 +24,7 @@ class SurfaceProps internal constructor(ptr: Long) : Managed(ptr, SurfacePropsNa
         SurfaceProps(SurfacePropsNative.nCloneWithPixelGeometry(nativePtr, pixelGeometry.ordinal))
 
     override fun equals(other: Any?): Boolean = other is SurfaceProps && SurfacePropsNative.nEquals(nativePtr, other.nativePtr)
+
     override fun hashCode(): Int = flags * 31 + pixelGeometry.hashCode()
 }
 
@@ -30,13 +33,32 @@ private object SurfacePropsNative {
         NativeLoader.ensureLoaded()
     }
 
-    external fun nMake(flags: Int, pixelGeometry: Int, textContrast: Float, textGamma: Float): Long
+    external fun nMake(
+        flags: Int,
+        pixelGeometry: Int,
+        textContrast: Float,
+        textGamma: Float,
+    ): Long
+
     external fun nRelease(ptr: Long)
+
     external fun nClone(ptr: Long): Long
-    external fun nCloneWithPixelGeometry(ptr: Long, pixelGeometry: Int): Long
+
+    external fun nCloneWithPixelGeometry(
+        ptr: Long,
+        pixelGeometry: Int,
+    ): Long
+
     external fun nFlags(ptr: Long): Int
+
     external fun nPixelGeometry(ptr: Long): Int
+
     external fun nTextContrast(ptr: Long): Float
+
     external fun nTextGamma(ptr: Long): Float
-    external fun nEquals(aPtr: Long, bPtr: Long): Boolean
+
+    external fun nEquals(
+        aPtr: Long,
+        bPtr: Long,
+    ): Boolean
 }

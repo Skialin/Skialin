@@ -9,11 +9,12 @@ import kotlin.test.assertNotNull
 class RuntimeEffectTest {
     @Test
     fun shaderEffectCompilesAndDraws() {
-        val sksl = """
+        val sksl =
+            """
             vec4 main(vec2 coord) {
                 return vec4(1.0, 0.0, 0.0, 1.0);
             }
-        """.trimIndent()
+            """.trimIndent()
         RuntimeEffect.makeForShader(sksl).use { effect ->
             effect.makeShader()!!.use { shader ->
                 Paint().use { paint ->
@@ -28,14 +29,19 @@ class RuntimeEffectTest {
 
     @Test
     fun shaderEffectWithUniform() {
-        val sksl = """
+        val sksl =
+            """
             uniform half4 color;
             vec4 main(vec2 coord) {
                 return color;
             }
-        """.trimIndent()
+            """.trimIndent()
         val uniforms = ByteBuffer.allocate(16).order(ByteOrder.nativeOrder())
-        uniforms.putFloat(0f).putFloat(1f).putFloat(0f).putFloat(1f)
+        uniforms
+            .putFloat(0f)
+            .putFloat(1f)
+            .putFloat(0f)
+            .putFloat(1f)
 
         RuntimeEffect.makeForShader(sksl).use { effect ->
             effect.makeShader(uniforms.array())!!.use { shader ->
@@ -51,11 +57,12 @@ class RuntimeEffectTest {
 
     @Test
     fun colorFilterEffectCompiles() {
-        val sksl = """
+        val sksl =
+            """
             vec4 main(vec4 inColor) {
                 return inColor.bgra;
             }
-        """.trimIndent()
+            """.trimIndent()
         RuntimeEffect.makeForColorFilter(sksl).use { effect ->
             effect.makeColorFilter()!!.use { filter ->
                 Paint().use { paint -> paint.setColorFilter(filter) }
@@ -72,12 +79,13 @@ class RuntimeEffectTest {
 
     @Test
     fun shaderEffectWithChildShader() {
-        val sksl = """
+        val sksl =
+            """
             uniform shader child;
             vec4 main(vec2 coord) {
                 return child.eval(coord);
             }
-        """.trimIndent()
+            """.trimIndent()
         RuntimeEffect.makeForShader(sksl).use { effect ->
             Shader.makeColor(Colors.RED).use { child ->
                 effect.makeShader(children = arrayOf(child))!!.use { shader ->

@@ -2,7 +2,9 @@ package org.skialin
 
 import org.skialin.impl.NativeLoader
 
-class Matrix33 internal constructor(internal val values: FloatArray) {
+class Matrix33 internal constructor(
+    internal val values: FloatArray,
+) {
     init {
         require(values.size == 9) { "Matrix33 requires exactly 9 values" }
     }
@@ -22,13 +24,22 @@ class Matrix33 internal constructor(internal val values: FloatArray) {
     }
 
     override fun equals(other: Any?): Boolean = other is Matrix33 && values.contentEquals(other.values)
+
     override fun hashCode(): Int = values.contentHashCode()
 
     companion object {
         val IDENTITY: Matrix33 get() = Matrix33(MatrixNative.nIdentity())
 
-        fun makeTranslate(dx: Float, dy: Float): Matrix33 = Matrix33(MatrixNative.nTranslate(dx, dy))
-        fun makeScale(sx: Float, sy: Float): Matrix33 = Matrix33(MatrixNative.nScale(sx, sy))
+        fun makeTranslate(
+            dx: Float,
+            dy: Float,
+        ): Matrix33 = Matrix33(MatrixNative.nTranslate(dx, dy))
+
+        fun makeScale(
+            sx: Float,
+            sy: Float,
+        ): Matrix33 = Matrix33(MatrixNative.nScale(sx, sy))
+
         fun makeRotate(degrees: Float): Matrix33 = Matrix33(MatrixNative.nRotate(degrees))
     }
 }
@@ -39,11 +50,37 @@ private object MatrixNative {
     }
 
     external fun nIdentity(): FloatArray
-    external fun nTranslate(dx: Float, dy: Float): FloatArray
-    external fun nScale(sx: Float, sy: Float): FloatArray
+
+    external fun nTranslate(
+        dx: Float,
+        dy: Float,
+    ): FloatArray
+
+    external fun nScale(
+        sx: Float,
+        sy: Float,
+    ): FloatArray
+
     external fun nRotate(degrees: Float): FloatArray
-    external fun nConcat(a: FloatArray, b: FloatArray): FloatArray
+
+    external fun nConcat(
+        a: FloatArray,
+        b: FloatArray,
+    ): FloatArray
+
     external fun nInvert(m: FloatArray): FloatArray?
-    external fun nMapPoint(m: FloatArray, x: Float, y: Float): FloatArray
-    external fun nMapRect(m: FloatArray, left: Float, top: Float, right: Float, bottom: Float): FloatArray
+
+    external fun nMapPoint(
+        m: FloatArray,
+        x: Float,
+        y: Float,
+    ): FloatArray
+
+    external fun nMapRect(
+        m: FloatArray,
+        left: Float,
+        top: Float,
+        right: Float,
+        bottom: Float,
+    ): FloatArray
 }

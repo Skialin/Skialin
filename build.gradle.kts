@@ -1,5 +1,7 @@
 plugins {
     kotlin("jvm") version "2.4.10"
+    id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
+    `maven-publish`
 }
 
 group = "dev.lunasa"
@@ -9,41 +11,56 @@ repositories {
     mavenCentral()
 }
 
-val osName = run {
-    val os = System.getProperty("os.name").lowercase()
-    when {
-        os.contains("win") -> "windows"
-        os.contains("mac") -> "macos"
-        os.contains("linux") -> "linux"
-        else -> error("skialin: unsupported OS $os")
+val hostOs =
+    run {
+        val os = System.getProperty("os.name").lowercase()
+        when {
+            os.contains("win") -> "windows"
+            os.contains("mac") -> "macos"
+            os.contains("linux") -> "linux"
+            else -> error("skialin: unsupported OS $os")
+        }
     }
-}
+
+val hostArch =
+    run {
+        when (val arch = System.getProperty("os.arch").lowercase()) {
+            "amd64", "x86_64" -> "x64"
+            "aarch64", "arm64" -> "arm64"
+            else -> arch
+        }
+    }
+
+val targetOs = (findProperty("skialin.targetOs") as String?) ?: hostOs
+val targetArch = (findProperty("skialin.targetArch") as String?) ?: hostArch
+val nativePlatformDir = "$targetOs-$targetArch"
 
 val lwjglVersion = "3.3.4"
-val lwjglNatives = "natives-$osName"
+val lwjglNatives = "natives-$hostOs"
 
 dependencies {
     testImplementation(kotlin("test"))
 
     testImplementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
-    testImplementation("org.lwjgl", "lwjgl")
-    testImplementation("org.lwjgl", "lwjgl-glfw")
-    testImplementation("org.lwjgl", "lwjgl-opengl")
-    testImplementation("org.lwjgl", "lwjgl-vulkan")
-    testRuntimeOnly("org.lwjgl", "lwjgl", classifier = lwjglNatives)
-    testRuntimeOnly("org.lwjgl", "lwjgl-glfw", classifier = lwjglNatives)
-    testRuntimeOnly("org.lwjgl", "lwjgl-opengl", classifier = lwjglNatives)
-    // lwjgl-vulkan has no platform natives jar -- it loads the system Vulkan loader dynamically.
+    testImplementation("org.lwjgl:lwjgl")
+    testImplementation("org.lwjgl:lwjgl-glfw")
+    testImplementation("org.lwjgl:lwjgl-opengl")
+    testImplementation("org.lwjgl:lwjgl-vulkan")
+    testRuntimeOnly("org.lwjgl:lwjgl::$lwjglNatives")
+    testRuntimeOnly("org.lwjgl:lwjgl-glfw::$lwjglNatives")
+    testRuntimeOnly("org.lwjgl:lwjgl-opengl::$lwjglNatives")
 }
 
 kotlin {
     jvmToolchain(25)
 }
 
+ktlint {
+    version.set("1.5.0")
+}
+
 tasks.test {
     useJUnitPlatform()
-    // LWJGL's default per-thread MemoryStack (64KB) is too small for
-    // VkInstance's capability-detection allocations on some drivers.
     systemProperty("org.lwjgl.system.stackSize", "4096")
 }
 
@@ -51,90 +68,114 @@ val buildNative = (findProperty("skialin.buildNative") as String?).toBoolean()
 val rustDir = layout.projectDirectory.dir("rust")
 val cargoProfile = "release"
 
-val nativePlatformDir = run {
-    val archProp = System.getProperty("os.arch").lowercase()
-    val arch = when (archProp) {
-        "amd64", "x86_64" -> "x64"
-        "aarch64", "arm64" -> "arm64"
-        else -> archProp
+val nativeLibName =
+    when (targetOs) {
+        "windows" -> "skialin_jni.dll"
+        "macos" -> "libskialin_jni.dylib"
+        else -> "libskialin_jni.so"
     }
-    "$osName-$arch"
-}
-
-val nativeLibName = when (osName) {
-    "windows" -> "skialin_jni.dll"
-    "macos" -> "libskialin_jni.dylib"
-    else -> "libskialin_jni.so"
-}
 
 val skiaDir = layout.projectDirectory.dir("external/skia")
 
-/**
- * Regenerates external/skia/out/Release from the tracked args.gn in
- * native-shim/, then builds the static libs skialin-sys links against.
- * Needed after a fresh clone or after `git submodule update` bumps skia
- * (out/ is gitignored inside the skia submodule itself). Requires
- * depot_tools (for ninja) on PATH.
- */
-val setupSkia by tasks.registering(Exec::class) {
-    workingDir = skiaDir.asFile
-    doFirst {
-        val outDir = skiaDir.dir("out/Release").asFile
-        outDir.mkdirs()
-        skiaDir.file("../../native-shim/args.gn").asFile.copyTo(outDir.resolve("args.gn"), overwrite = true)
+val setupSkia =
+    tasks.register<Exec>("setupSkia") {
+        workingDir = skiaDir.asFile
+        doFirst {
+            val outDir = skiaDir.dir("out/Release").asFile
+            outDir.mkdirs()
+            val args = skiaDir.file("../../native-shim/args.gn").asFile.readText()
+            val platformCflags = if (hostOs == "windows") "\nextra_cflags = [\"/MD\"]\n" else ""
+            outDir.resolve("args.gn").writeText(args + platformCflags)
+        }
+        val gnName = if (hostOs == "windows") "bin/gn.exe" else "bin/gn"
+        val gn = skiaDir.file(gnName).asFile.absolutePath
+        commandLine(gn, "gen", "out/Release")
     }
-    val gn = if (osName == "windows") "bin/gn.exe" else "bin/gn"
-    commandLine(gn, "gen", "out/Release")
-}
 
-val buildSkia by tasks.registering(Exec::class) {
-    dependsOn(setupSkia)
-    workingDir = skiaDir.asFile
-    val ninja = if (osName == "windows") "ninja.exe" else "ninja"
-    commandLine(
-        ninja, "-C", "out/Release",
-        "skia", "skparagraph", "skshaper", "skunicode_core", "skunicode_icu", "skcms",
-        "libpng", "zlib", "expat", "harfbuzz", "icu", "pathops",
-    )
-}
+val buildSkia =
+    tasks.register<Exec>("buildSkia") {
+        dependsOn(setupSkia)
+        workingDir = skiaDir.asFile
+        val ninja = if (hostOs == "windows") "ninja.exe" else "ninja"
+        commandLine(
+            ninja,
+            "-C",
+            "out/Release",
+            "skia",
+            "skparagraph",
+            "skshaper",
+            "skunicode_core",
+            "skunicode_icu",
+            "skcms",
+            "libpng",
+            "zlib",
+            "expat",
+            "harfbuzz",
+            "icu",
+            "pathops",
+        )
+    }
 
-val skiaLibDir = providers.gradleProperty("skialin.skiaLibDir")
-    .orElse(providers.environmentVariable("SKIALIN_SKIA_LIB_DIR"))
-    .orElse(skiaDir.dir("out/Release").asFile.absolutePath)
+val skiaLibDir =
+    providers
+        .gradleProperty("skialin.skiaLibDir")
+        .orElse(providers.environmentVariable("SKIALIN_SKIA_LIB_DIR"))
+        .orElse(skiaDir.dir("out/Release").asFile.absolutePath)
 
-val cargoBuild by tasks.registering(Exec::class) {
-    onlyIf { buildNative }
-    workingDir = rustDir.asFile
-    environment("SKIALIN_SKIA_LIB_DIR", skiaLibDir.get())
-    commandLine("cargo", "build", "-p", "skialin-jni", "--release")
-}
+val cargoBuild =
+    tasks.register<Exec>("cargoBuild") {
+        onlyIf { buildNative }
+        workingDir = rustDir.asFile
+        environment("SKIALIN_SKIA_LIB_DIR", skiaLibDir.get())
+        commandLine("cargo", "build", "-p", "skialin-jni", "--release")
+    }
 
-/**
- * SkLoadICU() (third_party/icu/SkLoadICU.cpp) looks for icudtl.dat next to
- * the module it's compiled into -- here, wherever NativeLoader extracts
- * skialin_jni's .dll/.so to at runtime (a JVM temp dir, not this build
- * directory). Bundling it as a resource alongside the native lib lets
- * NativeLoader extract both into the same temp directory.
- */
-fun registerCopyNativeLib(name: String, destination: String) = tasks.register<Copy>(name) {
+fun registerCopyNativeLib(
+    name: String,
+    destination: Provider<Directory>,
+) = tasks.register<Copy>(name) {
     onlyIf { buildNative }
     dependsOn(cargoBuild)
     from(rustDir.dir("target/$cargoProfile")) {
         include(nativeLibName)
+        into(nativePlatformDir)
     }
     from(skiaLibDir) {
         include("icudtl.dat")
     }
-    into(layout.buildDirectory.dir("$destination/natives/$nativePlatformDir"))
+    into(destination.map { it.dir("natives") })
 }
 
-val copyNativeLib = registerCopyNativeLib("copyNativeLib", "resources/main")
-val copyNativeLibForTest = registerCopyNativeLib("copyNativeLibForTest", "resources/test")
-
-tasks.named("processResources") {
-    dependsOn(copyNativeLib)
-}
+val copyNativeLib = registerCopyNativeLib("copyNativeLib", layout.buildDirectory.dir("skialin-natives"))
+val copyNativeLibForTest = registerCopyNativeLib("copyNativeLibForTest", layout.buildDirectory.dir("resources/test"))
 
 tasks.named("processTestResources") {
     dependsOn(copyNativeLibForTest)
+}
+
+val nativesJar =
+    tasks.register<Jar>("nativesJar") {
+        onlyIf { buildNative }
+        dependsOn(copyNativeLib)
+        archiveClassifier.set("natives-$nativePlatformDir")
+        from(layout.buildDirectory.dir("skialin-natives"))
+    }
+
+java {
+    withSourcesJar()
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("main") {
+            from(components["java"])
+            artifact(nativesJar)
+        }
+    }
+    repositories {
+        maven {
+            name = "local"
+            url = uri(layout.buildDirectory.dir("publishing-repo"))
+        }
+    }
 }

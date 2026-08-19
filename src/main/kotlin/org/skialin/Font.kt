@@ -4,8 +4,11 @@ import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
 /** A [Typeface] plus size, scale, skew, and rendering settings. Mirrors Skia's `SkFont`. */
-class Font internal constructor(ptr: Long) : Managed(ptr, FontNative::nRelease) {
+class Font internal constructor(
+    ptr: Long,
+) : Managed(ptr, FontNative::nRelease) {
     enum class Edging { ALIAS, ANTI_ALIAS, SUBPIXEL_ANTI_ALIAS }
+
     enum class Hinting { NONE, SLIGHT, NORMAL, FULL }
 
     constructor() : this(FontNative.nMakeDefault())
@@ -84,36 +87,122 @@ private object FontNative {
     }
 
     external fun nMakeDefault(): Long
-    external fun nMakeWithTypeface(typefacePtr: Long, size: Float): Long
+
+    external fun nMakeWithTypeface(
+        typefacePtr: Long,
+        size: Float,
+    ): Long
+
     external fun nRelease(ptr: Long)
+
     external fun nTypeface(ptr: Long): Long
-    external fun nSetTypeface(ptr: Long, typefacePtr: Long)
+
+    external fun nSetTypeface(
+        ptr: Long,
+        typefacePtr: Long,
+    )
+
     external fun nSize(ptr: Long): Float
-    external fun nSetSize(ptr: Long, size: Float)
+
+    external fun nSetSize(
+        ptr: Long,
+        size: Float,
+    )
+
     external fun nScaleX(ptr: Long): Float
-    external fun nSetScaleX(ptr: Long, scaleX: Float)
+
+    external fun nSetScaleX(
+        ptr: Long,
+        scaleX: Float,
+    )
+
     external fun nSkewX(ptr: Long): Float
-    external fun nSetSkewX(ptr: Long, skewX: Float)
+
+    external fun nSetSkewX(
+        ptr: Long,
+        skewX: Float,
+    )
+
     external fun nEdging(ptr: Long): Int
-    external fun nSetEdging(ptr: Long, edging: Int)
+
+    external fun nSetEdging(
+        ptr: Long,
+        edging: Int,
+    )
+
     external fun nHinting(ptr: Long): Int
-    external fun nSetHinting(ptr: Long, hinting: Int)
+
+    external fun nSetHinting(
+        ptr: Long,
+        hinting: Int,
+    )
+
     external fun nIsSubpixel(ptr: Long): Boolean
-    external fun nSetSubpixel(ptr: Long, subpixel: Boolean)
+
+    external fun nSetSubpixel(
+        ptr: Long,
+        subpixel: Boolean,
+    )
+
     external fun nIsEmbolden(ptr: Long): Boolean
-    external fun nSetEmbolden(ptr: Long, embolden: Boolean)
+
+    external fun nSetEmbolden(
+        ptr: Long,
+        embolden: Boolean,
+    )
+
     external fun nIsLinearMetrics(ptr: Long): Boolean
-    external fun nSetLinearMetrics(ptr: Long, linearMetrics: Boolean)
+
+    external fun nSetLinearMetrics(
+        ptr: Long,
+        linearMetrics: Boolean,
+    )
+
     external fun nIsForceAutoHinting(ptr: Long): Boolean
-    external fun nSetForceAutoHinting(ptr: Long, forceAutoHinting: Boolean)
+
+    external fun nSetForceAutoHinting(
+        ptr: Long,
+        forceAutoHinting: Boolean,
+    )
+
     external fun nIsEmbeddedBitmaps(ptr: Long): Boolean
-    external fun nSetEmbeddedBitmaps(ptr: Long, embeddedBitmaps: Boolean)
+
+    external fun nSetEmbeddedBitmaps(
+        ptr: Long,
+        embeddedBitmaps: Boolean,
+    )
+
     external fun nIsBaselineSnap(ptr: Long): Boolean
-    external fun nSetBaselineSnap(ptr: Long, baselineSnap: Boolean)
-    external fun nUnicharToGlyph(ptr: Long, unichar: Int): Int
-    external fun nTextToGlyphs(ptr: Long, text: String): ShortArray
-    external fun nMeasureText(ptr: Long, text: String): Float
-    external fun nWidths(ptr: Long, glyphs: ShortArray): FloatArray
-    external fun nMetrics(ptr: Long, out: FloatArray)
+
+    external fun nSetBaselineSnap(
+        ptr: Long,
+        baselineSnap: Boolean,
+    )
+
+    external fun nUnicharToGlyph(
+        ptr: Long,
+        unichar: Int,
+    ): Int
+
+    external fun nTextToGlyphs(
+        ptr: Long,
+        text: String,
+    ): ShortArray
+
+    external fun nMeasureText(
+        ptr: Long,
+        text: String,
+    ): Float
+
+    external fun nWidths(
+        ptr: Long,
+        glyphs: ShortArray,
+    ): FloatArray
+
+    external fun nMetrics(
+        ptr: Long,
+        out: FloatArray,
+    )
+
     external fun nSpacing(ptr: Long): Float
 }

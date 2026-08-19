@@ -4,8 +4,11 @@ import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
 /** Paragraph-wide layout settings: direction, alignment, line limits. Mirrors skparagraph's `ParagraphStyle`. */
-class ParagraphStyle internal constructor(ptr: Long) : Managed(ptr, ParagraphStyleNative::nRelease) {
+class ParagraphStyle internal constructor(
+    ptr: Long,
+) : Managed(ptr, ParagraphStyleNative::nRelease) {
     enum class TextDirection { RTL, LTR }
+
     enum class TextAlign { LEFT, RIGHT, CENTER, JUSTIFY, START, END }
 
     /** A bitmask controlling ascent/descent adjustments at paragraph edges. */
@@ -61,21 +64,62 @@ private object ParagraphStyleNative {
     }
 
     external fun nNew(): Long
+
     external fun nRelease(ptr: Long)
+
     external fun nTextDirection(ptr: Long): Int
-    external fun nSetTextDirection(ptr: Long, direction: Int)
+
+    external fun nSetTextDirection(
+        ptr: Long,
+        direction: Int,
+    )
+
     external fun nTextAlign(ptr: Long): Int
-    external fun nSetTextAlign(ptr: Long, align: Int)
+
+    external fun nSetTextAlign(
+        ptr: Long,
+        align: Int,
+    )
+
     external fun nMaxLines(ptr: Long): Long
-    external fun nSetMaxLines(ptr: Long, maxLines: Long)
+
+    external fun nSetMaxLines(
+        ptr: Long,
+        maxLines: Long,
+    )
+
     external fun nEllipsis(ptr: Long): String
-    external fun nSetEllipsis(ptr: Long, ellipsis: String)
+
+    external fun nSetEllipsis(
+        ptr: Long,
+        ellipsis: String,
+    )
+
     external fun nHeight(ptr: Long): Float
-    external fun nSetHeight(ptr: Long, height: Float)
+
+    external fun nSetHeight(
+        ptr: Long,
+        height: Float,
+    )
+
     external fun nTextHeightBehavior(ptr: Long): Int
-    external fun nSetTextHeightBehavior(ptr: Long, behavior: Int)
+
+    external fun nSetTextHeightBehavior(
+        ptr: Long,
+        behavior: Int,
+    )
+
     external fun nTextStyle(ptr: Long): Long
-    external fun nSetTextStyle(ptr: Long, stylePtr: Long)
+
+    external fun nSetTextStyle(
+        ptr: Long,
+        stylePtr: Long,
+    )
+
     external fun nStrutStyle(ptr: Long): Long
-    external fun nSetStrutStyle(ptr: Long, strutPtr: Long)
+
+    external fun nSetStrutStyle(
+        ptr: Long,
+        strutPtr: Long,
+    )
 }

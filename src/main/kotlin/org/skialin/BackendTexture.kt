@@ -3,7 +3,9 @@ package org.skialin
 import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
-class BackendTexture internal constructor(ptr: Long) : Managed(ptr, BackendTextureNative::nRelease) {
+class BackendTexture internal constructor(
+    ptr: Long,
+) : Managed(ptr, BackendTextureNative::nRelease) {
     val width: Int get() = BackendTextureNative.nWidth(nativePtr)
     val height: Int get() = BackendTextureNative.nHeight(nativePtr)
     val isValid: Boolean get() = BackendTextureNative.nIsValid(nativePtr)
@@ -33,10 +35,22 @@ class BackendTexture internal constructor(ptr: Long) : Managed(ptr, BackendTextu
             sharingMode: Int = 0,
             label: String = "",
         ): BackendTexture {
-            val ptr = BackendTextureNative.nMakeVk(
-                width, height, image, imageTiling, imageLayout, format, imageUsageFlags,
-                sampleCount, levelCount, currentQueueFamily, isProtected, sharingMode, label,
-            )
+            val ptr =
+                BackendTextureNative.nMakeVk(
+                    width,
+                    height,
+                    image,
+                    imageTiling,
+                    imageLayout,
+                    format,
+                    imageUsageFlags,
+                    sampleCount,
+                    levelCount,
+                    currentQueueFamily,
+                    isProtected,
+                    sharingMode,
+                    label,
+                )
             return BackendTexture(ptr)
         }
 
@@ -45,7 +59,16 @@ class BackendTexture internal constructor(ptr: Long) : Managed(ptr, BackendTextu
          * `target` is typically `GL_TEXTURE_2D` (0x0DE1); `format` a sized
          * internal format like `GL_RGBA8` (0x8058).
          */
-        fun makeGL(width: Int, height: Int, mipmapped: Boolean, target: Int, id: Int, format: Int, isProtected: Boolean = false, label: String = ""): BackendTexture {
+        fun makeGL(
+            width: Int,
+            height: Int,
+            mipmapped: Boolean,
+            target: Int,
+            id: Int,
+            format: Int,
+            isProtected: Boolean = false,
+            label: String = "",
+        ): BackendTexture {
             val ptr = BackendTextureNative.nMakeGL(width, height, mipmapped, target, id, format, isProtected, label)
             return BackendTexture(ptr)
         }
@@ -72,11 +95,27 @@ private object BackendTextureNative {
         sharingMode: Int,
         label: String,
     ): Long
-    external fun nMakeGL(width: Int, height: Int, mipmapped: Boolean, target: Int, id: Int, format: Int, isProtected: Boolean, label: String): Long
+
+    external fun nMakeGL(
+        width: Int,
+        height: Int,
+        mipmapped: Boolean,
+        target: Int,
+        id: Int,
+        format: Int,
+        isProtected: Boolean,
+        label: String,
+    ): Long
+
     external fun nRelease(ptr: Long)
+
     external fun nWidth(ptr: Long): Int
+
     external fun nHeight(ptr: Long): Int
+
     external fun nIsValid(ptr: Long): Boolean
+
     external fun nIsProtected(ptr: Long): Boolean
+
     external fun nHasMipmaps(ptr: Long): Boolean
 }

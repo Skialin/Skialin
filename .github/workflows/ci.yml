@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x64
+            os: windows-latest
+          - name: macos-arm64
+            os: macos-14
+          - name: macos-x64
+            os: macos-13
+          - name: linux-x64
+            os: ubuntu-latest
+          - name: linux-arm64
+            os: ubuntu-24.04-arm
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Sync Skia third-party deps
+        working-directory: external/skia
+        run: python3 tools/git-sync-deps
+
+      - name: Fetch gn
+        working-directory: external/skia
+        run: python3 bin/fetch-gn
+
+      - name: Fetch ninja
+        working-directory: external/skia
+        run: python3 bin/fetch-ninja
+
+      - name: Build Skia
+        run: ./gradlew buildSkia --console=plain
+
+      - name: ktlint
+        run: ./gradlew ktlintCheck --console=plain
+
+      - name: Build, test, publish (local repo)
+        run: ./gradlew test publish -Pskialin.buildNative=true --console=plain
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: skialin-${{ matrix.name }}
+          path: build/publishing-repo

@@ -7,7 +7,12 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class PathOpsTest {
-    private fun makeRect(left: Float, top: Float, right: Float, bottom: Float): Path {
+    private fun makeRect(
+        left: Float,
+        top: Float,
+        right: Float,
+        bottom: Float,
+    ): Path {
         val builder = PathBuilder()
         builder.addRect(Rect(left, top, right, bottom))
         return builder.snapshot()

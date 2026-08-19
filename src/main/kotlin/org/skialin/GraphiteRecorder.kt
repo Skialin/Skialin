@@ -3,7 +3,9 @@ package org.skialin
 import org.skialin.impl.NativeLoader
 
 /** Not thread-safe; one per thread/frame. Same close()-only rationale as [GraphiteContext]. */
-class GraphiteRecorder internal constructor(ptr: Long) : AutoCloseable {
+class GraphiteRecorder internal constructor(
+    ptr: Long,
+) : AutoCloseable {
     @Volatile
     private var ptr: Long = ptr
 
@@ -32,5 +34,6 @@ private object GraphiteRecorderNative {
     }
 
     external fun nRelease(ptr: Long)
+
     external fun nSnap(ptr: Long): Long
 }

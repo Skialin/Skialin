@@ -17,8 +17,16 @@ data class SamplingOptions(
         val MITCHELL = SamplingOptions(cubicB = 1f / 3f, cubicC = 1f / 3f)
         val CATMULL_ROM = SamplingOptions(cubicB = 0f, cubicC = 1f / 2f)
 
-        fun make(filter: FilterMode, mipmap: MipmapMode = MipmapMode.NONE) = SamplingOptions(filter = filter, mipmap = mipmap)
-        fun cubic(b: Float, c: Float) = SamplingOptions(cubicB = b, cubicC = c)
+        fun make(
+            filter: FilterMode,
+            mipmap: MipmapMode = MipmapMode.NONE,
+        ) = SamplingOptions(filter = filter, mipmap = mipmap)
+
+        fun cubic(
+            b: Float,
+            c: Float,
+        ) = SamplingOptions(cubicB = b, cubicC = c)
+
         fun aniso(maxAniso: Int) = SamplingOptions(maxAniso = maxAniso.coerceAtLeast(1))
     }
 }

@@ -4,13 +4,21 @@ import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
 /** Measures distance along a path (length, position/tangent, matrix at a point). Mirrors Skia's `SkPathMeasure`. */
-class PathMeasure(path: Path, forceClosed: Boolean = false, resScale: Float = 1f) :
-    Managed(PathMeasureNative.nNew(path.nativePtr, forceClosed, resScale), PathMeasureNative::nRelease) {
-
-    data class PosTan(val position: Point, val tangent: Point)
+class PathMeasure(
+    path: Path,
+    forceClosed: Boolean = false,
+    resScale: Float = 1f,
+) : Managed(PathMeasureNative.nNew(path.nativePtr, forceClosed, resScale), PathMeasureNative::nRelease) {
+    data class PosTan(
+        val position: Point,
+        val tangent: Point,
+    )
 
     /** `path` of `null` clears the current path. */
-    fun setPath(path: Path?, forceClosed: Boolean = false) = PathMeasureNative.nSetPath(nativePtr, path?.nativePtr ?: 0L, forceClosed)
+    fun setPath(
+        path: Path?,
+        forceClosed: Boolean = false,
+    ) = PathMeasureNative.nSetPath(nativePtr, path?.nativePtr ?: 0L, forceClosed)
 
     /** The length of the current contour, or 0 if there's no path. */
     fun length(): Float = PathMeasureNative.nLength(nativePtr)
@@ -33,8 +41,12 @@ class PathMeasure(path: Path, forceClosed: Boolean = false, resScale: Float = 1f
      * Appends the `[startD, stopD]` segment of the current contour to [dst]. Returns false
      * ([dst] untouched) if the segment is zero-length or `startD > stopD`.
      */
-    fun segment(startD: Float, stopD: Float, dst: PathBuilder, startWithMoveTo: Boolean): Boolean =
-        PathMeasureNative.nSegment(nativePtr, startD, stopD, dst.nativePtr, startWithMoveTo)
+    fun segment(
+        startD: Float,
+        stopD: Float,
+        dst: PathBuilder,
+        startWithMoveTo: Boolean,
+    ): Boolean = PathMeasureNative.nSegment(nativePtr, startD, stopD, dst.nativePtr, startWithMoveTo)
 
     val isClosed: Boolean get() = PathMeasureNative.nIsClosed(nativePtr)
 
@@ -47,13 +59,43 @@ private object PathMeasureNative {
         NativeLoader.ensureLoaded()
     }
 
-    external fun nNew(pathPtr: Long, forceClosed: Boolean, resScale: Float): Long
+    external fun nNew(
+        pathPtr: Long,
+        forceClosed: Boolean,
+        resScale: Float,
+    ): Long
+
     external fun nRelease(ptr: Long)
-    external fun nSetPath(ptr: Long, pathPtr: Long, forceClosed: Boolean)
+
+    external fun nSetPath(
+        ptr: Long,
+        pathPtr: Long,
+        forceClosed: Boolean,
+    )
+
     external fun nLength(ptr: Long): Float
-    external fun nPosTan(ptr: Long, distance: Float, out: FloatArray): Boolean
-    external fun nMatrix(ptr: Long, distance: Float, out: FloatArray): Boolean
-    external fun nSegment(ptr: Long, startD: Float, stopD: Float, dstPtr: Long, startWithMoveTo: Boolean): Boolean
+
+    external fun nPosTan(
+        ptr: Long,
+        distance: Float,
+        out: FloatArray,
+    ): Boolean
+
+    external fun nMatrix(
+        ptr: Long,
+        distance: Float,
+        out: FloatArray,
+    ): Boolean
+
+    external fun nSegment(
+        ptr: Long,
+        startD: Float,
+        stopD: Float,
+        dstPtr: Long,
+        startWithMoveTo: Boolean,
+    ): Boolean
+
     external fun nIsClosed(ptr: Long): Boolean
+
     external fun nNextContour(ptr: Long): Boolean
 }

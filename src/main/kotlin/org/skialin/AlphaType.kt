@@ -18,17 +18,19 @@ enum class AlphaType {
      * uninitialized
      */
     UNKNOWN,
+
     /**
      * pixel is opaque
      */
     OPAQUE,
+
     /**
      * pixel components are premultiplied by alpha
      */
     PREMUL,
+
     /**
      * uninitialized
      */
-    UNPREMUL
-    ;
+    UNPREMUL,
 }

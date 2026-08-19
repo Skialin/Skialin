@@ -3,10 +3,18 @@ package org.skialin
 typealias Color = Int
 
 object Colors {
-    fun argb(a: Int, r: Int, g: Int, b: Int): Color =
-        (a shl 24) or (r shl 16) or (g shl 8) or b
+    fun argb(
+        a: Int,
+        r: Int,
+        g: Int,
+        b: Int,
+    ): Color = (a shl 24) or (r shl 16) or (g shl 8) or b
 
-    fun rgb(r: Int, g: Int, b: Int): Color = argb(0xff, r, g, b)
+    fun rgb(
+        r: Int,
+        g: Int,
+        b: Int,
+    ): Color = argb(0xff, r, g, b)
 
     val BLACK: Color = rgb(0, 0, 0)
     val WHITE: Color = rgb(0xff, 0xff, 0xff)

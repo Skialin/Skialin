@@ -15,11 +15,13 @@ class GradientsTest {
 
     @Test
     fun linearGradientWithPositions() {
-        val shader = Shader.makeLinearGradient(
-            Point(0f, 0f), Point(10f, 0f),
-            intArrayOf(Colors.RED, Colors.GREEN, Colors.BLUE),
-            floatArrayOf(0f, 0.25f, 1f),
-        )
+        val shader =
+            Shader.makeLinearGradient(
+                Point(0f, 0f),
+                Point(10f, 0f),
+                intArrayOf(Colors.RED, Colors.GREEN, Colors.BLUE),
+                floatArrayOf(0f, 0.25f, 1f),
+            )
         assertNotNull(shader)
         shader.close()
     }

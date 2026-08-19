@@ -3,7 +3,9 @@ package org.skialin
 import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
-class Picture internal constructor(ptr: Long) : Managed(ptr, PictureNative::nRelease) {
+class Picture internal constructor(
+    ptr: Long,
+) : Managed(ptr, PictureNative::nRelease) {
     fun playback(canvas: Canvas) = PictureNative.nPlayback(nativePtr, canvas.ptr)
 
     val cullRect: Rect
@@ -20,8 +22,18 @@ private object PictureNative {
     }
 
     external fun nRelease(ptr: Long)
-    external fun nPlayback(ptr: Long, canvasPtr: Long)
+
+    external fun nPlayback(
+        ptr: Long,
+        canvasPtr: Long,
+    )
+
     external fun nCullRect(ptr: Long): FloatArray
+
     external fun nUniqueID(ptr: Long): Long
-    external fun nApproximateOpCount(ptr: Long, nested: Boolean): Int
+
+    external fun nApproximateOpCount(
+        ptr: Long,
+        nested: Boolean,
+    ): Int
 }

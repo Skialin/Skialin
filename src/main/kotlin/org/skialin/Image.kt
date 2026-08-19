@@ -5,7 +5,9 @@ import org.skialin.impl.NativeLoader
 import java.nio.ByteBuffer
 
 /** A two-dimensional array of pixels to draw. Mirrors Skia's `SkImage`. */
-class Image internal constructor(ptr: Long) : Managed(ptr, ImageNative::nRelease) {
+class Image internal constructor(
+    ptr: Long,
+) : Managed(ptr, ImageNative::nRelease) {
     val width: Int get() = ImageNative.nWidth(nativePtr)
     val height: Int get() = ImageNative.nHeight(nativePtr)
     val dimensions: ISize get() = ISize(width, height)
@@ -32,11 +34,19 @@ class Image internal constructor(ptr: Long) : Managed(ptr, ImageNative::nRelease
         sampling: SamplingOptions = SamplingOptions.NEAREST,
         localMatrix: Matrix33? = null,
     ): Shader? {
-        val ptr = ImageNative.nMakeShader(
-            nativePtr, tileX.ordinal, tileY.ordinal,
-            sampling.maxAniso, sampling.useCubic, sampling.cubicB ?: 0f, sampling.cubicC ?: 0f, sampling.filter.ordinal, sampling.mipmap.ordinal,
-            localMatrix?.values,
-        )
+        val ptr =
+            ImageNative.nMakeShader(
+                nativePtr,
+                tileX.ordinal,
+                tileY.ordinal,
+                sampling.maxAniso,
+                sampling.useCubic,
+                sampling.cubicB ?: 0f,
+                sampling.cubicC ?: 0f,
+                sampling.filter.ordinal,
+                sampling.mipmap.ordinal,
+                localMatrix?.values,
+            )
         return if (ptr == 0L) null else Shader(ptr)
     }
 
@@ -46,11 +56,19 @@ class Image internal constructor(ptr: Long) : Managed(ptr, ImageNative::nRelease
         sampling: SamplingOptions = SamplingOptions.NEAREST,
         localMatrix: Matrix33? = null,
     ): Shader? {
-        val ptr = ImageNative.nMakeRawShader(
-            nativePtr, tileX.ordinal, tileY.ordinal,
-            sampling.maxAniso, sampling.useCubic, sampling.cubicB ?: 0f, sampling.cubicC ?: 0f, sampling.filter.ordinal, sampling.mipmap.ordinal,
-            localMatrix?.values,
-        )
+        val ptr =
+            ImageNative.nMakeRawShader(
+                nativePtr,
+                tileX.ordinal,
+                tileY.ordinal,
+                sampling.maxAniso,
+                sampling.useCubic,
+                sampling.cubicB ?: 0f,
+                sampling.cubicC ?: 0f,
+                sampling.filter.ordinal,
+                sampling.mipmap.ordinal,
+                localMatrix?.values,
+            )
         return if (ptr == 0L) null else Shader(ptr)
     }
 
@@ -61,17 +79,48 @@ class Image internal constructor(ptr: Long) : Managed(ptr, ImageNative::nRelease
     }
 
     /** `dst` must be a direct [ByteBuffer] at least `dstRowBytes * dstInfo.height` bytes. */
-    fun readPixels(dstInfo: ImageInfo, dst: ByteBuffer, dstRowBytes: Long, srcX: Int = 0, srcY: Int = 0): Boolean {
+    fun readPixels(
+        dstInfo: ImageInfo,
+        dst: ByteBuffer,
+        dstRowBytes: Long,
+        srcX: Int = 0,
+        srcY: Int = 0,
+    ): Boolean {
         require(dst.isDirect) { "readPixels requires a direct ByteBuffer" }
         val addr = ImageNative.nBufferAddress(dst)
         return ImageNative.nReadPixels(nativePtr, dstInfo.nativePtr, addr, dstRowBytes, srcX, srcY)
     }
 
-    fun scalePixels(dst: Pixmap, sampling: SamplingOptions = SamplingOptions.NEAREST): Boolean =
-        ImageNative.nScalePixels(nativePtr, dst.nativePtr, sampling.maxAniso, sampling.useCubic, sampling.cubicB ?: 0f, sampling.cubicC ?: 0f, sampling.filter.ordinal, sampling.mipmap.ordinal)
+    fun scalePixels(
+        dst: Pixmap,
+        sampling: SamplingOptions = SamplingOptions.NEAREST,
+    ): Boolean =
+        ImageNative.nScalePixels(
+            nativePtr,
+            dst.nativePtr,
+            sampling.maxAniso,
+            sampling.useCubic,
+            sampling.cubicB ?: 0f,
+            sampling.cubicC ?: 0f,
+            sampling.filter.ordinal,
+            sampling.mipmap.ordinal,
+        )
 
-    fun makeScaled(info: ImageInfo, sampling: SamplingOptions = SamplingOptions.NEAREST): Image? {
-        val ptr = ImageNative.nMakeScaled(nativePtr, info.nativePtr, sampling.maxAniso, sampling.useCubic, sampling.cubicB ?: 0f, sampling.cubicC ?: 0f, sampling.filter.ordinal, sampling.mipmap.ordinal)
+    fun makeScaled(
+        info: ImageInfo,
+        sampling: SamplingOptions = SamplingOptions.NEAREST,
+    ): Image? {
+        val ptr =
+            ImageNative.nMakeScaled(
+                nativePtr,
+                info.nativePtr,
+                sampling.maxAniso,
+                sampling.useCubic,
+                sampling.cubicB ?: 0f,
+                sampling.cubicC ?: 0f,
+                sampling.filter.ordinal,
+                sampling.mipmap.ordinal,
+            )
         return if (ptr == 0L) null else Image(ptr)
     }
 
@@ -80,7 +129,10 @@ class Image internal constructor(ptr: Long) : Managed(ptr, ImageNative::nRelease
 
     fun encodeToPng(): ByteArray? = ImageNative.nEncodeToPng(nativePtr)
 
-    fun makeSubset(subset: IRect, mipmapped: Boolean = false): Image? {
+    fun makeSubset(
+        subset: IRect,
+        mipmapped: Boolean = false,
+    ): Image? {
         val ptr = ImageNative.nMakeSubset(nativePtr, subset.left, subset.top, subset.right, subset.bottom, mipmapped)
         return if (ptr == 0L) null else Image(ptr)
     }
@@ -89,15 +141,30 @@ class Image internal constructor(ptr: Long) : Managed(ptr, ImageNative::nRelease
 
     fun makeNonTextureImage(): Image? = ImageNative.nMakeNonTextureImage(nativePtr).takeIf { it != 0L }?.let { Image(it) }
 
-    fun makeRasterImage(allowCaching: Boolean = true): Image? = ImageNative.nMakeRasterImage(nativePtr, allowCaching).takeIf { it != 0L }?.let { Image(it) }
+    fun makeRasterImage(allowCaching: Boolean = true): Image? =
+        ImageNative
+            .nMakeRasterImage(nativePtr, allowCaching)
+            .takeIf {
+                it != 0L
+            }?.let { Image(it) }
 
     fun asLegacyBitmap(): Bitmap? = ImageNative.nAsLegacyBitmap(nativePtr).takeIf { it != 0L }?.let { Bitmap(it) }
 
-    fun makeColorSpace(target: ColorSpace, mipmapped: Boolean = false): Image? =
-        ImageNative.nMakeColorSpace(nativePtr, target.nativePtr, mipmapped).takeIf { it != 0L }?.let { Image(it) }
+    fun makeColorSpace(
+        target: ColorSpace,
+        mipmapped: Boolean = false,
+    ): Image? = ImageNative.nMakeColorSpace(nativePtr, target.nativePtr, mipmapped).takeIf { it != 0L }?.let { Image(it) }
 
-    fun makeColorTypeAndColorSpace(targetColorType: ColorType, targetColorSpace: ColorSpace, mipmapped: Boolean = false): Image? =
-        ImageNative.nMakeColorTypeAndColorSpace(nativePtr, targetColorType.ordinal, targetColorSpace.nativePtr, mipmapped).takeIf { it != 0L }?.let { Image(it) }
+    fun makeColorTypeAndColorSpace(
+        targetColorType: ColorType,
+        targetColorSpace: ColorSpace,
+        mipmapped: Boolean = false,
+    ): Image? =
+        ImageNative
+            .nMakeColorTypeAndColorSpace(nativePtr, targetColorType.ordinal, targetColorSpace.nativePtr, mipmapped)
+            .takeIf {
+                it != 0L
+            }?.let { Image(it) }
 
     fun reinterpretColorSpace(target: ColorSpace): Image? =
         ImageNative.nReinterpretColorSpace(nativePtr, target.nativePtr).takeIf { it != 0L }?.let { Image(it) }
@@ -106,15 +173,19 @@ class Image internal constructor(ptr: Long) : Managed(ptr, ImageNative::nRelease
         fun decode(bytes: ByteArray): Image? = ImageNative.nDecode(bytes).takeIf { it != 0L }?.let { Image(it) }
 
         /** A deep copy of `pixmap`'s pixels. */
-        fun makeFromPixmapCopy(pixmap: Pixmap): Image? = ImageNative.nFromPixmapCopy(pixmap.nativePtr).takeIf { it != 0L }?.let { Image(it) }
+        fun makeFromPixmapCopy(pixmap: Pixmap): Image? =
+            ImageNative.nFromPixmapCopy(pixmap.nativePtr).takeIf { it != 0L }?.let { Image(it) }
 
         /**
          * `pixels`' bytes become the image's pixel storage; no copy is made.
          * `pixels` is ref'd, not consumed: it stays independently valid and
          * closeable afterward.
          */
-        fun makeFromData(info: ImageInfo, pixels: Data, rowBytes: Long): Image? =
-            ImageNative.nFromData(info.nativePtr, pixels.nativePtr, rowBytes).takeIf { it != 0L }?.let { Image(it) }
+        fun makeFromData(
+            info: ImageInfo,
+            pixels: Data,
+            rowBytes: Long,
+        ): Image? = ImageNative.nFromData(info.nativePtr, pixels.nativePtr, rowBytes).takeIf { it != 0L }?.let { Image(it) }
 
         /**
          * Wraps [backendTexture], transferring ownership to Skia: the
@@ -129,9 +200,15 @@ class Image internal constructor(ptr: Long) : Managed(ptr, ImageNative::nRelease
             alphaType: AlphaType,
             colorSpace: ColorSpace? = null,
         ): Image? {
-            val ptr = ImageNative.nAdoptTextureFrom(
-                context.nativePtr, backendTexture.nativePtr, textureOrigin.ordinal, colorType.ordinal, alphaType.ordinal, colorSpace?.nativePtr ?: 0L,
-            )
+            val ptr =
+                ImageNative.nAdoptTextureFrom(
+                    context.nativePtr,
+                    backendTexture.nativePtr,
+                    textureOrigin.ordinal,
+                    colorType.ordinal,
+                    alphaType.ordinal,
+                    colorSpace?.nativePtr ?: 0L,
+                )
             return if (ptr == 0L) null else Image(ptr)
         }
 
@@ -144,9 +221,15 @@ class Image internal constructor(ptr: Long) : Managed(ptr, ImageNative::nRelease
             colorSpace: ColorSpace? = null,
             generateMipmapsFromBase: Boolean = false,
         ): Image? {
-            val ptr = ImageNative.nWrapGraphiteTexture(
-                recorder.nativePtr, backendTexture.nativePtr, alphaType.ordinal, colorSpace?.nativePtr ?: 0L, origin.ordinal, generateMipmapsFromBase,
-            )
+            val ptr =
+                ImageNative.nWrapGraphiteTexture(
+                    recorder.nativePtr,
+                    backendTexture.nativePtr,
+                    alphaType.ordinal,
+                    colorSpace?.nativePtr ?: 0L,
+                    origin.ordinal,
+                    generateMipmapsFromBase,
+                )
             return if (ptr == 0L) null else Image(ptr)
         }
     }
@@ -158,51 +241,161 @@ private object ImageNative {
     }
 
     external fun nBufferAddress(buffer: ByteBuffer): Long
+
     external fun nDecode(bytes: ByteArray): Long
+
     external fun nFromPixmapCopy(pixmapPtr: Long): Long
-    external fun nFromData(infoPtr: Long, dataPtr: Long, rowBytes: Long): Long
+
+    external fun nFromData(
+        infoPtr: Long,
+        dataPtr: Long,
+        rowBytes: Long,
+    ): Long
+
     external fun nRelease(ptr: Long)
+
     external fun nWidth(ptr: Long): Int
+
     external fun nHeight(ptr: Long): Int
+
     external fun nUniqueId(ptr: Long): Int
+
     external fun nAlphaType(ptr: Long): Int
+
     external fun nColorType(ptr: Long): Int
+
     external fun nColorSpace(ptr: Long): Long
+
     external fun nImageInfo(ptr: Long): Long
+
     external fun nIsAlphaOnly(ptr: Long): Boolean
+
     external fun nIsOpaque(ptr: Long): Boolean
+
     external fun nIsTextureBacked(ptr: Long): Boolean
+
     external fun nIsLazyGenerated(ptr: Long): Boolean
+
     external fun nHasMipmaps(ptr: Long): Boolean
+
     external fun nIsProtected(ptr: Long): Boolean
 
     external fun nMakeShader(
-        ptr: Long, tileX: Int, tileY: Int,
-        maxAniso: Int, useCubic: Boolean, cubicB: Float, cubicC: Float, filter: Int, mipmap: Int,
+        ptr: Long,
+        tileX: Int,
+        tileY: Int,
+        maxAniso: Int,
+        useCubic: Boolean,
+        cubicB: Float,
+        cubicC: Float,
+        filter: Int,
+        mipmap: Int,
         localMatrix: FloatArray?,
     ): Long
 
     external fun nMakeRawShader(
-        ptr: Long, tileX: Int, tileY: Int,
-        maxAniso: Int, useCubic: Boolean, cubicB: Float, cubicC: Float, filter: Int, mipmap: Int,
+        ptr: Long,
+        tileX: Int,
+        tileY: Int,
+        maxAniso: Int,
+        useCubic: Boolean,
+        cubicB: Float,
+        cubicC: Float,
+        filter: Int,
+        mipmap: Int,
         localMatrix: FloatArray?,
     ): Long
 
     external fun nPeekPixels(ptr: Long): Long
-    external fun nReadPixels(ptr: Long, dstInfoPtr: Long, dstAddr: Long, dstRowBytes: Long, srcX: Int, srcY: Int): Boolean
-    external fun nScalePixels(ptr: Long, dstPixmapPtr: Long, maxAniso: Int, useCubic: Boolean, cubicB: Float, cubicC: Float, filter: Int, mipmap: Int): Boolean
-    external fun nMakeScaled(ptr: Long, infoPtr: Long, maxAniso: Int, useCubic: Boolean, cubicB: Float, cubicC: Float, filter: Int, mipmap: Int): Long
-    external fun nRefEncodedData(ptr: Long): Long
-    external fun nEncodeToPng(ptr: Long): ByteArray?
-    external fun nMakeSubset(ptr: Long, left: Int, top: Int, right: Int, bottom: Int, mipmapped: Boolean): Long
-    external fun nWithDefaultMipmaps(ptr: Long): Long
-    external fun nMakeNonTextureImage(ptr: Long): Long
-    external fun nMakeRasterImage(ptr: Long, allowCaching: Boolean): Long
-    external fun nAsLegacyBitmap(ptr: Long): Long
-    external fun nMakeColorSpace(ptr: Long, targetPtr: Long, mipmapped: Boolean): Long
-    external fun nMakeColorTypeAndColorSpace(ptr: Long, targetColorType: Int, targetColorSpacePtr: Long, mipmapped: Boolean): Long
-    external fun nReinterpretColorSpace(ptr: Long, targetPtr: Long): Long
 
-    external fun nAdoptTextureFrom(contextPtr: Long, backendTexturePtr: Long, textureOrigin: Int, colorType: Int, alphaType: Int, colorSpacePtr: Long): Long
-    external fun nWrapGraphiteTexture(recorderPtr: Long, backendTexturePtr: Long, alphaType: Int, colorSpacePtr: Long, origin: Int, generateMipmapsFromBase: Boolean): Long
+    external fun nReadPixels(
+        ptr: Long,
+        dstInfoPtr: Long,
+        dstAddr: Long,
+        dstRowBytes: Long,
+        srcX: Int,
+        srcY: Int,
+    ): Boolean
+
+    external fun nScalePixels(
+        ptr: Long,
+        dstPixmapPtr: Long,
+        maxAniso: Int,
+        useCubic: Boolean,
+        cubicB: Float,
+        cubicC: Float,
+        filter: Int,
+        mipmap: Int,
+    ): Boolean
+
+    external fun nMakeScaled(
+        ptr: Long,
+        infoPtr: Long,
+        maxAniso: Int,
+        useCubic: Boolean,
+        cubicB: Float,
+        cubicC: Float,
+        filter: Int,
+        mipmap: Int,
+    ): Long
+
+    external fun nRefEncodedData(ptr: Long): Long
+
+    external fun nEncodeToPng(ptr: Long): ByteArray?
+
+    external fun nMakeSubset(
+        ptr: Long,
+        left: Int,
+        top: Int,
+        right: Int,
+        bottom: Int,
+        mipmapped: Boolean,
+    ): Long
+
+    external fun nWithDefaultMipmaps(ptr: Long): Long
+
+    external fun nMakeNonTextureImage(ptr: Long): Long
+
+    external fun nMakeRasterImage(
+        ptr: Long,
+        allowCaching: Boolean,
+    ): Long
+
+    external fun nAsLegacyBitmap(ptr: Long): Long
+
+    external fun nMakeColorSpace(
+        ptr: Long,
+        targetPtr: Long,
+        mipmapped: Boolean,
+    ): Long
+
+    external fun nMakeColorTypeAndColorSpace(
+        ptr: Long,
+        targetColorType: Int,
+        targetColorSpacePtr: Long,
+        mipmapped: Boolean,
+    ): Long
+
+    external fun nReinterpretColorSpace(
+        ptr: Long,
+        targetPtr: Long,
+    ): Long
+
+    external fun nAdoptTextureFrom(
+        contextPtr: Long,
+        backendTexturePtr: Long,
+        textureOrigin: Int,
+        colorType: Int,
+        alphaType: Int,
+        colorSpacePtr: Long,
+    ): Long
+
+    external fun nWrapGraphiteTexture(
+        recorderPtr: Long,
+        backendTexturePtr: Long,
+        alphaType: Int,
+        colorSpacePtr: Long,
+        origin: Int,
+        generateMipmapsFromBase: Boolean,
+    ): Long
 }

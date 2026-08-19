@@ -1,7 +1,6 @@
 is_debug = false
 is_official_build = false
 is_component_build = false
-extra_cflags = ["/MD"]
 skia_enable_ganesh = true
 skia_enable_graphite = true
 skia_use_gl = true

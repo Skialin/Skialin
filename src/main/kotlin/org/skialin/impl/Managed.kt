@@ -34,7 +34,10 @@ abstract class Managed internal constructor(
         }
     }
 
-    private class ReleaseAction(private val ptr: Long, private val release: (Long) -> Unit) : Runnable {
+    private class ReleaseAction(
+        private val ptr: Long,
+        private val release: (Long) -> Unit,
+    ) : Runnable {
         override fun run() {
             release(ptr)
         }

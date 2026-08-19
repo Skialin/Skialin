@@ -133,21 +133,34 @@ class ImageTest {
             }
 
             ImageInfo.make(2, 2, ColorType.RGBA_8888, AlphaType.PREMUL).use { info ->
-                Data.makeFromBytes(
-                    byteArrayOf(
-                        255.toByte(), 0, 0, 255.toByte(),
-                        255.toByte(), 0, 0, 255.toByte(),
-                        255.toByte(), 0, 0, 255.toByte(),
-                        255.toByte(), 0, 0, 255.toByte(),
-                    ),
-                ).use { pixels ->
-                    Image.makeFromData(info, pixels, 8)!!.use { fromData ->
-                        assertEquals(2, fromData.width)
-                        assertEquals(2, fromData.height)
+                Data
+                    .makeFromBytes(
+                        byteArrayOf(
+                            255.toByte(),
+                            0,
+                            0,
+                            255.toByte(),
+                            255.toByte(),
+                            0,
+                            0,
+                            255.toByte(),
+                            255.toByte(),
+                            0,
+                            0,
+                            255.toByte(),
+                            255.toByte(),
+                            0,
+                            0,
+                            255.toByte(),
+                        ),
+                    ).use { pixels ->
+                        Image.makeFromData(info, pixels, 8)!!.use { fromData ->
+                            assertEquals(2, fromData.width)
+                            assertEquals(2, fromData.height)
+                        }
+                        // pixels must stay independently usable: makeFromData refs, doesn't consume.
+                        assertEquals(16L, pixels.size)
                     }
-                    // pixels must stay independently usable: makeFromData refs, doesn't consume.
-                    assertEquals(16L, pixels.size)
-                }
             }
         }
     }

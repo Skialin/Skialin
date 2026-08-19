@@ -3,7 +3,9 @@ package org.skialin
 import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
-class Surface private constructor(ptr: Long) : Managed(ptr, SurfaceNative::nRelease) {
+class Surface private constructor(
+    ptr: Long,
+) : Managed(ptr, SurfaceNative::nRelease) {
     fun canvas(): Canvas = Canvas(SurfaceNative.nGetCanvas(nativePtr))
 
     fun imageSnapshot(): Image? {
@@ -12,7 +14,10 @@ class Surface private constructor(ptr: Long) : Managed(ptr, SurfaceNative::nRele
     }
 
     companion object {
-        fun makeRasterN32Premul(width: Int, height: Int): Surface? {
+        fun makeRasterN32Premul(
+            width: Int,
+            height: Int,
+        ): Surface? {
             val ptr = SurfaceNative.nMakeRasterN32Premul(width, height)
             return if (ptr == 0L) null else Surface(ptr)
         }
@@ -33,10 +38,17 @@ class Surface private constructor(ptr: Long) : Managed(ptr, SurfaceNative::nRele
             shouldCreateWithMips: Boolean = false,
             isProtected: Boolean = false,
         ): Surface? {
-            val ptr = SurfaceNative.nMakeRenderTarget(
-                context.nativePtr, budgeted, info.nativePtr, sampleCount, surfaceOrigin.ordinal,
-                surfaceProps?.nativePtr ?: 0L, shouldCreateWithMips, isProtected,
-            )
+            val ptr =
+                SurfaceNative.nMakeRenderTarget(
+                    context.nativePtr,
+                    budgeted,
+                    info.nativePtr,
+                    sampleCount,
+                    surfaceOrigin.ordinal,
+                    surfaceProps?.nativePtr ?: 0L,
+                    shouldCreateWithMips,
+                    isProtected,
+                )
             return if (ptr == 0L) null else Surface(ptr)
         }
 
@@ -55,14 +67,25 @@ class Surface private constructor(ptr: Long) : Managed(ptr, SurfaceNative::nRele
             colorSpace: ColorSpace? = null,
             surfaceProps: SurfaceProps? = null,
         ): Surface? {
-            val ptr = SurfaceNative.nWrapBackendTexture(
-                context.nativePtr, backendTexture.nativePtr, origin.ordinal, sampleCnt, colorType.ordinal,
-                colorSpace?.nativePtr ?: 0L, surfaceProps?.nativePtr ?: 0L,
-            )
+            val ptr =
+                SurfaceNative.nWrapBackendTexture(
+                    context.nativePtr,
+                    backendTexture.nativePtr,
+                    origin.ordinal,
+                    sampleCnt,
+                    colorType.ordinal,
+                    colorSpace?.nativePtr ?: 0L,
+                    surfaceProps?.nativePtr ?: 0L,
+                )
             return if (ptr == 0L) null else Surface(ptr)
         }
 
-        fun makeGraphiteRenderTarget(recorder: GraphiteRecorder, info: ImageInfo, mipmapped: Boolean = false, surfaceProps: SurfaceProps? = null): Surface? {
+        fun makeGraphiteRenderTarget(
+            recorder: GraphiteRecorder,
+            info: ImageInfo,
+            mipmapped: Boolean = false,
+            surfaceProps: SurfaceProps? = null,
+        ): Surface? {
             val ptr = SurfaceNative.nMakeGraphiteRenderTarget(recorder.nativePtr, info.nativePtr, mipmapped, surfaceProps?.nativePtr ?: 0L)
             return if (ptr == 0L) null else Surface(ptr)
         }
@@ -75,9 +98,14 @@ class Surface private constructor(ptr: Long) : Managed(ptr, SurfaceNative::nRele
             colorSpace: ColorSpace? = null,
             surfaceProps: SurfaceProps? = null,
         ): Surface? {
-            val ptr = SurfaceNative.nWrapGraphiteBackendTexture(
-                recorder.nativePtr, backendTexture.nativePtr, colorType.ordinal, colorSpace?.nativePtr ?: 0L, surfaceProps?.nativePtr ?: 0L,
-            )
+            val ptr =
+                SurfaceNative.nWrapGraphiteBackendTexture(
+                    recorder.nativePtr,
+                    backendTexture.nativePtr,
+                    colorType.ordinal,
+                    colorSpace?.nativePtr ?: 0L,
+                    surfaceProps?.nativePtr ?: 0L,
+                )
             return if (ptr == 0L) null else Surface(ptr)
         }
     }
@@ -88,8 +116,13 @@ private object SurfaceNative {
         NativeLoader.ensureLoaded()
     }
 
-    external fun nMakeRasterN32Premul(width: Int, height: Int): Long
+    external fun nMakeRasterN32Premul(
+        width: Int,
+        height: Int,
+    ): Long
+
     external fun nMakeRaster(infoPtr: Long): Long
+
     external fun nMakeRenderTarget(
         contextPtr: Long,
         budgeted: Boolean,
@@ -100,6 +133,7 @@ private object SurfaceNative {
         shouldCreateWithMips: Boolean,
         isProtected: Boolean,
     ): Long
+
     external fun nWrapBackendTexture(
         contextPtr: Long,
         backendTexturePtr: Long,
@@ -109,9 +143,25 @@ private object SurfaceNative {
         colorSpacePtr: Long,
         surfacePropsPtr: Long,
     ): Long
-    external fun nMakeGraphiteRenderTarget(recorderPtr: Long, infoPtr: Long, mipmapped: Boolean, surfacePropsPtr: Long): Long
-    external fun nWrapGraphiteBackendTexture(recorderPtr: Long, backendTexturePtr: Long, colorType: Int, colorSpacePtr: Long, surfacePropsPtr: Long): Long
+
+    external fun nMakeGraphiteRenderTarget(
+        recorderPtr: Long,
+        infoPtr: Long,
+        mipmapped: Boolean,
+        surfacePropsPtr: Long,
+    ): Long
+
+    external fun nWrapGraphiteBackendTexture(
+        recorderPtr: Long,
+        backendTexturePtr: Long,
+        colorType: Int,
+        colorSpacePtr: Long,
+        surfacePropsPtr: Long,
+    ): Long
+
     external fun nRelease(ptr: Long)
+
     external fun nGetCanvas(ptr: Long): Long
+
     external fun nMakeImageSnapshot(ptr: Long): Long
 }

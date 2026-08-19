@@ -7,12 +7,29 @@ import kotlin.test.assertNotNull
 class ColorMatrixTest {
     @Test
     fun identityIsTheDefault20Floats() {
-        val expected = floatArrayOf(
-            1f, 0f, 0f, 0f, 0f,
-            0f, 1f, 0f, 0f, 0f,
-            0f, 0f, 1f, 0f, 0f,
-            0f, 0f, 0f, 1f, 0f,
-        )
+        val expected =
+            floatArrayOf(
+                1f,
+                0f,
+                0f,
+                0f,
+                0f,
+                0f,
+                1f,
+                0f,
+                0f,
+                0f,
+                0f,
+                0f,
+                1f,
+                0f,
+                0f,
+                0f,
+                0f,
+                0f,
+                1f,
+                0f,
+            )
         assertEquals(expected.toList(), ColorMatrix.identity().toList())
     }
 

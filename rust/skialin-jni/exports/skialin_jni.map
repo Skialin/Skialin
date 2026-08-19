@@ -1,0 +1,6 @@
+SKIALIN_1.0 {
+  global:
+    Java_org_skialin_*;
+  local:
+    *;
+};

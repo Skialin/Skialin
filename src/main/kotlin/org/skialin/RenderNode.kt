@@ -3,7 +3,9 @@ package org.skialin
 import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
-class RenderNode(context: RenderNodeContext) : Managed(RenderNodeNative.nMake(context.nativePtr), RenderNodeNative::nRelease) {
+class RenderNode(
+    context: RenderNodeContext,
+) : Managed(RenderNodeNative.nMake(context.nativePtr), RenderNodeNative::nRelease) {
     var layerPaint: Paint?
         get() = RenderNodeNative.nGetLayerPaint(nativePtr).let { if (it == 0L) null else Paint(it) }
         set(value) = RenderNodeNative.nSetLayerPaint(nativePtr, value?.nativePtr ?: 0L)
@@ -71,9 +73,15 @@ class RenderNode(context: RenderNodeContext) : Managed(RenderNodeNative.nMake(co
         get() = RenderNodeNative.nGetClip(nativePtr)
         set(value) = RenderNodeNative.nSetClip(nativePtr, value)
 
-    fun setClipRect(r: Rect, mode: ClipOp = ClipOp.INTERSECT) = RenderNodeNative.nSetClipRect(nativePtr, r.left, r.top, r.right, r.bottom, mode.ordinal)
+    fun setClipRect(
+        r: Rect,
+        mode: ClipOp = ClipOp.INTERSECT,
+    ) = RenderNodeNative.nSetClipRect(nativePtr, r.left, r.top, r.right, r.bottom, mode.ordinal)
 
-    fun setClipRRect(r: RRect, mode: ClipOp = ClipOp.INTERSECT) = RenderNodeNative.nSetClipRRect(nativePtr, r.nativePtr, mode.ordinal)
+    fun setClipRRect(
+        r: RRect,
+        mode: ClipOp = ClipOp.INTERSECT,
+    ) = RenderNodeNative.nSetClipRRect(nativePtr, r.nativePtr, mode.ordinal)
 
     fun beginRecording(): Canvas = Canvas(RenderNodeNative.nBeginRecording(nativePtr))
 
@@ -88,43 +96,148 @@ private object RenderNodeNative {
     }
 
     external fun nMake(contextPtr: Long): Long
+
     external fun nRelease(ptr: Long)
+
     external fun nGetLayerPaint(ptr: Long): Long
-    external fun nSetLayerPaint(ptr: Long, paintPtr: Long)
+
+    external fun nSetLayerPaint(
+        ptr: Long,
+        paintPtr: Long,
+    )
+
     external fun nGetBounds(ptr: Long): FloatArray
-    external fun nSetBounds(ptr: Long, left: Float, top: Float, right: Float, bottom: Float)
+
+    external fun nSetBounds(
+        ptr: Long,
+        left: Float,
+        top: Float,
+        right: Float,
+        bottom: Float,
+    )
+
     external fun nGetPivotX(ptr: Long): Float
+
     external fun nGetPivotY(ptr: Long): Float
-    external fun nSetPivot(ptr: Long, x: Float, y: Float)
+
+    external fun nSetPivot(
+        ptr: Long,
+        x: Float,
+        y: Float,
+    )
+
     external fun nGetAlpha(ptr: Long): Float
-    external fun nSetAlpha(ptr: Long, value: Float)
+
+    external fun nSetAlpha(
+        ptr: Long,
+        value: Float,
+    )
+
     external fun nGetScaleX(ptr: Long): Float
-    external fun nSetScaleX(ptr: Long, value: Float)
+
+    external fun nSetScaleX(
+        ptr: Long,
+        value: Float,
+    )
+
     external fun nGetScaleY(ptr: Long): Float
-    external fun nSetScaleY(ptr: Long, value: Float)
+
+    external fun nSetScaleY(
+        ptr: Long,
+        value: Float,
+    )
+
     external fun nGetTranslationX(ptr: Long): Float
-    external fun nSetTranslationX(ptr: Long, value: Float)
+
+    external fun nSetTranslationX(
+        ptr: Long,
+        value: Float,
+    )
+
     external fun nGetTranslationY(ptr: Long): Float
-    external fun nSetTranslationY(ptr: Long, value: Float)
+
+    external fun nSetTranslationY(
+        ptr: Long,
+        value: Float,
+    )
+
     external fun nGetShadowElevation(ptr: Long): Float
-    external fun nSetShadowElevation(ptr: Long, value: Float)
+
+    external fun nSetShadowElevation(
+        ptr: Long,
+        value: Float,
+    )
+
     external fun nGetAmbientShadowColor(ptr: Long): Int
-    external fun nSetAmbientShadowColor(ptr: Long, value: Int)
+
+    external fun nSetAmbientShadowColor(
+        ptr: Long,
+        value: Int,
+    )
+
     external fun nGetSpotShadowColor(ptr: Long): Int
-    external fun nSetSpotShadowColor(ptr: Long, value: Int)
+
+    external fun nSetSpotShadowColor(
+        ptr: Long,
+        value: Int,
+    )
+
     external fun nGetRotationX(ptr: Long): Float
-    external fun nSetRotationX(ptr: Long, value: Float)
+
+    external fun nSetRotationX(
+        ptr: Long,
+        value: Float,
+    )
+
     external fun nGetRotationY(ptr: Long): Float
-    external fun nSetRotationY(ptr: Long, value: Float)
+
+    external fun nSetRotationY(
+        ptr: Long,
+        value: Float,
+    )
+
     external fun nGetRotationZ(ptr: Long): Float
-    external fun nSetRotationZ(ptr: Long, value: Float)
+
+    external fun nSetRotationZ(
+        ptr: Long,
+        value: Float,
+    )
+
     external fun nGetCameraDistance(ptr: Long): Float
-    external fun nSetCameraDistance(ptr: Long, value: Float)
-    external fun nSetClipRect(ptr: Long, left: Float, top: Float, right: Float, bottom: Float, mode: Int)
-    external fun nSetClipRRect(ptr: Long, rrectPtr: Long, mode: Int)
+
+    external fun nSetCameraDistance(
+        ptr: Long,
+        value: Float,
+    )
+
+    external fun nSetClipRect(
+        ptr: Long,
+        left: Float,
+        top: Float,
+        right: Float,
+        bottom: Float,
+        mode: Int,
+    )
+
+    external fun nSetClipRRect(
+        ptr: Long,
+        rrectPtr: Long,
+        mode: Int,
+    )
+
     external fun nGetClip(ptr: Long): Boolean
-    external fun nSetClip(ptr: Long, clip: Boolean)
+
+    external fun nSetClip(
+        ptr: Long,
+        clip: Boolean,
+    )
+
     external fun nBeginRecording(ptr: Long): Long
+
     external fun nEndRecording(ptr: Long)
-    external fun nDrawInto(ptr: Long, canvasPtr: Long)
+
+    external fun nDrawInto(
+        ptr: Long,
+        canvasPtr: Long,
+    )
 }

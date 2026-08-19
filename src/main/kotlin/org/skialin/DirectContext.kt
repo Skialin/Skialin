@@ -13,7 +13,9 @@ import org.skialin.impl.NativeLoader
  * arbitrary thread, which would tear down GL state from the wrong one for
  * the GL case. [close] must be called explicitly; skipping it leaks.
  */
-class DirectContext private constructor(ptr: Long) : AutoCloseable {
+class DirectContext private constructor(
+    ptr: Long,
+) : AutoCloseable {
     @Volatile
     private var ptr: Long = ptr
 
@@ -61,7 +63,16 @@ class DirectContext private constructor(ptr: Long) : AutoCloseable {
             maxApiVersion: Int,
             protectedContext: Boolean = false,
         ): DirectContext? {
-            val ptr = DirectContextNative.nMakeVulkan(instance, physicalDevice, device, queue, graphicsQueueIndex, maxApiVersion, protectedContext)
+            val ptr =
+                DirectContextNative.nMakeVulkan(
+                    instance,
+                    physicalDevice,
+                    device,
+                    queue,
+                    graphicsQueueIndex,
+                    maxApiVersion,
+                    protectedContext,
+                )
             return if (ptr == 0L) null else DirectContext(ptr)
         }
     }
@@ -73,6 +84,7 @@ private object DirectContextNative {
     }
 
     external fun nMakeGL(): Long
+
     external fun nMakeVulkan(
         instance: Long,
         physicalDevice: Long,
@@ -82,7 +94,13 @@ private object DirectContextNative {
         maxApiVersion: Int,
         protectedContext: Boolean,
     ): Long
+
     external fun nRelease(ptr: Long)
+
     external fun nFlush(ptr: Long)
-    external fun nSubmit(ptr: Long, syncCpu: Boolean)
+
+    external fun nSubmit(
+        ptr: Long,
+        syncCpu: Boolean,
+    )
 }

@@ -1,8 +1,19 @@
 package org.skialin
 
-import java.nio.ByteBuffer
 import org.lwjgl.system.MemoryStack
-import org.lwjgl.vulkan.VK10.*
+import org.lwjgl.vulkan.VK10.VK_QUEUE_GRAPHICS_BIT
+import org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_APPLICATION_INFO
+import org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO
+import org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO
+import org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO
+import org.lwjgl.vulkan.VK10.VK_SUCCESS
+import org.lwjgl.vulkan.VK10.vkCreateDevice
+import org.lwjgl.vulkan.VK10.vkCreateInstance
+import org.lwjgl.vulkan.VK10.vkDestroyDevice
+import org.lwjgl.vulkan.VK10.vkDestroyInstance
+import org.lwjgl.vulkan.VK10.vkEnumeratePhysicalDevices
+import org.lwjgl.vulkan.VK10.vkGetDeviceQueue
+import org.lwjgl.vulkan.VK10.vkGetPhysicalDeviceQueueFamilyProperties
 import org.lwjgl.vulkan.VK11.VK_API_VERSION_1_1
 import org.lwjgl.vulkan.VkApplicationInfo
 import org.lwjgl.vulkan.VkDevice
@@ -12,6 +23,7 @@ import org.lwjgl.vulkan.VkInstance
 import org.lwjgl.vulkan.VkInstanceCreateInfo
 import org.lwjgl.vulkan.VkPhysicalDevice
 import org.lwjgl.vulkan.VkQueueFamilyProperties
+import java.nio.ByteBuffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -44,11 +56,13 @@ class DirectContextVulkanTest {
                 vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, pFamilyCount, null)
                 val families = VkQueueFamilyProperties.calloc(pFamilyCount[0], stack)
                 vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, pFamilyCount, families)
-                val graphicsQueueFamilyIndex = (0 until families.capacity()).firstOrNull { families[it].queueFlags() and VK_QUEUE_GRAPHICS_BIT != 0 }
-                    ?: fail("no graphics queue family")
+                val graphicsQueueFamilyIndex =
+                    (0 until families.capacity()).firstOrNull { families[it].queueFlags() and VK_QUEUE_GRAPHICS_BIT != 0 }
+                        ?: fail("no graphics queue family")
 
                 val queueInfo = VkDeviceQueueCreateInfo.calloc(1, stack)
-                queueInfo[0].sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
+                queueInfo[0]
+                    .sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
                     .queueFamilyIndex(graphicsQueueFamilyIndex)
                     .pQueuePriorities(stack.floats(1.0f))
 
@@ -61,16 +75,26 @@ class DirectContextVulkanTest {
                     val pQueue = stack.mallocPointer(1)
                     vkGetDeviceQueue(device, graphicsQueueFamilyIndex, 0, pQueue)
 
-                    val context = DirectContext.makeVulkan(
-                        instance.address(), physicalDevice.address(), device.address(), pQueue[0],
-                        graphicsQueueFamilyIndex, VK_API_VERSION_1_1,
-                    ) ?: fail("DirectContext.makeVulkan failed")
+                    val context =
+                        DirectContext.makeVulkan(
+                            instance.address(),
+                            physicalDevice.address(),
+                            device.address(),
+                            pQueue[0],
+                            graphicsQueueFamilyIndex,
+                            VK_API_VERSION_1_1,
+                        ) ?: fail("DirectContext.makeVulkan failed")
 
                     context.use {
                         val info = ImageInfo.make(16, 16, ColorType.N32, AlphaType.PREMUL)
-                        val surface = Surface.makeRenderTarget(
-                            context, budgeted = false, info = info, sampleCount = 0, surfaceOrigin = SurfaceOrigin.TOP_LEFT,
-                        ) ?: fail("makeRenderTarget failed")
+                        val surface =
+                            Surface.makeRenderTarget(
+                                context,
+                                budgeted = false,
+                                info = info,
+                                sampleCount = 0,
+                                surfaceOrigin = SurfaceOrigin.TOP_LEFT,
+                            ) ?: fail("makeRenderTarget failed")
                         surface.use {
                             surface.canvas().clear(Colors.RED)
                             context.flush()
