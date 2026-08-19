@@ -78,18 +78,46 @@ fn main() {
         "SkReduceOrder.cpp",
     ];
 
-    cc::Build::new()
-        .cpp(true)
-        .std("c++20")
+    let shim_build = || {
+        let mut build = cc::Build::new();
+        build
+            .cpp(true)
+            .std("c++20")
+            .include(&skia_dir)
+            .include(&shim_include)
+            .include(skia_dir.join("include/third_party/vulkan"))
+            .define("SK_USE_INTERNAL_VULKAN_HEADERS", None)
+            .warnings(false);
+        // Skia applies gn/skia/BUILD.gn's "no_rtti" config to every one of its
+        // own targets, so libskia has no typeinfo for any Skia class. Deriving
+        // from SkDrawable with RTTI on leaves the subclass typeinfo referencing
+        // a base typeinfo that was never emitted; the Itanium ABI linkers say
+        // so ("undefined symbol: typeinfo for SkDrawable"), MSVC papers over it
+        // by emitting the whole hierarchy descriptor per TU.
+        if build.get_compiler().is_like_msvc() {
+            build.flag("/GR-");
+        } else {
+            build.flag("-fno-rtti");
+        }
+        build
+    };
+
+    shim_build()
         .file(shim_src.join("bridge.cpp"))
-        .file(shim_src.join("force_link.cpp"))
         .files(pathops_sources.iter().map(|f| pathops_dir.join(f)))
-        .include(&skia_dir)
-        .include(&shim_include)
-        .include(skia_dir.join("include/third_party/vulkan"))
-        .define("SK_USE_INTERNAL_VULKAN_HEADERS", None)
-        .warnings(false)
         .compile("skialin_bridge");
+
+    // force_link.cpp exists to give Skia's header-defined (inline) member
+    // functions out-of-line copies, because bindgen's generate_inline_functions
+    // binds them as ordinary extern calls. Optimizing this translation unit
+    // defeats the point: clang and gcc inline each call and then drop the now
+    // unreferenced linkonce_odr definition, leaving the JNI library with
+    // undefined symbols (a hard link error on macOS, a dlopen failure on
+    // Linux). MSVC keeps them, which is why only Windows ever linked.
+    shim_build()
+        .opt_level(0)
+        .file(shim_src.join("force_link.cpp"))
+        .compile("skialin_force_link");
 
     let bindings = bindgen::Builder::default()
         .header("wrapper.h")

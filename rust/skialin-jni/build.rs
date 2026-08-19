@@ -12,6 +12,10 @@ fn main() {
         }
         "linux" | "android" => {
             let map = manifest_dir.join("exports/skialin_jni.map");
+            // Unlike ld64, ELF linkers happily produce a shared object with
+            // unresolved symbols and only fail once the JVM dlopen()s it, as an
+            // UnsatisfiedLinkError with no hint of which symbol was missing.
+            println!("cargo:rustc-link-arg=-Wl,--no-undefined");
             println!("cargo:rustc-link-arg=-Wl,--gc-sections");
             println!("cargo:rustc-link-arg=-Wl,--version-script={}", map.display());
             println!("cargo:rerun-if-changed={}", map.display());

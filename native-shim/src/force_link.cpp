@@ -7,6 +7,7 @@
 #include "include/core/SkImage.h"
 #include "include/core/SkMatrix.h"
 #include "include/core/SkPaint.h"
+#include "include/core/SkPath.h"
 #include "include/core/SkPathBuilder.h"
 #include "include/core/SkPixmap.h"
 #include "include/core/SkTextBlob.h"
@@ -23,6 +24,7 @@ SKIALIN_NOINLINE void touch(const SkBitmap& bitmap, SkBitmap& mutableBitmap) {
     mutableBitmap.eraseARGB(0, 0, 0, 0);
     (void)bitmap.height();
     (void)bitmap.width();
+    (void)bitmap.rowBytes();
     (void)mutableBitmap.getPixels();
 }
 
@@ -50,6 +52,7 @@ SKIALIN_NOINLINE void touch(SkMatrix& matrix) {
     float buffer[9];
     matrix.get9(buffer);
     matrix.invert(nullptr);
+    (void)matrix.isIdentity();
     (void)matrix.mapRect(SkRect::MakeEmpty());
 }
 
@@ -66,6 +69,10 @@ SKIALIN_NOINLINE void touch(const SkPaint& paint, SkPaint& mutablePaint) {
     mutablePaint.setAntiAlias(false);
     mutablePaint.setDither(false);
     mutablePaint.setAlpha(0);
+}
+
+SKIALIN_NOINLINE void touch(const SkPath& path) {
+    (void)path.getFillType();
 }
 
 SKIALIN_NOINLINE void touch(const SkPathBuilder& builder) {
