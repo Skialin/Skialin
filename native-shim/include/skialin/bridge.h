@@ -515,6 +515,8 @@ SkM44* skialin_bridge_M44_invert(const SkM44* m);
 /* v4 is a 4-float [x, y, z, w] vector; outV4 receives the transformed result. */
 void skialin_bridge_M44_mapV4(const SkM44* m, const float* v4, float* outV4);
 bool skialin_bridge_M44_equals(const SkM44* a, const SkM44* b);
+SkM44* skialin_bridge_M44_transpose(const SkM44* m);
+float skialin_bridge_M44_rc(const SkM44* m, int row, int col);
 
 /* Vertices: ref-owned by the caller. Free with skialin_bridge_Vertices_unref.
  * texs/colors/indices may be null (indices additionally needs indexCount 0).

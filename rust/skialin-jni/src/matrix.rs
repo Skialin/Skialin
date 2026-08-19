@@ -1,4 +1,4 @@
-use jni::sys::{jfloat, jfloatArray};
+use jni::sys::{jboolean, jfloat, jfloatArray};
 use jni::JNIEnv;
 
 use skialin_core::{Matrix, Point, Rect};
@@ -69,4 +69,30 @@ pub extern "system" fn Java_org_skialin_MatrixNative_nMapRect(
 ) -> jfloatArray {
     let mapped = read_matrix(&env, m).map_rect(Rect::new(left, top, right, bottom));
     write_floats(&env, &[mapped.left, mapped.top, mapped.right, mapped.bottom])
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_MatrixNative_nSkew(env: JNIEnv, _class: jni::objects::JClass, sx: jfloat, sy: jfloat) -> jfloatArray {
+    write_floats(&env, &Matrix::skew(sx, sy).to_array())
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_MatrixNative_nPreConcat(env: JNIEnv, _class: jni::objects::JClass, a: jfloatArray, b: jfloatArray) -> jfloatArray {
+    let mut a = read_matrix(&env, a);
+    let b = read_matrix(&env, b);
+    a.pre_concat(&b);
+    write_floats(&env, &a.to_array())
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_MatrixNative_nPostConcat(env: JNIEnv, _class: jni::objects::JClass, a: jfloatArray, b: jfloatArray) -> jfloatArray {
+    let mut a = read_matrix(&env, a);
+    let b = read_matrix(&env, b);
+    a.post_concat(&b);
+    write_floats(&env, &a.to_array())
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_MatrixNative_nIsIdentity(env: JNIEnv, _class: jni::objects::JClass, m: jfloatArray) -> jboolean {
+    read_matrix(&env, m).is_identity() as jboolean
 }

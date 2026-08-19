@@ -36,6 +36,14 @@ impl M44 {
         out
     }
 
+    pub fn transpose(&self) -> Self {
+        M44(unsafe { sys::skialin_bridge_M44_transpose(self.0) })
+    }
+
+    pub fn rc(&self, row: i32, col: i32) -> f32 {
+        unsafe { sys::skialin_bridge_M44_rc(self.0, row, col) }
+    }
+
     pub fn concat(a: &M44, b: &M44) -> Self {
         M44(unsafe { sys::skialin_bridge_M44_concat(a.0, b.0) })
     }

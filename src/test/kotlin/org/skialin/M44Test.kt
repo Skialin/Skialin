@@ -89,6 +89,32 @@ class M44Test {
     }
 
     @Test
+    fun transposeSwapsRowsAndColumns() {
+        val values = FloatArray(16) { it.toFloat() }
+        M44.makeFromRowMajor(values).use { m ->
+            m.transpose().use { t ->
+                for (row in 0 until 4) {
+                    for (col in 0 until 4) {
+                        assertEquals(m.rc(row, col), t.rc(col, row))
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun rcMatchesRowMajor() {
+        val values = FloatArray(16) { it.toFloat() }
+        M44.makeFromRowMajor(values).use { m ->
+            for (row in 0 until 4) {
+                for (col in 0 until 4) {
+                    assertEquals(values[row * 4 + col], m.rc(row, col))
+                }
+            }
+        }
+    }
+
+    @Test
     fun concat44DrawsWithoutCrashing() {
         Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
             val canvas = surface.canvas()

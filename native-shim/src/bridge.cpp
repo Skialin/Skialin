@@ -1775,6 +1775,14 @@ bool skialin_bridge_M44_equals(const SkM44* a, const SkM44* b) {
     return *a == *b;
 }
 
+SkM44* skialin_bridge_M44_transpose(const SkM44* m) {
+    return new SkM44(m->transpose());
+}
+
+float skialin_bridge_M44_rc(const SkM44* m, int row, int col) {
+    return m->rc(row, col);
+}
+
 void skialin_bridge_Vertices_unref(SkVertices* vertices) {
     SkSafeUnref(vertices);
 }

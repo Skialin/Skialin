@@ -23,6 +23,12 @@ class Matrix33 internal constructor(
         return Rect(out[0], out[1], out[2], out[3])
     }
 
+    fun preConcat(other: Matrix33): Matrix33 = Matrix33(MatrixNative.nPreConcat(values, other.values))
+
+    fun postConcat(other: Matrix33): Matrix33 = Matrix33(MatrixNative.nPostConcat(values, other.values))
+
+    val isIdentity: Boolean get() = MatrixNative.nIsIdentity(values)
+
     override fun equals(other: Any?): Boolean = other is Matrix33 && values.contentEquals(other.values)
 
     override fun hashCode(): Int = values.contentHashCode()
@@ -41,6 +47,11 @@ class Matrix33 internal constructor(
         ): Matrix33 = Matrix33(MatrixNative.nScale(sx, sy))
 
         fun makeRotate(degrees: Float): Matrix33 = Matrix33(MatrixNative.nRotate(degrees))
+
+        fun makeSkew(
+            sx: Float,
+            sy: Float,
+        ): Matrix33 = Matrix33(MatrixNative.nSkew(sx, sy))
     }
 }
 
@@ -83,4 +94,21 @@ private object MatrixNative {
         right: Float,
         bottom: Float,
     ): FloatArray
+
+    external fun nSkew(
+        sx: Float,
+        sy: Float,
+    ): FloatArray
+
+    external fun nPreConcat(
+        a: FloatArray,
+        b: FloatArray,
+    ): FloatArray
+
+    external fun nPostConcat(
+        a: FloatArray,
+        b: FloatArray,
+    ): FloatArray
+
+    external fun nIsIdentity(m: FloatArray): Boolean
 }

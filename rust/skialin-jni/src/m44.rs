@@ -83,3 +83,13 @@ pub extern "system" fn Java_org_skialin_M44Native_nEquals(_env: JNIEnv, _class: 
     let b = unsafe { borrow::<M44>(b_ptr) };
     (a == b) as jboolean
 }
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_M44Native_nTranspose(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jlong {
+    box_ptr(unsafe { borrow::<M44>(ptr) }.transpose())
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_M44Native_nRc(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, row: jni::sys::jint, col: jni::sys::jint) -> jfloat {
+    unsafe { borrow::<M44>(ptr) }.rc(row, col)
+}

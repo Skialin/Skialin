@@ -30,6 +30,26 @@ impl Matrix {
         m
     }
 
+    pub fn skew(sx: f32, sy: f32) -> Self {
+        let mut m = Self::identity();
+        unsafe { m.0.setSkew1(sx, sy) };
+        m
+    }
+
+    pub fn pre_concat(&mut self, other: &Matrix) -> &mut Self {
+        unsafe { self.0.preConcat(&other.0) };
+        self
+    }
+
+    pub fn post_concat(&mut self, other: &Matrix) -> &mut Self {
+        unsafe { self.0.postConcat(&other.0) };
+        self
+    }
+
+    pub fn is_identity(&self) -> bool {
+        unsafe { self.0.isIdentity() }
+    }
+
     pub fn concat(a: &Matrix, b: &Matrix) -> Self {
         let mut m = Self::identity();
         unsafe { m.0.setConcat(&a.0, &b.0) };

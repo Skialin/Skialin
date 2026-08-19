@@ -18,6 +18,13 @@ class M44 internal constructor(
     /** Transforms the 4-component vector `[x, y, z, w]`. */
     fun map(v: FloatArray): FloatArray = M44Native.nMap(nativePtr, v)
 
+    fun transpose(): M44 = M44(M44Native.nTranspose(nativePtr))
+
+    fun rc(
+        row: Int,
+        col: Int,
+    ): Float = M44Native.nRc(nativePtr, row, col)
+
     override fun equals(other: Any?): Boolean = other is M44 && M44Native.nEquals(nativePtr, other.nativePtr)
 
     override fun hashCode(): Int = rowMajor.contentHashCode()
@@ -105,4 +112,12 @@ private object M44Native {
         aPtr: Long,
         bPtr: Long,
     ): Boolean
+
+    external fun nTranspose(ptr: Long): Long
+
+    external fun nRc(
+        ptr: Long,
+        row: Int,
+        col: Int,
+    ): Float
 }
