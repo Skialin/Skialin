@@ -102,6 +102,8 @@ void skialin_bridge_Canvas_getTotalMatrix(const SkCanvas* canvas, SkMatrix* outM
  * SkCanvas::SaveLayerFlags bits. Returns the new save count. */
 int32_t skialin_bridge_Canvas_saveLayer(SkCanvas* canvas, const SkRect* bounds, const SkPaint* paint, SkImageFilter* backdrop, uint32_t flags);
 SkM44* skialin_bridge_Canvas_getLocalToDevice(const SkCanvas* canvas);
+SkCanvas* skialin_bridge_Canvas_newFromBitmap(const SkBitmap* bitmap);
+void skialin_bridge_Canvas_deleteOwned(SkCanvas* canvas);
 
 /* Path: ref-owned by the caller. Free with skialin_bridge_Path_delete. */
 SkPath* skialin_bridge_PathBuilder_snapshot(const SkPathBuilder* builder, const SkMatrix* matrix);

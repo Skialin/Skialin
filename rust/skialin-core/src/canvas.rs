@@ -72,6 +72,15 @@ impl<'a> Canvas<'a> {
         Canvas { ptr, _marker: PhantomData }
     }
 
+    pub fn new_from_bitmap(bitmap: &mut Bitmap) -> Self {
+        let ptr = unsafe { sys::skialin_bridge_Canvas_newFromBitmap(bitmap.as_raw_mut()) };
+        Canvas { ptr, _marker: PhantomData }
+    }
+
+    pub fn delete_owned(self) {
+        unsafe { sys::skialin_bridge_Canvas_deleteOwned(self.ptr) };
+    }
+
     pub fn as_raw(&self) -> *mut sys::SkCanvas {
         self.ptr
     }

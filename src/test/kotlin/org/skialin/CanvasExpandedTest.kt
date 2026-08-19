@@ -193,6 +193,20 @@ class CanvasExpandedTest {
     }
 
     @Test
+    fun ownedCanvasFromBitmapDrawsAndCloses() {
+        Bitmap().use { bitmap ->
+            bitmap.allocPixels(8, 8)
+            Canvas(bitmap).use { canvas ->
+                Paint().use { paint ->
+                    paint.color = Colors.RED
+                    canvas.clear(Colors.WHITE)
+                    canvas.drawRect(Rect(0f, 0f, 8f, 8f), paint)
+                }
+            }
+        }
+    }
+
+    @Test
     fun saveLayerWithBackdropDrawsWithoutCrashing() {
         Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
             val canvas = surface.canvas()

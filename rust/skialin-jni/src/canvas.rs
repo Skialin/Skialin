@@ -553,3 +553,13 @@ pub extern "system" fn Java_org_skialin_CanvasNative_nDrawAnnotation<'l>(
     let value = (value_ptr != 0).then(|| unsafe { borrow::<Data>(value_ptr) });
     canvas_from_ptr(ptr).draw_annotation(Rect::new(left, top, right, bottom), &key, value);
 }
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nNewFromBitmap(_env: JNIEnv, _class: jni::objects::JClass, bitmap_ptr: jlong) -> jlong {
+    Canvas::new_from_bitmap(unsafe { borrow_mut::<Bitmap>(bitmap_ptr) }).as_raw() as jlong
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nDeleteOwned(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) {
+    canvas_from_ptr(ptr).delete_owned();
+}

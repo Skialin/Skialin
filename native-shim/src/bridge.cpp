@@ -170,6 +170,14 @@ SkM44* skialin_bridge_Canvas_getLocalToDevice(const SkCanvas* canvas) {
     return new SkM44(canvas->getLocalToDevice());
 }
 
+SkCanvas* skialin_bridge_Canvas_newFromBitmap(const SkBitmap* bitmap) {
+    return new SkCanvas(*bitmap);
+}
+
+void skialin_bridge_Canvas_deleteOwned(SkCanvas* canvas) {
+    delete canvas;
+}
+
 SkPath* skialin_bridge_PathBuilder_snapshot(const SkPathBuilder* builder, const SkMatrix* matrix) {
     return new SkPath(builder->snapshot(matrix));
 }

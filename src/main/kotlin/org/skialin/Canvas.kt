@@ -1,10 +1,29 @@
 package org.skialin
 
 import org.skialin.impl.NativeLoader
+import java.lang.ref.Cleaner
+
+private val canvasCleaner: Cleaner = Cleaner.create()
 
 class Canvas internal constructor(
     internal val ptr: Long,
-) {
+    private val owned: Boolean = false,
+) : AutoCloseable {
+    constructor(bitmap: Bitmap) : this(CanvasNative.nNewFromBitmap(bitmap.nativePtr), owned = true)
+
+    private val cleanable: Cleaner.Cleanable? =
+        if (owned) canvasCleaner.register(this, ReleaseAction(ptr)) else null
+
+    override fun close() {
+        cleanable?.clean()
+    }
+
+    private class ReleaseAction(
+        private val ptr: Long,
+    ) : Runnable {
+        override fun run() = CanvasNative.nDeleteOwned(ptr)
+    }
+
     fun clear(color: Color) = CanvasNative.nClear(ptr, color)
 
     fun drawColor(
@@ -773,4 +792,8 @@ private object CanvasNative {
         fontPtr: Long,
         paintPtr: Long,
     )
+
+    external fun nNewFromBitmap(bitmapPtr: Long): Long
+
+    external fun nDeleteOwned(ptr: Long)
 }
