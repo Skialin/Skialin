@@ -174,4 +174,16 @@ class ImageTest {
             }
         }
     }
+
+    @Test
+    fun makeFromBitmapProducesMatchingImage() {
+        Bitmap().use { bitmap ->
+            bitmap.allocPixels(4, 4)
+            bitmap.eraseColor(Colors.BLUE)
+            Image.makeFromBitmap(bitmap)!!.use { image ->
+                assertEquals(4, image.width)
+                assertEquals(4, image.height)
+            }
+        }
+    }
 }

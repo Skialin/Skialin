@@ -49,6 +49,10 @@ impl Image {
         unsafe { Self::from_raw(sys::skialin_bridge_Image_RasterFromPixmapCopy(pixmap.as_raw())) }
     }
 
+    pub fn from_bitmap(bitmap: &crate::Bitmap) -> Option<Self> {
+        unsafe { Self::from_raw(sys::skialin_bridge_Image_MakeFromBitmap(bitmap.as_raw())) }
+    }
+
     pub fn adopt_texture_from(
         context: &mut DirectContext,
         backend_texture: &BackendTexture,

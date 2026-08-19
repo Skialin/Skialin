@@ -1,7 +1,7 @@
 use jni::sys::{jboolean, jbyteArray, jfloatArray, jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{BackendTexture, Data, DirectContext, FilterMode, GraphiteBackendTexture, GraphiteRecorder, Image, ImageInfo, MipmapMode, Pixmap, SamplingOptions, SurfaceOrigin, TileMode};
+use skialin_core::{BackendTexture, Bitmap, Data, DirectContext, FilterMode, GraphiteBackendTexture, GraphiteRecorder, Image, ImageInfo, MipmapMode, Pixmap, SamplingOptions, SurfaceOrigin, TileMode};
 
 use crate::color_space::color_space_ptr_from_jlong;
 use crate::color_type::{alpha_type_from_ordinal, alpha_type_to_ordinal, color_type_from_ordinal, color_type_to_ordinal};
@@ -52,6 +52,15 @@ pub extern "system" fn Java_org_skialin_ImageNative_nDecode(env: JNIEnv, _class:
 pub extern "system" fn Java_org_skialin_ImageNative_nFromPixmapCopy(_env: JNIEnv, _class: jni::objects::JClass, pixmap_ptr: jlong) -> jlong {
     let pixmap = unsafe { borrow::<Pixmap>(pixmap_ptr) };
     match Image::from_pixmap_copy(pixmap) {
+        Some(image) => box_ptr(image),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_ImageNative_nFromBitmap(_env: JNIEnv, _class: jni::objects::JClass, bitmap_ptr: jlong) -> jlong {
+    let bitmap = unsafe { borrow::<Bitmap>(bitmap_ptr) };
+    match Image::from_bitmap(bitmap) {
         Some(image) => box_ptr(image),
         None => 0,
     }

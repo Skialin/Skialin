@@ -84,6 +84,19 @@ impl Bitmap {
         let ptr = unsafe { sys::skialin_bridge_Bitmap_asImage(&*self.0) };
         (!ptr.is_null()).then_some(Image(ptr))
     }
+
+    pub fn extract_subset(&self, dst: &mut Bitmap, subset: crate::IRect) -> bool {
+        let sk_subset: sys::SkIRect = subset.into();
+        unsafe { self.0.extractSubset(dst.as_raw_mut(), &sk_subset) }
+    }
+
+    pub fn extract_alpha(&self, dst: &mut Bitmap) -> bool {
+        unsafe { self.0.extractAlpha2(dst.as_raw_mut(), std::ptr::null(), std::ptr::null_mut(), std::ptr::null_mut()) }
+    }
+
+    pub fn notify_pixels_changed(&self) {
+        unsafe { self.0.notifyPixelsChanged() };
+    }
 }
 
 impl Default for Bitmap {

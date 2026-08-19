@@ -49,6 +49,15 @@ class Bitmap internal constructor(
         val ptr = BitmapNative.nAsImage(nativePtr)
         return if (ptr == 0L) null else Image(ptr)
     }
+
+    fun extractSubset(
+        dst: Bitmap,
+        subset: IRect,
+    ): Boolean = BitmapNative.nExtractSubset(nativePtr, dst.nativePtr, subset.left, subset.top, subset.right, subset.bottom)
+
+    fun extractAlpha(dst: Bitmap): Boolean = BitmapNative.nExtractAlpha(nativePtr, dst.nativePtr)
+
+    fun notifyPixelsChanged() = BitmapNative.nNotifyPixelsChanged(nativePtr)
 }
 
 private object BitmapNative {
@@ -79,4 +88,20 @@ private object BitmapNative {
     external fun nReadPixels(ptr: Long): ByteArray
 
     external fun nAsImage(ptr: Long): Long
+
+    external fun nExtractSubset(
+        ptr: Long,
+        dstPtr: Long,
+        left: Int,
+        top: Int,
+        right: Int,
+        bottom: Int,
+    ): Boolean
+
+    external fun nExtractAlpha(
+        ptr: Long,
+        dstPtr: Long,
+    ): Boolean
+
+    external fun nNotifyPixelsChanged(ptr: Long)
 }

@@ -126,6 +126,7 @@ SkImage* skialin_bridge_Surface_makeImageSnapshot(SkSurface* surface);
  * its own opaque type. */
 void skialin_bridge_Image_unref(SkImage* image);
 SkImage* skialin_bridge_Image_MakeFromEncoded(const uint8_t* bytes, size_t length);
+SkImage* skialin_bridge_Image_MakeFromBitmap(const SkBitmap* bitmap);
 SkData* skialin_bridge_Image_encodeToData(const SkImage* image);
 /* quality: [0, 100]. Null on encode failure. */
 SkData* skialin_bridge_Image_encodeToDataJpeg(const SkImage* image, int32_t quality);

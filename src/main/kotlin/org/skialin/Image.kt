@@ -186,6 +186,8 @@ class Image internal constructor(
         fun makeFromPixmapCopy(pixmap: Pixmap): Image? =
             ImageNative.nFromPixmapCopy(pixmap.nativePtr).takeIf { it != 0L }?.let { Image(it) }
 
+        fun makeFromBitmap(bitmap: Bitmap): Image? = ImageNative.nFromBitmap(bitmap.nativePtr).takeIf { it != 0L }?.let { Image(it) }
+
         /**
          * `pixels`' bytes become the image's pixel storage; no copy is made.
          * `pixels` is ref'd, not consumed: it stays independently valid and
@@ -255,6 +257,8 @@ private object ImageNative {
     external fun nDecode(bytes: ByteArray): Long
 
     external fun nFromPixmapCopy(pixmapPtr: Long): Long
+
+    external fun nFromBitmap(bitmapPtr: Long): Long
 
     external fun nFromData(
         infoPtr: Long,

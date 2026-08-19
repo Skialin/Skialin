@@ -1,7 +1,7 @@
-use jni::sys::{jint, jlong};
+use jni::sys::{jboolean, jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{Bitmap, ImageInfo};
+use skialin_core::{Bitmap, IRect, ImageInfo};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 
@@ -56,4 +56,33 @@ pub extern "system" fn Java_org_skialin_BitmapNative_nAsImage(_env: JNIEnv, _cla
         Some(image) => box_ptr(image),
         None => 0,
     }
+}
+
+#[allow(clippy::too_many_arguments)]
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_BitmapNative_nExtractSubset(
+    _env: JNIEnv,
+    _class: jni::objects::JClass,
+    ptr: jlong,
+    dst_ptr: jlong,
+    left: jint,
+    top: jint,
+    right: jint,
+    bottom: jint,
+) -> jboolean {
+    let bitmap = unsafe { borrow::<Bitmap>(ptr) };
+    let dst = unsafe { borrow_mut::<Bitmap>(dst_ptr) };
+    bitmap.extract_subset(dst, IRect::new(left, top, right, bottom)) as jboolean
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_BitmapNative_nExtractAlpha(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, dst_ptr: jlong) -> jboolean {
+    let bitmap = unsafe { borrow::<Bitmap>(ptr) };
+    let dst = unsafe { borrow_mut::<Bitmap>(dst_ptr) };
+    bitmap.extract_alpha(dst) as jboolean
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_BitmapNative_nNotifyPixelsChanged(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) {
+    unsafe { borrow::<Bitmap>(ptr) }.notify_pixels_changed();
 }

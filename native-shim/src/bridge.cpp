@@ -374,6 +374,10 @@ SkImage* skialin_bridge_Image_RasterFromPixmapCopy(const SkPixmap* pixmap) {
     return SkImages::RasterFromPixmapCopy(*pixmap).release();
 }
 
+SkImage* skialin_bridge_Image_MakeFromBitmap(const SkBitmap* bitmap) {
+    return SkImages::RasterFromBitmap(*bitmap).release();
+}
+
 SkImage* skialin_bridge_Image_RasterFromData(const SkImageInfo* info, SkData* pixels, size_t rowBytes) {
     return SkImages::RasterFromData(*info, sk_ref_sp(pixels), rowBytes).release();
 }
