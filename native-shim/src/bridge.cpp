@@ -19,6 +19,7 @@
 #include "include/core/SkPixmap.h"
 #include "include/core/SkPaint.h"
 #include "include/core/SkShader.h"
+#include "include/core/SkBlender.h"
 #include "include/core/SkSamplingOptions.h"
 #include "include/core/SkTypeface.h"
 #include "include/core/SkFontStyle.h"
@@ -650,6 +651,10 @@ SkShader* skialin_bridge_Shader_makeSweepGradient(
     return SkShaders::SweepGradient(center, startAngle, endAngle, gradient, localMatrix).release();
 }
 
+SkShader* skialin_bridge_Shader_BlendBlender(SkBlender* blender, SkShader* dst, SkShader* src) {
+    return SkShaders::Blend(sk_ref_sp(blender), sk_ref_sp(dst), sk_ref_sp(src)).release();
+}
+
 SkShader* skialin_bridge_Shader_Blend(SkBlendMode mode, SkShader* dst, SkShader* src) {
     return SkShaders::Blend(mode, sk_ref_sp(dst), sk_ref_sp(src)).release();
 }
@@ -706,6 +711,35 @@ SkColorFilter* skialin_bridge_RuntimeEffect_makeColorFilter(
         childRefs.push_back(sk_ref_sp(children[i]));
     }
     return effect->makeColorFilter(uniformData, childRefs.data(), childCount).release();
+}
+
+SkRuntimeEffect* skialin_bridge_RuntimeEffect_MakeForBlender(const char* sksl, size_t length, SkData** outError) {
+    SkRuntimeEffect::Result result = SkRuntimeEffect::MakeForBlender(SkString(sksl, length));
+    if (!result.effect) {
+        *outError = SkData::MakeWithCopy(result.errorText.c_str(), result.errorText.size()).release();
+        return nullptr;
+    }
+    return result.effect.release();
+}
+
+SkBlender* skialin_bridge_RuntimeEffect_makeBlender(
+    const SkRuntimeEffect* effect, const uint8_t* uniforms, size_t uniformsLength,
+    SkShader* const* children, size_t childCount) {
+    sk_sp<SkData> uniformData = SkData::MakeWithCopy(uniforms, uniformsLength);
+    std::vector<SkRuntimeEffect::ChildPtr> childRefs;
+    childRefs.reserve(childCount);
+    for (size_t i = 0; i < childCount; ++i) {
+        childRefs.push_back(sk_ref_sp(children[i]));
+    }
+    return effect->makeBlender(uniformData, SkSpan<const SkRuntimeEffect::ChildPtr>(childRefs.data(), childRefs.size())).release();
+}
+
+SkBlender* skialin_bridge_Blender_Mode(SkBlendMode mode) {
+    return SkBlender::Mode(mode).release();
+}
+
+void skialin_bridge_Blender_unref(SkBlender* blender) {
+    SkSafeUnref(blender);
 }
 
 void skialin_bridge_Typeface_unref(SkTypeface* typeface) {
@@ -1442,6 +1476,10 @@ SkImageFilter* skialin_bridge_ImageFilter_Blend(SkBlendMode mode, SkImageFilter*
     return SkImageFilters::Blend(mode, sk_ref_sp(background), sk_ref_sp(foreground)).release();
 }
 
+SkImageFilter* skialin_bridge_ImageFilter_BlendBlender(SkBlender* blender, SkImageFilter* background, SkImageFilter* foreground) {
+    return SkImageFilters::Blend(sk_ref_sp(blender), sk_ref_sp(background), sk_ref_sp(foreground)).release();
+}
+
 SkImageFilter* skialin_bridge_ImageFilter_Merge(SkImageFilter* first, SkImageFilter* second) {
     return SkImageFilters::Merge(sk_ref_sp(first), sk_ref_sp(second)).release();
 }
@@ -1474,6 +1512,10 @@ void skialin_bridge_Paint_setMaskFilter(SkPaint* paint, SkMaskFilter* filter) {
     paint->setMaskFilter(sk_ref_sp(filter));
 }
 
+void skialin_bridge_Paint_setBlender(SkPaint* paint, SkBlender* blender) {
+    paint->setBlender(sk_ref_sp(blender));
+}
+
 SkShader* skialin_bridge_Paint_refShader(const SkPaint* paint) {
     return paint->refShader().release();
 }
@@ -1488,6 +1530,10 @@ SkImageFilter* skialin_bridge_Paint_refImageFilter(const SkPaint* paint) {
 
 SkMaskFilter* skialin_bridge_Paint_refMaskFilter(const SkPaint* paint) {
     return paint->refMaskFilter().release();
+}
+
+SkBlender* skialin_bridge_Paint_refBlender(const SkPaint* paint) {
+    return paint->refBlender().release();
 }
 
 SkPathEffect* skialin_bridge_Paint_refPathEffect(const SkPaint* paint) {

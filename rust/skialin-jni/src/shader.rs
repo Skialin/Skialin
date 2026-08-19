@@ -1,7 +1,7 @@
 use jni::sys::{jboolean, jfloatArray, jint, jintArray, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{Matrix, Point, Shader, TileMode};
+use skialin_core::{Blender, Matrix, Point, Shader, TileMode};
 
 use crate::util::{borrow, box_ptr, drop_ptr};
 
@@ -179,6 +179,17 @@ pub extern "system" fn Java_org_skialin_ShaderNative_nBlend(_env: JNIEnv, _class
     let dst = unsafe { borrow::<Shader>(dst_ptr) };
     let src = unsafe { borrow::<Shader>(src_ptr) };
     match Shader::blend(crate::paint::blend_mode_from_ordinal(mode), dst, src) {
+        Some(shader) => box_ptr(shader),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_ShaderNative_nBlendBlender(_env: JNIEnv, _class: jni::objects::JClass, blender_ptr: jlong, dst_ptr: jlong, src_ptr: jlong) -> jlong {
+    let blender = unsafe { borrow::<Blender>(blender_ptr) };
+    let dst = unsafe { borrow::<Shader>(dst_ptr) };
+    let src = unsafe { borrow::<Shader>(src_ptr) };
+    match Shader::blend_with_blender(blender, dst, src) {
         Some(shader) => box_ptr(shader),
         None => 0,
     }

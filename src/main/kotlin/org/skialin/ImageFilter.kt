@@ -107,6 +107,16 @@ class ImageFilter internal constructor(
         ): ImageFilter? =
             ImageFilterNative.nBlend(mode.ordinal, background?.nativePtr ?: 0L, foreground?.nativePtr ?: 0L).takeIf { it != 0L }?.let { ImageFilter(it) }
 
+        fun makeBlend(
+            blender: Blender,
+            background: ImageFilter? = null,
+            foreground: ImageFilter? = null,
+        ): ImageFilter? =
+            ImageFilterNative
+                .nBlendBlender(blender.nativePtr, background?.nativePtr ?: 0L, foreground?.nativePtr ?: 0L)
+                .takeIf { it != 0L }
+                ?.let { ImageFilter(it) }
+
         fun makeMerge(
             first: ImageFilter? = null,
             second: ImageFilter? = null,
@@ -199,6 +209,12 @@ private object ImageFilterNative {
 
     external fun nBlend(
         mode: Int,
+        backgroundPtr: Long,
+        foregroundPtr: Long,
+    ): Long
+
+    external fun nBlendBlender(
+        blenderPtr: Long,
         backgroundPtr: Long,
         foregroundPtr: Long,
     ): Long

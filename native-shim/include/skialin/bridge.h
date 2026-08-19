@@ -50,6 +50,7 @@ class SkColorFilter;
 class SkImageFilter;
 class SkMaskFilter;
 class SkRuntimeEffect;
+class SkBlender;
 class SkRRect;
 class SkRegion;
 class SkSVGDOM;
@@ -300,22 +301,13 @@ SkShader* skialin_bridge_Shader_makeSweepGradient(
     SkPoint center, float startAngle, float endAngle,
     const uint32_t* colors, const float* positions, size_t count, SkTileMode tileMode, const SkMatrix* localMatrix);
 SkShader* skialin_bridge_Shader_Blend(SkBlendMode mode, SkShader* dst, SkShader* src);
+SkShader* skialin_bridge_Shader_BlendBlender(SkBlender* blender, SkShader* dst, SkShader* src);
 SkShader* skialin_bridge_Shader_MakeFractalNoise(float baseFreqX, float baseFreqY, int32_t numOctaves, float seed);
 SkShader* skialin_bridge_Shader_MakeTurbulence(float baseFreqX, float baseFreqY, int32_t numOctaves, float seed);
 
-/* RuntimeEffect: ref-owned by the caller. Free with
- * skialin_bridge_RuntimeEffect_unref. Scoped to shader and color-filter
- * effects (the two common cases); MakeForBlender/makeBlender are not yet
- * bound. Uniforms are passed as a raw packed byte buffer matching the
- * SkSL uniform block's layout (offsets from SkRuntimeEffect::uniforms(),
- * not yet exposed here either -- callers must know their own layout).
- * children are borrowed for the duration of the call (ref'd internally,
- * not consumed). On failure, *outError is set to a UTF-8, non-NUL-terminated
- * SkData describing the compile error (ref-owned by the caller, free with
- * skialin_bridge_Data_unref); on success *outError is left untouched by
- * the caller's responsibility to have zero-initialized it first. */
 SkRuntimeEffect* skialin_bridge_RuntimeEffect_MakeForShader(const char* sksl, size_t length, SkData** outError);
 SkRuntimeEffect* skialin_bridge_RuntimeEffect_MakeForColorFilter(const char* sksl, size_t length, SkData** outError);
+SkRuntimeEffect* skialin_bridge_RuntimeEffect_MakeForBlender(const char* sksl, size_t length, SkData** outError);
 void skialin_bridge_RuntimeEffect_unref(SkRuntimeEffect* effect);
 SkShader* skialin_bridge_RuntimeEffect_makeShader(
     const SkRuntimeEffect* effect, const uint8_t* uniforms, size_t uniformsLength,
@@ -323,6 +315,12 @@ SkShader* skialin_bridge_RuntimeEffect_makeShader(
 SkColorFilter* skialin_bridge_RuntimeEffect_makeColorFilter(
     const SkRuntimeEffect* effect, const uint8_t* uniforms, size_t uniformsLength,
     SkColorFilter* const* children, size_t childCount);
+SkBlender* skialin_bridge_RuntimeEffect_makeBlender(
+    const SkRuntimeEffect* effect, const uint8_t* uniforms, size_t uniformsLength,
+    SkShader* const* children, size_t childCount);
+
+SkBlender* skialin_bridge_Blender_Mode(SkBlendMode mode);
+void skialin_bridge_Blender_unref(SkBlender* blender);
 
 /* RRect: heap-allocated with `new`/`delete`, same rationale as ImageInfo/
  * Pixmap (a plain value class, but rect()/radii() etc. return non-trivial-
@@ -862,6 +860,7 @@ SkImageFilter* skialin_bridge_ImageFilter_MatrixTransform(
 SkImageFilter* skialin_bridge_ImageFilter_Dilate(float radiusX, float radiusY, SkImageFilter* input);
 SkImageFilter* skialin_bridge_ImageFilter_Erode(float radiusX, float radiusY, SkImageFilter* input);
 SkImageFilter* skialin_bridge_ImageFilter_Blend(SkBlendMode mode, SkImageFilter* background, SkImageFilter* foreground);
+SkImageFilter* skialin_bridge_ImageFilter_BlendBlender(SkBlender* blender, SkImageFilter* background, SkImageFilter* foreground);
 SkImageFilter* skialin_bridge_ImageFilter_Merge(SkImageFilter* first, SkImageFilter* second);
 SkImageFilter* skialin_bridge_ImageFilter_Shader(SkShader* shader);
 SkImageFilter* skialin_bridge_ImageFilter_Tile(const SkRect* src, const SkRect* dst, SkImageFilter* input);
@@ -877,6 +876,7 @@ SkMaskFilter* skialin_bridge_MaskFilter_MakeBlur(int32_t style, float sigma, boo
 void skialin_bridge_Paint_setColorFilter(SkPaint* paint, SkColorFilter* filter);
 void skialin_bridge_Paint_setImageFilter(SkPaint* paint, SkImageFilter* filter);
 void skialin_bridge_Paint_setMaskFilter(SkPaint* paint, SkMaskFilter* filter);
+void skialin_bridge_Paint_setBlender(SkPaint* paint, SkBlender* blender);
 
 /* Ref-owned by the caller; null if paint has none attached. Free with the
  * matching type's unref (skialin_bridge_Shader_unref etc.). refShader/
@@ -887,6 +887,7 @@ SkColorFilter* skialin_bridge_Paint_refColorFilter(const SkPaint* paint);
 SkImageFilter* skialin_bridge_Paint_refImageFilter(const SkPaint* paint);
 SkMaskFilter* skialin_bridge_Paint_refMaskFilter(const SkPaint* paint);
 SkPathEffect* skialin_bridge_Paint_refPathEffect(const SkPaint* paint);
+SkBlender* skialin_bridge_Paint_refBlender(const SkPaint* paint);
 
 /* DirectContext (GrDirectContext, Ganesh + OpenGL). Wraps whatever native GL
  * context is current on the calling thread; creating that context (WGL/GLX/

@@ -1,5 +1,6 @@
 mod backend_texture;
 mod bitmap;
+mod blender;
 mod canvas;
 mod codec;
 mod color_filter;

@@ -235,6 +235,12 @@ impl Paint {
         self
     }
 
+    pub fn set_blender(&mut self, blender: Option<&crate::Blender>) -> &mut Self {
+        let ptr = blender.map_or(std::ptr::null_mut(), |b| b.0);
+        unsafe { sys::skialin_bridge_Paint_setBlender(&mut *self.0, ptr) };
+        self
+    }
+
     pub fn shader(&self) -> Option<crate::Shader> {
         unsafe { crate::Shader::from_raw(sys::skialin_bridge_Paint_refShader(&*self.0)) }
     }
@@ -249,6 +255,10 @@ impl Paint {
 
     pub fn mask_filter(&self) -> Option<crate::MaskFilter> {
         unsafe { crate::MaskFilter::from_raw(sys::skialin_bridge_Paint_refMaskFilter(&*self.0)) }
+    }
+
+    pub fn blender(&self) -> Option<crate::Blender> {
+        unsafe { crate::Blender::from_raw(sys::skialin_bridge_Paint_refBlender(&*self.0)) }
     }
 
     pub fn set_path_effect(&mut self, effect: Option<&crate::PathEffect>) -> &mut Self {

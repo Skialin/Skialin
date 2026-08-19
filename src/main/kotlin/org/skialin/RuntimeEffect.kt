@@ -3,19 +3,9 @@ package org.skialin
 import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
-/**
- * A compiled SkSL shader or color-filter effect. Mirrors Skia's `SkRuntimeEffect`.
- *
- * @throws IllegalArgumentException if [sksl] fails to compile.
- */
 class RuntimeEffect private constructor(
     ptr: Long,
 ) : Managed(ptr, RuntimeEffectNative::nRelease) {
-    /**
-     * [uniforms] is a raw byte buffer packed to match the SkSL uniform block's layout
-     * (the caller is responsible for knowing that layout); pass `null` if the effect
-     * declares no uniforms.
-     */
     fun makeShader(
         uniforms: ByteArray? = null,
         children: Array<Shader> = emptyArray(),
@@ -26,11 +16,6 @@ class RuntimeEffect private constructor(
         return if (ptr == 0L) null else Shader(ptr)
     }
 
-    /**
-     * [uniforms] is a raw byte buffer packed to match the SkSL uniform block's layout
-     * (the caller is responsible for knowing that layout); pass `null` if the effect
-     * declares no uniforms.
-     */
     fun makeColorFilter(
         uniforms: ByteArray? = null,
         children: Array<ColorFilter> = emptyArray(),
@@ -40,12 +25,21 @@ class RuntimeEffect private constructor(
         return if (ptr == 0L) null else ColorFilter(ptr)
     }
 
+    fun makeBlender(
+        uniforms: ByteArray? = null,
+        children: Array<Shader> = emptyArray(),
+    ): Blender? {
+        val childPtrs = LongArray(children.size) { children[it].nativePtr }
+        val ptr = RuntimeEffectNative.nMakeBlender(nativePtr, uniforms, childPtrs)
+        return if (ptr == 0L) null else Blender(ptr)
+    }
+
     companion object {
-        /** [sksl] must define `vec4 main(vec2 coord) { ... }` returning a premultiplied color. */
         fun makeForShader(sksl: String): RuntimeEffect = RuntimeEffect(RuntimeEffectNative.nMakeForShader(sksl))
 
-        /** [sksl] must define `vec4 main(vec4 inColor) { ... }`. */
         fun makeForColorFilter(sksl: String): RuntimeEffect = RuntimeEffect(RuntimeEffectNative.nMakeForColorFilter(sksl))
+
+        fun makeForBlender(sksl: String): RuntimeEffect = RuntimeEffect(RuntimeEffectNative.nMakeForBlender(sksl))
     }
 }
 
@@ -58,6 +52,8 @@ private object RuntimeEffectNative {
 
     external fun nMakeForColorFilter(sksl: String): Long
 
+    external fun nMakeForBlender(sksl: String): Long
+
     external fun nRelease(ptr: Long)
 
     external fun nMakeShader(
@@ -68,6 +64,12 @@ private object RuntimeEffectNative {
     ): Long
 
     external fun nMakeColorFilter(
+        ptr: Long,
+        uniforms: ByteArray?,
+        children: LongArray,
+    ): Long
+
+    external fun nMakeBlender(
         ptr: Long,
         uniforms: ByteArray?,
         children: LongArray,

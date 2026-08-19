@@ -26,8 +26,6 @@ fn matrix_from_nullable_array(env: &JNIEnv, array: jni::sys::jfloatArray) -> Opt
     Some(Matrix::from_array(values))
 }
 
-/// Boxes `Ok(effect)` as a positive pointer, or throws an IllegalArgumentException
-/// with the SkSL compiler's error text and returns 0.
 fn finish_make<'l>(env: &mut JNIEnv<'l>, result: Result<RuntimeEffect, String>) -> jlong {
     match result {
         Ok(effect) => box_ptr(effect),
@@ -49,6 +47,13 @@ pub extern "system" fn Java_org_skialin_RuntimeEffectNative_nMakeForShader<'l>(m
 pub extern "system" fn Java_org_skialin_RuntimeEffectNative_nMakeForColorFilter<'l>(mut env: JNIEnv<'l>, _class: jni::objects::JClass<'l>, sksl: jni::objects::JString<'l>) -> jlong {
     let sksl: String = env.get_string(&sksl).expect("get_string").into();
     let result = RuntimeEffect::make_for_color_filter(&sksl);
+    finish_make(&mut env, result)
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_RuntimeEffectNative_nMakeForBlender<'l>(mut env: JNIEnv<'l>, _class: jni::objects::JClass<'l>, sksl: jni::objects::JString<'l>) -> jlong {
+    let sksl: String = env.get_string(&sksl).expect("get_string").into();
+    let result = RuntimeEffect::make_for_blender(&sksl);
     finish_make(&mut env, result)
 }
 
@@ -91,6 +96,21 @@ pub extern "system" fn Java_org_skialin_RuntimeEffectNative_nMakeColorFilter(env
 
     match unsafe { borrow::<RuntimeEffect>(ptr) }.make_color_filter(&uniforms, &child_refs) {
         Some(filter) => box_ptr(filter),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_RuntimeEffectNative_nMakeBlender(env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, uniforms: jbyteArray, children: jlongArray) -> jlong {
+    let uniforms = bytes_from_nullable_array(&env, uniforms);
+    let children_array = unsafe { jni::objects::JLongArray::from_raw(children) };
+    let child_count = env.get_array_length(&children_array).expect("get_array_length") as usize;
+    let mut child_ptrs = vec![0i64; child_count];
+    env.get_long_array_region(&children_array, 0, &mut child_ptrs).expect("get_long_array_region");
+    let child_refs: Vec<&Shader> = child_ptrs.iter().map(|&p| unsafe { borrow::<Shader>(p) }).collect();
+
+    match unsafe { borrow::<RuntimeEffect>(ptr) }.make_blender(&uniforms, &child_refs) {
+        Some(blender) => box_ptr(blender),
         None => 0,
     }
 }

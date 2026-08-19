@@ -1,4 +1,4 @@
-use crate::{sys, Color, Matrix, Point, TileMode};
+use crate::{sys, Blender, Color, Matrix, Point, TileMode};
 
 pub struct Shader(pub(crate) *mut sys::SkShader);
 
@@ -72,6 +72,10 @@ impl Shader {
 
     pub fn blend(mode: crate::BlendMode, dst: &Shader, src: &Shader) -> Option<Self> {
         unsafe { Self::from_raw(sys::skialin_bridge_Shader_Blend(mode.into(), dst.0, src.0)) }
+    }
+
+    pub fn blend_with_blender(blender: &Blender, dst: &Shader, src: &Shader) -> Option<Self> {
+        unsafe { Self::from_raw(sys::skialin_bridge_Shader_BlendBlender(blender.0, dst.0, src.0)) }
     }
 
     pub fn fractal_noise(base_freq_x: f32, base_freq_y: f32, num_octaves: i32, seed: f32) -> Option<Self> {

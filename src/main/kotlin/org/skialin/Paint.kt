@@ -56,6 +56,10 @@ class Paint internal constructor(
         PaintNative.nSetPathEffect(nativePtr, effect?.nativePtr ?: 0L)
     }
 
+    fun setBlender(blender: Blender?) {
+        PaintNative.nSetBlender(nativePtr, blender?.nativePtr ?: 0L)
+    }
+
     fun getShader(): Shader? = PaintNative.nGetShader(nativePtr).takeIf { it != 0L }?.let { Shader(it) }
 
     fun getColorFilter(): ColorFilter? = PaintNative.nGetColorFilter(nativePtr).takeIf { it != 0L }?.let { ColorFilter(it) }
@@ -65,6 +69,8 @@ class Paint internal constructor(
     fun getMaskFilter(): MaskFilter? = PaintNative.nGetMaskFilter(nativePtr).takeIf { it != 0L }?.let { MaskFilter(it) }
 
     fun getPathEffect(): PathEffect? = PaintNative.nGetPathEffect(nativePtr).takeIf { it != 0L }?.let { PathEffect(it) }
+
+    fun getBlender(): Blender? = PaintNative.nGetBlender(nativePtr).takeIf { it != 0L }?.let { Blender(it) }
 
     val blendMode: BlendMode get() = BlendMode.entries[PaintNative.nGetBlendMode(nativePtr)]
 
@@ -182,6 +188,11 @@ private object PaintNative {
         effectPtr: Long,
     )
 
+    external fun nSetBlender(
+        ptr: Long,
+        blenderPtr: Long,
+    )
+
     external fun nGetShader(ptr: Long): Long
 
     external fun nGetColorFilter(ptr: Long): Long
@@ -191,6 +202,8 @@ private object PaintNative {
     external fun nGetMaskFilter(ptr: Long): Long
 
     external fun nGetPathEffect(ptr: Long): Long
+
+    external fun nGetBlender(ptr: Long): Long
 
     external fun nGetBlendMode(ptr: Long): Int
 

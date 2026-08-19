@@ -94,6 +94,12 @@ class Shader internal constructor(
             src: Shader,
         ): Shader? = ShaderNative.nBlend(mode.ordinal, dst.nativePtr, src.nativePtr).takeIf { it != 0L }?.let { Shader(it) }
 
+        fun makeBlend(
+            blender: Blender,
+            dst: Shader,
+            src: Shader,
+        ): Shader? = ShaderNative.nBlendBlender(blender.nativePtr, dst.nativePtr, src.nativePtr).takeIf { it != 0L }?.let { Shader(it) }
+
         fun makeFractalNoise(
             baseFreqX: Float,
             baseFreqY: Float,
@@ -175,6 +181,12 @@ private object ShaderNative {
 
     external fun nBlend(
         mode: Int,
+        dstPtr: Long,
+        srcPtr: Long,
+    ): Long
+
+    external fun nBlendBlender(
+        blenderPtr: Long,
         dstPtr: Long,
         srcPtr: Long,
     ): Long

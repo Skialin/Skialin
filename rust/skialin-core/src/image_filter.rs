@@ -1,4 +1,4 @@
-use crate::{sys, Color, ColorFilter, Matrix, SamplingOptions, TileMode};
+use crate::{sys, Blender, Color, ColorFilter, Matrix, SamplingOptions, TileMode};
 
 pub struct ImageFilter(pub(crate) *mut sys::SkImageFilter);
 
@@ -61,6 +61,10 @@ impl ImageFilter {
 
     pub fn blend(mode: crate::BlendMode, background: Option<&ImageFilter>, foreground: Option<&ImageFilter>) -> Option<Self> {
         unsafe { Self::from_raw(sys::skialin_bridge_ImageFilter_Blend(mode.into(), Self::input_ptr(background), Self::input_ptr(foreground))) }
+    }
+
+    pub fn blend_with_blender(blender: &Blender, background: Option<&ImageFilter>, foreground: Option<&ImageFilter>) -> Option<Self> {
+        unsafe { Self::from_raw(sys::skialin_bridge_ImageFilter_BlendBlender(blender.0, Self::input_ptr(background), Self::input_ptr(foreground))) }
     }
 
     pub fn merge(first: Option<&ImageFilter>, second: Option<&ImageFilter>) -> Option<Self> {

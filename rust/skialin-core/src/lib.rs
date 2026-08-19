@@ -2,6 +2,7 @@ pub use skialin_sys as sys;
 
 pub mod backend_texture;
 pub mod bitmap;
+pub mod blender;
 pub mod canvas;
 pub mod codec;
 pub mod color;
@@ -60,6 +61,7 @@ pub mod vertices;
 
 pub use backend_texture::BackendTexture;
 pub use bitmap::{AlphaType, Bitmap};
+pub use blender::Blender;
 pub use canvas::{Canvas, ClipOp, PointMode, SrcRectConstraint};
 pub use codec::{Codec, FrameInfo};
 pub use color::Color;

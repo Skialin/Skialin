@@ -1,7 +1,7 @@
 use jni::sys::{jboolean, jfloat, jfloatArray, jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{ColorFilter, ImageFilter, Matrix, Rect, SamplingOptions, Shader, TileMode};
+use skialin_core::{Blender, ColorFilter, ImageFilter, Matrix, Rect, SamplingOptions, Shader, TileMode};
 
 use crate::paint::blend_mode_from_ordinal;
 use crate::util::{borrow, box_ptr, drop_ptr};
@@ -148,6 +148,15 @@ pub extern "system" fn Java_org_skialin_ImageFilterNative_nErode(_env: JNIEnv, _
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_ImageFilterNative_nBlend(_env: JNIEnv, _class: jni::objects::JClass, mode: jint, background_ptr: jlong, foreground_ptr: jlong) -> jlong {
     match ImageFilter::blend(blend_mode_from_ordinal(mode), input_from_ptr(background_ptr), input_from_ptr(foreground_ptr)) {
+        Some(filter) => box_ptr(filter),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_ImageFilterNative_nBlendBlender(_env: JNIEnv, _class: jni::objects::JClass, blender_ptr: jlong, background_ptr: jlong, foreground_ptr: jlong) -> jlong {
+    let blender = unsafe { borrow::<Blender>(blender_ptr) };
+    match ImageFilter::blend_with_blender(blender, input_from_ptr(background_ptr), input_from_ptr(foreground_ptr)) {
         Some(filter) => box_ptr(filter),
         None => 0,
     }
