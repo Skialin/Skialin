@@ -5,6 +5,8 @@
 
 #include "include/core/SkSurface.h"
 #include "include/core/SkCanvas.h"
+#include "include/core/SkPicture.h"
+#include "include/core/SkPictureRecorder.h"
 #include "include/core/SkImage.h"
 #include "include/core/SkData.h"
 #include "include/core/SkBitmap.h"
@@ -1768,6 +1770,50 @@ void skialin_bridge_GraphiteBackendTexture_delete(skgpu::graphite::BackendTextur
 
 bool skialin_bridge_GraphiteBackendTexture_isValid(const skgpu::graphite::BackendTexture* texture) {
     return texture->isValid();
+}
+
+SkPictureRecorder* skialin_bridge_PictureRecorder_new(void) {
+    return new SkPictureRecorder();
+}
+
+void skialin_bridge_PictureRecorder_delete(SkPictureRecorder* recorder) {
+    delete recorder;
+}
+
+SkCanvas* skialin_bridge_PictureRecorder_beginRecording(SkPictureRecorder* recorder, const SkRect* bounds) {
+    return recorder->beginRecording(*bounds);
+}
+
+SkCanvas* skialin_bridge_PictureRecorder_getRecordingCanvas(SkPictureRecorder* recorder) {
+    return recorder->getRecordingCanvas();
+}
+
+SkPicture* skialin_bridge_PictureRecorder_finishRecordingAsPicture(SkPictureRecorder* recorder) {
+    return recorder->finishRecordingAsPicture().release();
+}
+
+void skialin_bridge_Picture_unref(SkPicture* picture) {
+    SkSafeUnref(picture);
+}
+
+void skialin_bridge_Picture_playback(const SkPicture* picture, SkCanvas* canvas) {
+    picture->playback(canvas);
+}
+
+void skialin_bridge_Picture_cullRect(const SkPicture* picture, SkRect* outRect) {
+    *outRect = picture->cullRect();
+}
+
+uint32_t skialin_bridge_Picture_uniqueID(const SkPicture* picture) {
+    return picture->uniqueID();
+}
+
+int32_t skialin_bridge_Picture_approximateOpCount(const SkPicture* picture, bool nested) {
+    return picture->approximateOpCount(nested);
+}
+
+void skialin_bridge_Canvas_drawPicture(SkCanvas* canvas, const SkPicture* picture) {
+    canvas->drawPicture(picture);
 }
 
 }  // extern "C"

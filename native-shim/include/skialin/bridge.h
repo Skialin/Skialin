@@ -48,6 +48,8 @@ class SkPathEffect;
 class SkPathMeasure;
 class SkM44;
 class SkVertices;
+class SkPictureRecorder;
+class SkPicture;
 class GrDirectContext;
 enum GrSurfaceOrigin : int;
 namespace skgpu {
@@ -849,5 +851,28 @@ skgpu::graphite::BackendTexture* skialin_bridge_GraphiteBackendTexture_MakeVk(
     VkDeviceMemory allocMemory, VkDeviceSize allocOffset, VkDeviceSize allocSize, uint32_t allocFlags);
 void skialin_bridge_GraphiteBackendTexture_delete(skgpu::graphite::BackendTexture* texture);
 bool skialin_bridge_GraphiteBackendTexture_isValid(const skgpu::graphite::BackendTexture* texture);
+
+/* PictureRecorder/Picture: deferred-drawing recording, Skia's equivalent of
+ * a display-list/render-node. SkPictureRecorder is heap-allocated with
+ * new/delete (owns non-trivial internal recording state, never given to
+ * bindgen). SkPicture is ref-counted but abstract (pure virtual playback/
+ * cullRect), same bindgen gap as SkImage, so it's routed entirely through
+ * the bridge too. canvas returned by beginRecording/getRecordingCanvas is
+ * borrowed, owned by the recorder. */
+SkPictureRecorder* skialin_bridge_PictureRecorder_new(void);
+void skialin_bridge_PictureRecorder_delete(SkPictureRecorder* recorder);
+SkCanvas* skialin_bridge_PictureRecorder_beginRecording(SkPictureRecorder* recorder, const SkRect* bounds);
+SkCanvas* skialin_bridge_PictureRecorder_getRecordingCanvas(SkPictureRecorder* recorder);
+/* Ref-owned by the caller; free with skialin_bridge_Picture_unref. Null if
+ * beginRecording wasn't called first. */
+SkPicture* skialin_bridge_PictureRecorder_finishRecordingAsPicture(SkPictureRecorder* recorder);
+
+void skialin_bridge_Picture_unref(SkPicture* picture);
+void skialin_bridge_Picture_playback(const SkPicture* picture, SkCanvas* canvas);
+void skialin_bridge_Picture_cullRect(const SkPicture* picture, SkRect* outRect);
+uint32_t skialin_bridge_Picture_uniqueID(const SkPicture* picture);
+int32_t skialin_bridge_Picture_approximateOpCount(const SkPicture* picture, bool nested);
+
+void skialin_bridge_Canvas_drawPicture(SkCanvas* canvas, const SkPicture* picture);
 
 }  // extern "C"

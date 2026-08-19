@@ -237,6 +237,10 @@ impl<'a> Canvas<'a> {
         unsafe { sys::skialin_bridge_Canvas_drawRRect(self.ptr, rrect.0, &*paint.0) };
     }
 
+    pub fn draw_picture(&mut self, picture: &crate::Picture) {
+        unsafe { sys::skialin_bridge_Canvas_drawPicture(self.ptr, picture.0) };
+    }
+
     /// Draws the ring between `outer` and `inner`; `inner` must be contained within `outer`.
     pub fn draw_drrect(&mut self, outer: &RRect, inner: &RRect, paint: &Paint) {
         unsafe { sys::skialin_bridge_Canvas_drawDRRect(self.ptr, outer.0, inner.0, &*paint.0) };

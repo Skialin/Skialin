@@ -81,6 +81,8 @@ class Canvas internal constructor(internal val ptr: Long) {
 
     fun drawRRect(rrect: RRect, paint: Paint) = CanvasNative.nDrawRRect(ptr, rrect.nativePtr, paint.nativePtr)
 
+    fun drawPicture(picture: Picture) = CanvasNative.nDrawPicture(ptr, picture.nativePtr)
+
     /** Draws the ring between [outer] and [inner]; [inner] must be contained within [outer]. */
     fun drawDRRect(outer: RRect, inner: RRect, paint: Paint) = CanvasNative.nDrawDRRect(ptr, outer.nativePtr, inner.nativePtr, paint.nativePtr)
 
@@ -152,6 +154,7 @@ private object CanvasNative {
     )
     external fun nSaveLayer(ptr: Long, bounds: FloatArray?, paintPtr: Long): Int
     external fun nDrawRRect(ptr: Long, rrectPtr: Long, paintPtr: Long)
+    external fun nDrawPicture(ptr: Long, picturePtr: Long)
     external fun nDrawDRRect(ptr: Long, outerPtr: Long, innerPtr: Long, paintPtr: Long)
     external fun nClipRRect(ptr: Long, rrectPtr: Long, op: Int)
     external fun nDrawVertices(ptr: Long, verticesPtr: Long, mode: Int, paintPtr: Long)
