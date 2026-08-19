@@ -30,7 +30,8 @@ class ColorFilter internal constructor(
             src: ColorFilter,
         ): ColorFilter? = ColorFilterNative.nLerp(t, dst.nativePtr, src.nativePtr).takeIf { it != 0L }?.let { ColorFilter(it) }
 
-        fun makeHSLAMatrix(rowMajor20: FloatArray): ColorFilter? = ColorFilterNative.nHSLAMatrix(rowMajor20).takeIf { it != 0L }?.let { ColorFilter(it) }
+        fun makeHSLAMatrix(rowMajor20: FloatArray): ColorFilter? =
+            ColorFilterNative.nHSLAMatrix(rowMajor20).takeIf { it != 0L }?.let { ColorFilter(it) }
 
         val linearToSRGBGamma: ColorFilter get() = ColorFilter(ColorFilterNative.nLinearToSRGBGamma())
 
@@ -60,7 +61,8 @@ class ColorFilter internal constructor(
             grayscale: Boolean,
             invertStyle: InvertStyle,
             contrast: Float,
-        ): ColorFilter? = ColorFilterNative.nHighContrast(grayscale, invertStyle.ordinal, contrast).takeIf { it != 0L }?.let { ColorFilter(it) }
+        ): ColorFilter? =
+            ColorFilterNative.nHighContrast(grayscale, invertStyle.ordinal, contrast).takeIf { it != 0L }?.let { ColorFilter(it) }
 
         val luma: ColorFilter get() = ColorFilter(ColorFilterNative.nLuma())
     }

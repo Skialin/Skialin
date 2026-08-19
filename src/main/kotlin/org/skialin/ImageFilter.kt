@@ -105,7 +105,10 @@ class ImageFilter internal constructor(
             background: ImageFilter? = null,
             foreground: ImageFilter? = null,
         ): ImageFilter? =
-            ImageFilterNative.nBlend(mode.ordinal, background?.nativePtr ?: 0L, foreground?.nativePtr ?: 0L).takeIf { it != 0L }?.let { ImageFilter(it) }
+            ImageFilterNative
+                .nBlend(mode.ordinal, background?.nativePtr ?: 0L, foreground?.nativePtr ?: 0L)
+                .takeIf { it != 0L }
+                ?.let { ImageFilter(it) }
 
         fun makeBlend(
             blender: Blender,
@@ -120,9 +123,11 @@ class ImageFilter internal constructor(
         fun makeMerge(
             first: ImageFilter? = null,
             second: ImageFilter? = null,
-        ): ImageFilter? = ImageFilterNative.nMerge(first?.nativePtr ?: 0L, second?.nativePtr ?: 0L).takeIf { it != 0L }?.let { ImageFilter(it) }
+        ): ImageFilter? =
+            ImageFilterNative.nMerge(first?.nativePtr ?: 0L, second?.nativePtr ?: 0L).takeIf { it != 0L }?.let { ImageFilter(it) }
 
-        fun makeShader(shader: Shader): ImageFilter? = ImageFilterNative.nShader(shader.nativePtr).takeIf { it != 0L }?.let { ImageFilter(it) }
+        fun makeShader(shader: Shader): ImageFilter? =
+            ImageFilterNative.nShader(shader.nativePtr).takeIf { it != 0L }?.let { ImageFilter(it) }
 
         fun makeTile(
             src: Rect,

@@ -24,7 +24,8 @@ class Surface private constructor(
 
     val imageInfo: ImageInfo get() = ImageInfo(SurfaceNative.nImageInfo(nativePtr))
 
-    fun notifyContentWillChange(mode: ContentChangeMode = ContentChangeMode.RETAIN) = SurfaceNative.nNotifyContentWillChange(nativePtr, mode.ordinal)
+    fun notifyContentWillChange(mode: ContentChangeMode = ContentChangeMode.RETAIN) =
+        SurfaceNative.nNotifyContentWillChange(nativePtr, mode.ordinal)
 
     fun flush() = SurfaceNative.nFlush(nativePtr)
 
