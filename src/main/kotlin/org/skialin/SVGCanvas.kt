@@ -16,7 +16,7 @@ class SVGCanvas(
     private var ptr: Long =
         SVGCanvasNative.nMake(bounds.left, bounds.top, bounds.right, bounds.bottom, convertTextToPaths, noPrettyXml, relativePathEncoding)
 
-    fun canvas(): Canvas {
+    val canvas: Canvas get() {
         check(ptr != 0L) { "SVGCanvas already finished" }
         return Canvas(SVGCanvasNative.nGetCanvas(ptr))
     }
