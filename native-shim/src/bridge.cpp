@@ -1292,6 +1292,30 @@ void skialin_bridge_FontCollection_setDefaultFontManager(skia::textlayout::FontC
     collection->setDefaultFontManager(sk_ref_sp(fontManager));
 }
 
+void skialin_bridge_FontCollection_setAssetFontManager(skia::textlayout::FontCollection* collection, SkFontMgr* fontManager) {
+    collection->setAssetFontManager(sk_ref_sp(fontManager));
+}
+
+void skialin_bridge_FontCollection_setDynamicFontManager(skia::textlayout::FontCollection* collection, SkFontMgr* fontManager) {
+    collection->setDynamicFontManager(sk_ref_sp(fontManager));
+}
+
+void skialin_bridge_FontCollection_setTestFontManager(skia::textlayout::FontCollection* collection, SkFontMgr* fontManager) {
+    collection->setTestFontManager(sk_ref_sp(fontManager));
+}
+
+void skialin_bridge_FontCollection_disableFontFallback(skia::textlayout::FontCollection* collection) {
+    collection->disableFontFallback();
+}
+
+void skialin_bridge_FontCollection_enableFontFallback(skia::textlayout::FontCollection* collection) {
+    collection->enableFontFallback();
+}
+
+bool skialin_bridge_FontCollection_fontFallbackEnabled(skia::textlayout::FontCollection* collection) {
+    return collection->fontFallbackEnabled();
+}
+
 skia::textlayout::ParagraphBuilder* skialin_bridge_ParagraphBuilder_make(const skia::textlayout::ParagraphStyle* style, skia::textlayout::FontCollection* fontCollection) {
     return ParagraphBuilder::make(*style, sk_ref_sp(fontCollection), SkUnicodes::ICU::Make()).release();
 }

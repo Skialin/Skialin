@@ -3,13 +3,20 @@ package org.skialin
 import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
-/**
- * Resolves font family names to [Typeface]s during paragraph layout.
- * Mirrors skparagraph's `FontCollection`.
- */
 class FontCollection : Managed(FontCollectionNative.nNew(), FontCollectionNative::nRelease) {
-    /** The minimum needed to get real glyphs out of a laid-out paragraph; usually [FontMgr.system]. */
     fun setDefaultFontManager(fontManager: FontMgr) = FontCollectionNative.nSetDefaultFontManager(nativePtr, fontManager.nativePtr)
+
+    fun setAssetFontManager(fontManager: FontMgr) = FontCollectionNative.nSetAssetFontManager(nativePtr, fontManager.nativePtr)
+
+    fun setDynamicFontManager(fontManager: FontMgr) = FontCollectionNative.nSetDynamicFontManager(nativePtr, fontManager.nativePtr)
+
+    fun setTestFontManager(fontManager: FontMgr) = FontCollectionNative.nSetTestFontManager(nativePtr, fontManager.nativePtr)
+
+    fun disableFontFallback() = FontCollectionNative.nDisableFontFallback(nativePtr)
+
+    fun enableFontFallback() = FontCollectionNative.nEnableFontFallback(nativePtr)
+
+    val fontFallbackEnabled: Boolean get() = FontCollectionNative.nFontFallbackEnabled(nativePtr)
 }
 
 private object FontCollectionNative {
@@ -25,4 +32,25 @@ private object FontCollectionNative {
         ptr: Long,
         fontMgrPtr: Long,
     )
+
+    external fun nSetAssetFontManager(
+        ptr: Long,
+        fontMgrPtr: Long,
+    )
+
+    external fun nSetDynamicFontManager(
+        ptr: Long,
+        fontMgrPtr: Long,
+    )
+
+    external fun nSetTestFontManager(
+        ptr: Long,
+        fontMgrPtr: Long,
+    )
+
+    external fun nDisableFontFallback(ptr: Long)
+
+    external fun nEnableFontFallback(ptr: Long)
+
+    external fun nFontFallbackEnabled(ptr: Long): Boolean
 }

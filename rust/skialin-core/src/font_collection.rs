@@ -7,10 +7,32 @@ impl FontCollection {
         FontCollection(unsafe { sys::skialin_bridge_FontCollection_new() })
     }
 
-    /// The minimum needed to get real glyphs out of a laid-out paragraph;
-    /// usually [`FontMgr::system`].
     pub fn set_default_font_manager(&mut self, font_manager: &FontMgr) {
         unsafe { sys::skialin_bridge_FontCollection_setDefaultFontManager(self.0, font_manager.0) };
+    }
+
+    pub fn set_asset_font_manager(&mut self, font_manager: &FontMgr) {
+        unsafe { sys::skialin_bridge_FontCollection_setAssetFontManager(self.0, font_manager.0) };
+    }
+
+    pub fn set_dynamic_font_manager(&mut self, font_manager: &FontMgr) {
+        unsafe { sys::skialin_bridge_FontCollection_setDynamicFontManager(self.0, font_manager.0) };
+    }
+
+    pub fn set_test_font_manager(&mut self, font_manager: &FontMgr) {
+        unsafe { sys::skialin_bridge_FontCollection_setTestFontManager(self.0, font_manager.0) };
+    }
+
+    pub fn disable_font_fallback(&mut self) {
+        unsafe { sys::skialin_bridge_FontCollection_disableFontFallback(self.0) };
+    }
+
+    pub fn enable_font_fallback(&mut self) {
+        unsafe { sys::skialin_bridge_FontCollection_enableFontFallback(self.0) };
+    }
+
+    pub fn font_fallback_enabled(&mut self) -> bool {
+        unsafe { sys::skialin_bridge_FontCollection_fontFallbackEnabled(self.0) }
     }
 }
 

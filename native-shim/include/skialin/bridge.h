@@ -771,12 +771,17 @@ void skialin_bridge_ParagraphBuilder_addPlaceholder(
 /* FontCollection: ref-owned by the caller. Free with
  * skialin_bridge_FontCollection_unref. Resolves families named in TextStyle
  * to a Typeface during layout; setDefaultFontManager is the minimum needed
- * to get real glyphs (usually FontMgr::system()). setAssetFontManager/
- * setDynamicFontManager/setTestFontManager are not yet bound. */
+ * to get real glyphs (usually FontMgr::system()). */
 skia::textlayout::FontCollection* skialin_bridge_FontCollection_new(void);
 void skialin_bridge_FontCollection_unref(skia::textlayout::FontCollection* collection);
 /* fontManager is ref'd by the bridge, not consumed. */
 void skialin_bridge_FontCollection_setDefaultFontManager(skia::textlayout::FontCollection* collection, SkFontMgr* fontManager);
+void skialin_bridge_FontCollection_setAssetFontManager(skia::textlayout::FontCollection* collection, SkFontMgr* fontManager);
+void skialin_bridge_FontCollection_setDynamicFontManager(skia::textlayout::FontCollection* collection, SkFontMgr* fontManager);
+void skialin_bridge_FontCollection_setTestFontManager(skia::textlayout::FontCollection* collection, SkFontMgr* fontManager);
+void skialin_bridge_FontCollection_disableFontFallback(skia::textlayout::FontCollection* collection);
+void skialin_bridge_FontCollection_enableFontFallback(skia::textlayout::FontCollection* collection);
+bool skialin_bridge_FontCollection_fontFallbackEnabled(skia::textlayout::FontCollection* collection);
 
 /* ParagraphBuilder: owned by the caller. Free with
  * skialin_bridge_ParagraphBuilder_delete. Both ParagraphBuilder and
