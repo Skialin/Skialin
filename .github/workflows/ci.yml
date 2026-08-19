@@ -33,7 +33,7 @@ jobs:
         timeout-minutes: 5
         run: |
           sudo apt-get update -o Acquire::Retries=3 -o Acquire::http::Timeout=15 -o Acquire::https::Timeout=15
-          sudo apt-get install -y --no-install-recommends libfreetype-dev libfontconfig1-dev
+          sudo apt-get install -y --no-install-recommends libfreetype-dev libfontconfig1-dev libgl1-mesa-dev mesa-common-dev
 
       - uses: maxim-lobanov/setup-xcode@v1
         if: runner.os == 'macOS'
@@ -53,6 +53,7 @@ jobs:
         run: git -C external/skia rev-parse HEAD > .skia-commit
 
       - name: Cache Skia build
+        id: cache-skia
         uses: actions/cache@v4
         with:
           path: |
@@ -62,6 +63,17 @@ jobs:
           key: skia-${{ matrix.name }}-${{ hashFiles('.skia-commit', 'native-shim/args.gn') }}
           restore-keys: |
             skia-${{ matrix.name }}-
+
+      - name: Fix mtimes on restored Skia cache
+        run: |
+          # actions/checkout stamps every source file with "now", but the
+          # cached out/Release objects keep their original (older) mtimes.
+          # Ninja then sees every source as newer than every object and
+          # rebuilds from scratch. Bump the restored outputs to the current
+          # time so ninja can see them as up to date again.
+          if [ -d external/skia/out ]; then
+            find external/skia/out -exec touch -c {} +
+          fi
 
       - name: Cache Cargo
         uses: actions/cache@v4

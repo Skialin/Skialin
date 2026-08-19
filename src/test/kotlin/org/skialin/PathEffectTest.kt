@@ -63,7 +63,11 @@ class PathEffectTest {
 
     @Test
     fun path1DPath2DAndLine2DAreUsable() {
-        val dot = PathBuilder().use { it.addCircle(Point(2f, 2f), 2f); it.snapshot() }
+        val dot =
+            PathBuilder().use {
+                it.addCircle(Point(2f, 2f), 2f)
+                it.snapshot()
+            }
         dot.use {
             PathEffect.makePath1D(dot, 8f, 0f, Path1DStyle.ROTATE)!!.use { assertNotNull(it) }
             PathEffect.makePath2D(Matrix33.makeScale(8f, 8f), dot)!!.use { assertNotNull(it) }
