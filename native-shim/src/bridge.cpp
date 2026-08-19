@@ -39,6 +39,7 @@
 #include "include/effects/SkGradient.h"
 #include "include/effects/SkRuntimeEffect.h"
 #include "include/core/SkRRect.h"
+#include "include/core/SkRegion.h"
 #include "include/core/SkPathEffect.h"
 #include "include/effects/SkDashPathEffect.h"
 #include "include/effects/SkCornerPathEffect.h"
@@ -1391,6 +1392,82 @@ void skialin_bridge_Canvas_drawRRect(SkCanvas* canvas, const SkRRect* rrect, con
 
 void skialin_bridge_Canvas_drawDRRect(SkCanvas* canvas, const SkRRect* outer, const SkRRect* inner, const SkPaint* paint) {
     canvas->drawDRRect(*outer, *inner, *paint);
+}
+
+SkRegion* skialin_bridge_Region_MakeEmpty(void) {
+    return new SkRegion();
+}
+
+SkRegion* skialin_bridge_Region_MakeRect(const SkIRect* rect) {
+    return new SkRegion(*rect);
+}
+
+void skialin_bridge_Region_delete(SkRegion* region) {
+    delete region;
+}
+
+SkRegion* skialin_bridge_Region_clone(const SkRegion* region) {
+    return new SkRegion(*region);
+}
+
+bool skialin_bridge_Region_setRect(SkRegion* region, const SkIRect* rect) {
+    return region->setRect(*rect);
+}
+
+bool skialin_bridge_Region_setPath(SkRegion* region, const SkPath* path, const SkRegion* clip) {
+    return region->setPath(*path, *clip);
+}
+
+bool skialin_bridge_Region_opRegion(SkRegion* region, const SkRegion* other, int32_t op) {
+    return region->op(*other, static_cast<SkRegion::Op>(op));
+}
+
+bool skialin_bridge_Region_opRect(SkRegion* region, const SkIRect* rect, int32_t op) {
+    return region->op(*rect, static_cast<SkRegion::Op>(op));
+}
+
+bool skialin_bridge_Region_isEmpty(const SkRegion* region) {
+    return region->isEmpty();
+}
+
+bool skialin_bridge_Region_isRect(const SkRegion* region) {
+    return region->isRect();
+}
+
+bool skialin_bridge_Region_isComplex(const SkRegion* region) {
+    return region->isComplex();
+}
+
+void skialin_bridge_Region_getBounds(const SkRegion* region, SkIRect* outRect) {
+    *outRect = region->getBounds();
+}
+
+bool skialin_bridge_Region_containsPoint(const SkRegion* region, int32_t x, int32_t y) {
+    return region->contains(x, y);
+}
+
+bool skialin_bridge_Region_containsRect(const SkRegion* region, const SkIRect* rect) {
+    return region->contains(*rect);
+}
+
+bool skialin_bridge_Region_containsRegion(const SkRegion* region, const SkRegion* other) {
+    return region->contains(*other);
+}
+
+bool skialin_bridge_Region_intersectsRect(const SkRegion* region, const SkIRect* rect) {
+    return region->intersects(*rect);
+}
+
+bool skialin_bridge_Region_intersectsRegion(const SkRegion* region, const SkRegion* other) {
+    return region->intersects(*other);
+}
+
+bool skialin_bridge_Region_equals(const SkRegion* a, const SkRegion* b) {
+    return *a == *b;
+}
+
+SkPath* skialin_bridge_Region_getBoundaryPath(const SkRegion* region) {
+    return new SkPath(region->getBoundaryPath());
 }
 
 void skialin_bridge_Canvas_clipRRect(SkCanvas* canvas, const SkRRect* rrect, SkClipOp op, bool doAntiAlias) {

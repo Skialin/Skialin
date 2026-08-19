@@ -48,6 +48,7 @@ class SkImageFilter;
 class SkMaskFilter;
 class SkRuntimeEffect;
 class SkRRect;
+class SkRegion;
 class SkPathEffect;
 class SkPathMeasure;
 class SkM44;
@@ -322,6 +323,32 @@ SkRRect* skialin_bridge_RRect_transform(const SkRRect* rrect, const SkMatrix* ma
 void skialin_bridge_Canvas_drawRRect(SkCanvas* canvas, const SkRRect* rrect, const SkPaint* paint);
 void skialin_bridge_Canvas_drawDRRect(SkCanvas* canvas, const SkRRect* outer, const SkRRect* inner, const SkPaint* paint);
 void skialin_bridge_Canvas_clipRRect(SkCanvas* canvas, const SkRRect* rrect, SkClipOp op, bool doAntiAlias);
+
+/* Region: heap-allocated with new/delete, same rationale as RRect -- never
+ * given to bindgen (forward-declared only) so routed entirely through the
+ * bridge. op: 0 difference, 1 intersect, 2 union, 3 xor,
+ * 4 reverse-difference, 5 replace (matches SkRegion::Op's declaration
+ * order). */
+SkRegion* skialin_bridge_Region_MakeEmpty(void);
+SkRegion* skialin_bridge_Region_MakeRect(const SkIRect* rect);
+void skialin_bridge_Region_delete(SkRegion* region);
+SkRegion* skialin_bridge_Region_clone(const SkRegion* region);
+bool skialin_bridge_Region_setRect(SkRegion* region, const SkIRect* rect);
+bool skialin_bridge_Region_setPath(SkRegion* region, const SkPath* path, const SkRegion* clip);
+bool skialin_bridge_Region_opRegion(SkRegion* region, const SkRegion* other, int32_t op);
+bool skialin_bridge_Region_opRect(SkRegion* region, const SkIRect* rect, int32_t op);
+bool skialin_bridge_Region_isEmpty(const SkRegion* region);
+bool skialin_bridge_Region_isRect(const SkRegion* region);
+bool skialin_bridge_Region_isComplex(const SkRegion* region);
+void skialin_bridge_Region_getBounds(const SkRegion* region, SkIRect* outRect);
+bool skialin_bridge_Region_containsPoint(const SkRegion* region, int32_t x, int32_t y);
+bool skialin_bridge_Region_containsRect(const SkRegion* region, const SkIRect* rect);
+bool skialin_bridge_Region_containsRegion(const SkRegion* region, const SkRegion* other);
+bool skialin_bridge_Region_intersectsRect(const SkRegion* region, const SkIRect* rect);
+bool skialin_bridge_Region_intersectsRegion(const SkRegion* region, const SkRegion* other);
+bool skialin_bridge_Region_equals(const SkRegion* a, const SkRegion* b);
+/* Ref-owned by the caller; free with skialin_bridge_Path_delete. */
+SkPath* skialin_bridge_Region_getBoundaryPath(const SkRegion* region);
 
 /* SkSurfaceProps: heap-allocated, same rationale as RRect (cloneWithPixelGeometry
  * returns by value, hitting gotcha #1). Owned by the caller; free with

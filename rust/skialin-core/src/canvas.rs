@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::paint::BlendMode;
 use crate::path::Path;
-use crate::{sys, Color, Image, Matrix, Paint, Point, RRect, Rect, SamplingOptions, TextBlob, Vertices, M44};
+use crate::{sys, Color, Image, Matrix, Paint, Point, RRect, Rect, Region, SamplingOptions, TextBlob, Vertices, M44};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum PointMode {
@@ -248,6 +248,14 @@ impl<'a> Canvas<'a> {
 
     pub fn clip_rrect(&mut self, rrect: &RRect, op: ClipOp, antialias: bool) {
         unsafe { sys::skialin_bridge_Canvas_clipRRect(self.ptr, rrect.0, op.into(), antialias) };
+    }
+
+    pub fn draw_region(&mut self, region: &Region, paint: &Paint) {
+        unsafe { self.as_mut().drawRegion(region.0, &*paint.0) };
+    }
+
+    pub fn clip_region(&mut self, region: &Region, op: ClipOp) {
+        unsafe { self.as_mut().clipRegion(region.0, op.into()) };
     }
 
     pub fn draw_vertices(&mut self, vertices: &Vertices, mode: BlendMode, paint: &Paint) {

@@ -184,6 +184,16 @@ class Canvas internal constructor(
         op: ClipOp = ClipOp.INTERSECT,
     ) = CanvasNative.nClipRRect(ptr, rrect.nativePtr, op.ordinal)
 
+    fun drawRegion(
+        region: Region,
+        paint: Paint,
+    ) = CanvasNative.nDrawRegion(ptr, region.nativePtr, paint.nativePtr)
+
+    fun clipRegion(
+        region: Region,
+        op: ClipOp = ClipOp.INTERSECT,
+    ) = CanvasNative.nClipRegion(ptr, region.nativePtr, op.ordinal)
+
     fun drawVertices(
         vertices: Vertices,
         mode: BlendMode,
@@ -441,6 +451,18 @@ private object CanvasNative {
     external fun nClipRRect(
         ptr: Long,
         rrectPtr: Long,
+        op: Int,
+    )
+
+    external fun nDrawRegion(
+        ptr: Long,
+        regionPtr: Long,
+        paintPtr: Long,
+    )
+
+    external fun nClipRegion(
+        ptr: Long,
+        regionPtr: Long,
         op: Int,
     )
 
