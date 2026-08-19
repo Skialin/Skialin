@@ -44,6 +44,8 @@ jobs:
           distribution: temurin
           java-version: "25"
 
+      - run: chmod +x gradlew
+
       - name: Resolve Skia submodule commit
         run: git -C external/skia rev-parse HEAD > .skia-commit
 
