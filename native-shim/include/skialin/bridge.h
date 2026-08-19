@@ -94,6 +94,10 @@ SkPoint skialin_bridge_Matrix_mapPoint(const SkMatrix* matrix, SkPoint point);
 SkRect skialin_bridge_Matrix_mapRect(const SkMatrix* matrix, const SkRect* rect);
 SkRect skialin_bridge_PathBuilder_computeBounds(const SkPathBuilder* builder);
 void skialin_bridge_Canvas_getTotalMatrix(const SkCanvas* canvas, SkMatrix* outMatrix);
+/* Full SkCanvas::SaveLayerRec overload: bounds/paint/backdrop may each be
+ * null. backdrop is borrowed (ref'd internally), not consumed. flags is
+ * SkCanvas::SaveLayerFlags bits. Returns the new save count. */
+int32_t skialin_bridge_Canvas_saveLayer(SkCanvas* canvas, const SkRect* bounds, const SkPaint* paint, SkImageFilter* backdrop, uint32_t flags);
 
 /* Path: ref-owned by the caller. Free with skialin_bridge_Path_delete. */
 SkPath* skialin_bridge_PathBuilder_snapshot(const SkPathBuilder* builder, const SkMatrix* matrix);

@@ -270,6 +270,24 @@ class Canvas internal constructor(
         paint: Paint? = null,
     ): Int = CanvasNative.nSaveLayer(ptr, bounds?.let { floatArrayOf(it.left, it.top, it.right, it.bottom) }, paint?.nativePtr ?: 0L)
 
+    /**
+     * Like [saveLayer], but [backdrop], if given, filters the current layer's content before
+     * it's drawn into the new one (instead of the new layer starting out transparent-black).
+     */
+    fun saveLayer(
+        bounds: Rect? = null,
+        paint: Paint? = null,
+        backdrop: ImageFilter?,
+        flags: Int = 0,
+    ): Int =
+        CanvasNative.nSaveLayerWithBackdrop(
+            ptr,
+            bounds?.let { floatArrayOf(it.left, it.top, it.right, it.bottom) },
+            paint?.nativePtr ?: 0L,
+            backdrop?.nativePtr ?: 0L,
+            flags,
+        )
+
     /** Runs [block] between [save] and [restore]. */
     inline fun withSave(block: Canvas.() -> Unit) {
         save()
@@ -486,6 +504,14 @@ private object CanvasNative {
         ptr: Long,
         bounds: FloatArray?,
         paintPtr: Long,
+    ): Int
+
+    external fun nSaveLayerWithBackdrop(
+        ptr: Long,
+        bounds: FloatArray?,
+        paintPtr: Long,
+        backdropPtr: Long,
+        flags: Int,
     ): Int
 
     external fun nDrawImageNine(

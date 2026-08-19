@@ -1,4 +1,4 @@
-use skialin_core::{color, Image, ImageInfo, Paint, Point, PointMode, Rect, SamplingOptions, SrcRectConstraint, Surface};
+use skialin_core::{color, Image, ImageFilter, ImageInfo, Paint, Point, PointMode, Rect, SamplingOptions, SrcRectConstraint, Surface, TileMode};
 
 fn make_image() -> Image {
     let info = ImageInfo::n32_premul(4, 4);
@@ -70,5 +70,16 @@ fn save_layer_returns_incrementing_count() {
     let count_before = canvas.save();
     let layer_count = canvas.save_layer(Some(Rect::new(0.0, 0.0, 16.0, 16.0)), None);
     assert!(layer_count > count_before);
+    canvas.restore();
+}
+
+#[test]
+fn save_layer_with_backdrop_draws_without_crashing() {
+    let mut surface = Surface::new_raster_n32_premul(16, 16).unwrap();
+    let mut canvas = surface.canvas();
+    canvas.clear(color::WHITE);
+    let backdrop = ImageFilter::blur(2.0, 2.0, TileMode::Decal, None).unwrap();
+    let layer_count = canvas.save_layer_with_backdrop(Some(Rect::new(0.0, 0.0, 16.0, 16.0)), None, Some(&backdrop), 0);
+    assert!(layer_count > 0);
     canvas.restore();
 }

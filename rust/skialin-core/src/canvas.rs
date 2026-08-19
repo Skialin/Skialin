@@ -243,6 +243,18 @@ impl<'a> Canvas<'a> {
         unsafe { self.as_mut().saveLayer(bounds_ptr, paint_ptr) }
     }
 
+    /// Like [`Self::save_layer`], but `backdrop`, if given, filters the
+    /// current layer's content before it's drawn into the new one (instead
+    /// of the new layer starting out transparent-black). `flags` is
+    /// `SkCanvas::SaveLayerFlags` bits.
+    pub fn save_layer_with_backdrop(&mut self, bounds: Option<Rect>, paint: Option<&Paint>, backdrop: Option<&crate::ImageFilter>, flags: u32) -> i32 {
+        let sk_bounds: Option<sys::SkRect> = bounds.map(Into::into);
+        let bounds_ptr = sk_bounds.as_ref().map_or(std::ptr::null(), |r| r as *const sys::SkRect);
+        let paint_ptr = paint.map_or(std::ptr::null(), |p| &*p.0 as *const sys::SkPaint);
+        let backdrop_ptr = backdrop.map_or(std::ptr::null_mut(), |f| f.0);
+        unsafe { sys::skialin_bridge_Canvas_saveLayer(self.ptr, bounds_ptr, paint_ptr, backdrop_ptr, flags) }
+    }
+
     pub fn draw_rrect(&mut self, rrect: &RRect, paint: &Paint) {
         unsafe { sys::skialin_bridge_Canvas_drawRRect(self.ptr, rrect.0, &*paint.0) };
     }

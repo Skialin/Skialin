@@ -146,6 +146,11 @@ void skialin_bridge_Canvas_getTotalMatrix(const SkCanvas* canvas, SkMatrix* outM
     *outMatrix = canvas->getTotalMatrix();
 }
 
+int32_t skialin_bridge_Canvas_saveLayer(SkCanvas* canvas, const SkRect* bounds, const SkPaint* paint, SkImageFilter* backdrop, uint32_t flags) {
+    SkCanvas::SaveLayerRec rec(bounds, paint, backdrop, static_cast<SkCanvas::SaveLayerFlags>(flags));
+    return canvas->saveLayer(rec);
+}
+
 SkPath* skialin_bridge_PathBuilder_snapshot(const SkPathBuilder* builder, const SkMatrix* matrix) {
     return new SkPath(builder->snapshot(matrix));
 }

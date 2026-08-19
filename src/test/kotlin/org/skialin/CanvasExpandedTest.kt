@@ -131,4 +131,17 @@ class CanvasExpandedTest {
             surface.canvas().drawAnnotation(Rect(0f, 0f, 16f, 16f), "url", null)
         }
     }
+
+    @Test
+    fun saveLayerWithBackdropDrawsWithoutCrashing() {
+        Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
+            val canvas = surface.canvas()
+            canvas.clear(Colors.WHITE)
+            ImageFilter.makeBlur(2f, 2f)!!.use { backdrop ->
+                val layerCount = canvas.saveLayer(Rect(0f, 0f, 16f, 16f), null, backdrop)
+                assertTrue(layerCount > 0)
+                canvas.restore()
+            }
+        }
+    }
 }

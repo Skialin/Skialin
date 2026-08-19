@@ -1,7 +1,7 @@
 use jni::sys::{jboolean, jfloat, jfloatArray, jint, jintArray, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{Canvas, ClipOp, Color, Data, FilterMode, Image, IRect, Matrix, Paint, Path, Point, PointMode, RRect, Rect, Region, SamplingOptions, SrcRectConstraint, TextBlob, Vertices, M44};
+use skialin_core::{Canvas, ClipOp, Color, Data, FilterMode, Image, ImageFilter, IRect, Matrix, Paint, Path, Point, PointMode, RRect, Rect, Region, SamplingOptions, SrcRectConstraint, TextBlob, Vertices, M44};
 
 use crate::paint::blend_mode_from_ordinal;
 use crate::util::borrow;
@@ -377,6 +377,30 @@ pub extern "system" fn Java_org_skialin_CanvasNative_nSaveLayer(env: JNIEnv, _cl
     };
     let paint = (paint_ptr != 0).then(|| unsafe { borrow::<Paint>(paint_ptr) });
     canvas_from_ptr(ptr).save_layer(bounds_rect, paint)
+}
+
+#[allow(clippy::too_many_arguments)]
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_CanvasNative_nSaveLayerWithBackdrop(
+    env: JNIEnv,
+    _class: jni::objects::JClass,
+    ptr: jlong,
+    bounds: jfloatArray,
+    paint_ptr: jlong,
+    backdrop_ptr: jlong,
+    flags: jint,
+) -> jint {
+    let bounds_rect = if bounds.is_null() {
+        None
+    } else {
+        let array = unsafe { jni::objects::JFloatArray::from_raw(bounds) };
+        let mut values = [0f32; 4];
+        env.get_float_array_region(&array, 0, &mut values).expect("get_float_array_region");
+        Some(Rect::new(values[0], values[1], values[2], values[3]))
+    };
+    let paint = (paint_ptr != 0).then(|| unsafe { borrow::<Paint>(paint_ptr) });
+    let backdrop = (backdrop_ptr != 0).then(|| unsafe { borrow::<ImageFilter>(backdrop_ptr) });
+    canvas_from_ptr(ptr).save_layer_with_backdrop(bounds_rect, paint, backdrop, flags as u32)
 }
 
 #[allow(clippy::too_many_arguments)]
