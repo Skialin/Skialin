@@ -120,6 +120,6 @@ fn paints_without_crashing() {
     paragraph.layout(200.0);
 
     let mut surface = Surface::new_raster_n32_premul(200, 100).unwrap();
-    let mut canvas = surface.canvas;
+    let mut canvas = surface.canvas();
     paragraph.paint(&mut canvas, 0.0, 0.0);
 }

@@ -108,7 +108,7 @@ fn render_target_round_trip() {
     let mut surface = Surface::new_render_target(&mut context, false, &info, 0, SurfaceOrigin::TopLeft, None, false, false)
         .expect("failed to create GPU render-target surface");
 
-    surface.canvas.clear(0xFFFF0000);
+    surface.canvas().clear(0xFFFF0000);
     context.flush();
     context.submit(true);
 

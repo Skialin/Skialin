@@ -11,7 +11,7 @@ fn parses_and_renders_without_crashing() {
     assert_eq!((width, height), (16.0, 16.0));
 
     let mut surface = Surface::new_raster_n32_premul(16, 16).unwrap();
-    dom.render(&mut surface.canvas);
+    dom.render(&mut surface.canvas());
     let image = surface.image_snapshot().unwrap();
 
     let info = ImageInfo::new(16, 16, ColorType::N32, AlphaType::Premul);
@@ -29,7 +29,7 @@ fn invalid_bytes_returns_none() {
 fn svg_canvas_records_draws_as_xml() {
     let mut svg_canvas = SVGCanvas::new(Rect::new(0.0, 0.0, 16.0, 16.0), SVGCanvasFlags::default());
     {
-        let mut canvas = svg_canvas.canvas;
+        let mut canvas = svg_canvas.canvas();
         let mut paint = skialin_core::Paint::new();
         paint.set_color(skialin_core::color::RED);
         canvas.draw_rect(Rect::new(0.0, 0.0, 16.0, 16.0), &paint);

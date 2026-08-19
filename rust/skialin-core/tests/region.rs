@@ -40,7 +40,7 @@ fn clone_is_independent() {
 fn draws_and_clips_without_crashing() {
     let region = Region::from_rect(IRect::new(0, 0, 16, 16));
     let mut surface = Surface::new_raster_n32_premul(16, 16).unwrap();
-    let mut canvas = surface.canvas;
+    let mut canvas = surface.canvas();
     let mut paint = Paint::new();
     paint.set_color(color::RED);
     canvas.draw_region(&region, &paint);

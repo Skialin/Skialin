@@ -24,7 +24,7 @@ fn radial_gradient_draws_without_crashing() {
     let mut paint = Paint::new();
     paint.set_shader(Some(&shader));
     let mut surface = Surface::new_raster_n32_premul(32, 32).unwrap();
-    let mut canvas = surface.canvas;
+    let mut canvas = surface.canvas();
     canvas.draw_rect(skialin_core::Rect::new(0.0, 0.0, 32.0, 32.0), &paint);
 }
 
@@ -39,7 +39,7 @@ fn two_point_conical_gradient_draws_without_crashing() {
     let mut paint = Paint::new();
     paint.set_shader(Some(&shader));
     let mut surface = Surface::new_raster_n32_premul(32, 32).unwrap();
-    let mut canvas = surface.canvas;
+    let mut canvas = surface.canvas();
     canvas.draw_rect(skialin_core::Rect::new(0.0, 0.0, 32.0, 32.0), &paint);
 }
 
@@ -49,7 +49,7 @@ fn sweep_gradient_draws_without_crashing() {
     let mut paint = Paint::new();
     paint.set_shader(Some(&shader));
     let mut surface = Surface::new_raster_n32_premul(32, 32).unwrap();
-    let mut canvas = surface.canvas;
+    let mut canvas = surface.canvas();
     canvas.draw_rect(skialin_core::Rect::new(0.0, 0.0, 32.0, 32.0), &paint);
 }
 

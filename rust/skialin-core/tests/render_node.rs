@@ -15,7 +15,7 @@ fn record_and_draw_matches_pixels() {
     node.end_recording();
 
     let mut surface = Surface::new_raster_n32_premul(16, 16).unwrap();
-    node.draw_into(&mut surface.canvas);
+    node.draw_into(&mut surface.canvas());
     let image = surface.image_snapshot().unwrap();
 
     let info = ImageInfo::new(16, 16, ColorType::N32, AlphaType::Premul);
@@ -40,8 +40,8 @@ fn clip_confines_content() {
     node.end_recording();
 
     let mut surface = Surface::new_raster_n32_premul(16, 16).unwrap();
-    surface.canvas.clear(color::WHITE);
-    node.draw_into(&mut surface.canvas);
+    surface.canvas().clear(color::WHITE);
+    node.draw_into(&mut surface.canvas());
     let image = surface.image_snapshot().unwrap();
 
     let info = ImageInfo::new(16, 16, ColorType::N32, AlphaType::Premul);
@@ -74,8 +74,8 @@ fn clip_path_confines_content() {
     node.end_recording();
 
     let mut surface = Surface::new_raster_n32_premul(16, 16).unwrap();
-    surface.canvas.clear(color::WHITE);
-    node.draw_into(&mut surface.canvas);
+    surface.canvas().clear(color::WHITE);
+    node.draw_into(&mut surface.canvas());
     let image = surface.image_snapshot().unwrap();
 
     let info = ImageInfo::new(16, 16, ColorType::N32, AlphaType::Premul);
@@ -105,8 +105,8 @@ fn alpha_reduces_opacity() {
     node.end_recording();
 
     let mut surface = Surface::new_raster_n32_premul(4, 4).unwrap();
-    surface.canvas.clear(color::WHITE);
-    node.draw_into(&mut surface.canvas);
+    surface.canvas().clear(color::WHITE);
+    node.draw_into(&mut surface.canvas());
     let image = surface.image_snapshot().unwrap();
 
     let info = ImageInfo::new(4, 4, ColorType::N32, AlphaType::Premul);

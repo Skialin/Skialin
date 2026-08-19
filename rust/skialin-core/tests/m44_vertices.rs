@@ -66,7 +66,7 @@ fn vertices_draws_a_triangle_without_crashing() {
     let vertices = Vertices::make_copy(VertexMode::Triangles, &positions, &[], &colors, &[]).unwrap();
 
     let mut surface = Surface::new_raster_n32_premul(16, 16).unwrap();
-    let mut canvas = surface.canvas;
+    let mut canvas = surface.canvas();
     let paint = Paint::new();
     canvas.draw_vertices(&vertices, skialin_core::BlendMode::SrcOver, &paint);
 }
@@ -83,7 +83,7 @@ fn vertices_with_indices_and_texs() {
 #[test]
 fn concat_44_draws_without_crashing() {
     let mut surface = Surface::new_raster_n32_premul(16, 16).unwrap();
-    let mut canvas = surface.canvas;
+    let mut canvas = surface.canvas();
     canvas.concat_44(&M44::translate(2.0, 2.0, 0.0));
     let mut paint = Paint::new();
     paint.set_color(color::RED);

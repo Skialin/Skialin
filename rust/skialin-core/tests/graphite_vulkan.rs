@@ -132,7 +132,7 @@ fn render_target_round_trip() {
     let info = ImageInfo::new(16, 16, ColorType::N32, AlphaType::Premul);
     let mut surface = skialin_core::Surface::new_graphite_render_target(&mut recorder, &info, false, None).expect("failed to create Graphite render-target surface");
 
-    surface.canvas.clear(0xFFFF0000);
+    surface.canvas().clear(0xFFFF0000);
 
     let mut recording = recorder.snap().expect("snap failed");
     let status = context.insert_recording(&mut recording, &mut surface);

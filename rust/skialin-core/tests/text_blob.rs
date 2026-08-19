@@ -68,7 +68,7 @@ fn draws_without_crashing() {
     let font = make_font();
     let blob = skialin_core::TextBlob::from_text("Hi", &font, TextEncoding::Utf8).unwrap();
     let mut surface = Surface::new_raster_n32_premul(64, 64).unwrap();
-    let mut canvas = surface.canvas;
+    let mut canvas = surface.canvas();
     let mut paint = Paint::new();
     paint.set_color(color::BLACK);
     canvas.draw_text_blob(&blob, 4.0, 20.0, &paint);

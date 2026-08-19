@@ -2,7 +2,7 @@ use skialin_core::{AlphaType, ColorSpace, ColorType, Data, FilterMode, Image, Im
 
 fn red_square_image() -> Image {
     let mut surface = Surface::new_raster_n32_premul(16, 16).unwrap();
-    surface.canvas.clear(0xFFFF0000);
+    surface.canvas().clear(0xFFFF0000);
     surface.image_snapshot().unwrap()
 }
 
@@ -11,7 +11,7 @@ fn red_square_image() -> Image {
 fn opaque_red_square_image() -> Image {
     let info = ImageInfo::new(16, 16, ColorType::N32, AlphaType::Opaque);
     let mut surface = Surface::new_raster(&info).unwrap();
-    surface.canvas.clear(0xFFFF0000);
+    surface.canvas().clear(0xFFFF0000);
     surface.image_snapshot().unwrap()
 }
 

@@ -15,7 +15,7 @@ fn record_and_playback_draws_matching_pixels() {
     assert!(picture.approximate_op_count(false) > 0);
 
     let mut surface = Surface::new_raster_n32_premul(16, 16).unwrap();
-    surface.canvas.draw_picture(&picture);
+    surface.canvas().draw_picture(&picture);
     let image = surface.image_snapshot().unwrap();
 
     let mut pixels = vec![0u8; 16 * 16 * 4];

@@ -28,7 +28,7 @@ pub extern "system" fn Java_org_skialin_SVGCanvasNative_nMake(
 
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_SVGCanvasNative_nGetCanvas(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jlong {
-    unsafe { borrow_mut::<SVGCanvas>(ptr) }.canvas.as_raw() as jlong
+    unsafe { borrow_mut::<SVGCanvas>(ptr) }.canvas().as_raw() as jlong
 }
 
 #[no_mangle]
