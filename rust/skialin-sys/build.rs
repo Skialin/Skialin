@@ -87,6 +87,14 @@ fn main() {
             .include(&shim_include)
             .include(skia_dir.join("include/third_party/vulkan"))
             .define("SK_USE_INTERNAL_VULKAN_HEADERS", None)
+            // Skia's GN release build compiles with NDEBUG, which
+            // SkLoadUserConfig.h turns into SK_RELEASE. Without it these
+            // translation units get SK_DEBUG instead, so their copies of Skia's
+            // header-inline code carry asserts and debug-only members that
+            // libskia's do not -- an ODR mismatch that surfaced as
+            // "SkRefCnt.h: fatal error: fRefCnt was 0" once force_link.cpp
+            // started actually emitting those copies.
+            .define("NDEBUG", None)
             .warnings(false);
         // Skia applies gn/skia/BUILD.gn's "no_rtti" config to every one of its
         // own targets, so libskia has no typeinfo for any Skia class. Deriving
