@@ -71,8 +71,6 @@ impl Bitmap {
         unsafe { self.0.eraseARGB(a as u32, r as u32, g as u32, b as u32) };
     }
 
-    /// Raw view of the pixel buffer, valid until the next call that
-    /// reallocates pixels (e.g. `alloc_pixels`).
     pub fn pixels(&mut self) -> &mut [u8] {
         let len = self.row_bytes() * self.height().max(0) as usize;
         let ptr = unsafe { self.0.getPixels() } as *mut u8;

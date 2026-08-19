@@ -62,15 +62,12 @@ impl From<ClipOp> for sys::SkClipOp {
     }
 }
 
-/// Borrowed for the lifetime of the [`crate::Surface`] it was obtained from.
 pub struct Canvas<'a> {
     pub(crate) ptr: *mut sys::SkCanvas,
     pub(crate) _marker: PhantomData<&'a mut ()>,
 }
 
 impl<'a> Canvas<'a> {
-    /// # Safety
-    /// `ptr` must point to a live `SkCanvas` for the duration of `'a`.
     pub unsafe fn from_raw(ptr: *mut sys::SkCanvas) -> Self {
         Canvas { ptr, _marker: PhantomData }
     }
@@ -241,7 +238,6 @@ impl<'a> Canvas<'a> {
         unsafe { self.as_mut().drawImage2(image.0, x, y, &sk_sampling, paint_ptr) };
     }
 
-    /// `src` defaults to the whole image when `None`.
     #[allow(clippy::too_many_arguments)]
     pub fn draw_image_rect(&mut self, image: &Image, src: Option<Rect>, dst: Rect, sampling: SamplingOptions, paint: Option<&Paint>, constraint: SrcRectConstraint) {
         let sk_dst: sys::SkRect = dst.into();
@@ -257,9 +253,6 @@ impl<'a> Canvas<'a> {
         }
     }
 
-    /// Draws `image` as a 9-patch: the `center` region scales to fill the
-    /// interior of `dst` while the surrounding edges/corners scale only
-    /// along one axis (or not at all), keeping border art crisp.
     pub fn draw_image_nine(&mut self, image: &Image, center: IRect, dst: Rect, filter: FilterMode, paint: Option<&Paint>) {
         let sk_center: sys::SkIRect = center.into();
         let sk_dst: sys::SkRect = dst.into();
@@ -267,9 +260,6 @@ impl<'a> Canvas<'a> {
         unsafe { self.as_mut().drawImageNine(image.0, &sk_center, &sk_dst, filter.into(), paint_ptr) };
     }
 
-    /// Saves the canvas state, then redirects drawing to a new layer.
-    /// `bounds`, if given, is a hint for the layer's extent. Returns the
-    /// new save count, for [`Self::restore_to_count`].
     pub fn save_layer(&mut self, bounds: Option<Rect>, paint: Option<&Paint>) -> i32 {
         let sk_bounds: Option<sys::SkRect> = bounds.map(Into::into);
         let bounds_ptr = sk_bounds.as_ref().map_or(std::ptr::null(), |r| r as *const sys::SkRect);
@@ -277,10 +267,6 @@ impl<'a> Canvas<'a> {
         unsafe { self.as_mut().saveLayer(bounds_ptr, paint_ptr) }
     }
 
-    /// Like [`Self::save_layer`], but `backdrop`, if given, filters the
-    /// current layer's content before it's drawn into the new one (instead
-    /// of the new layer starting out transparent-black). `flags` is
-    /// `SkCanvas::SaveLayerFlags` bits.
     pub fn save_layer_with_backdrop(&mut self, bounds: Option<Rect>, paint: Option<&Paint>, backdrop: Option<&crate::ImageFilter>, flags: u32) -> i32 {
         let sk_bounds: Option<sys::SkRect> = bounds.map(Into::into);
         let bounds_ptr = sk_bounds.as_ref().map_or(std::ptr::null(), |r| r as *const sys::SkRect);
@@ -297,7 +283,6 @@ impl<'a> Canvas<'a> {
         unsafe { sys::skialin_bridge_Canvas_drawPicture(self.ptr, picture.0) };
     }
 
-    /// Draws the ring between `outer` and `inner`; `inner` must be contained within `outer`.
     pub fn draw_drrect(&mut self, outer: &RRect, inner: &RRect, paint: &Paint) {
         unsafe { sys::skialin_bridge_Canvas_drawDRRect(self.ptr, outer.0, inner.0, &*paint.0) };
     }
@@ -318,10 +303,6 @@ impl<'a> Canvas<'a> {
         unsafe { sys::skialin_bridge_Canvas_drawVertices(self.ptr, vertices.0, mode.into(), &*paint.0) };
     }
 
-    /// Draws a Coons patch: `cubics` is the 12-point boundary (4 cubic
-    /// Bezier edges sharing corner points), `colors` are the 4 corner
-    /// colors, `tex_coords` optionally maps a source image's 4 corners onto
-    /// the patch (via a shader on `paint`).
     pub fn draw_patch(&mut self, cubics: [Point; 12], colors: [Color; 4], tex_coords: Option<[Point; 4]>, mode: BlendMode, paint: &Paint) {
         let sk_cubics: Vec<sys::SkPoint> = cubics.iter().map(|&p| p.into()).collect();
         let sk_tex: Option<[sys::SkPoint; 4]> = tex_coords.map(|coords| std::array::from_fn(|i| coords[i].into()));
@@ -329,9 +310,6 @@ impl<'a> Canvas<'a> {
         unsafe { self.as_mut().drawPatch(sk_cubics.as_ptr(), colors.as_ptr(), tex_ptr, mode.into(), &*paint.0) };
     }
 
-    /// Attaches a key/value annotation to the document at `rect` (e.g. a
-    /// hyperlink or named destination when drawing into a PDF-backed
-    /// canvas); a no-op for raster/GPU canvases.
     pub fn draw_annotation(&mut self, rect: Rect, key: &str, value: Option<&Data>) {
         let sk_rect: sys::SkRect = rect.into();
         let key_cstr = std::ffi::CString::new(key).expect("annotation key must not contain a NUL byte");
@@ -339,7 +317,6 @@ impl<'a> Canvas<'a> {
         unsafe { self.as_mut().drawAnnotation(&sk_rect, key_cstr.as_ptr(), value_ptr) };
     }
 
-    /// Draws `drawable`, optionally transformed by `matrix`.
     pub fn draw_drawable(&mut self, drawable: &crate::Drawable, matrix: Option<&Matrix>) {
         let matrix_ptr = matrix.map_or(std::ptr::null(), |m| &m.0 as *const sys::SkMatrix);
         unsafe { self.as_mut().drawDrawable(drawable.as_raw(), matrix_ptr) };

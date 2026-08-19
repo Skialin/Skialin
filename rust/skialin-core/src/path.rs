@@ -70,7 +70,6 @@ impl From<AddPathMode> for sys::SkPath_AddPathMode {
     }
 }
 
-/// An immutable, drawable path snapshot. Produced from a [`PathBuilder`].
 pub struct Path(pub(crate) *mut sys::SkPath);
 
 impl Path {
@@ -90,14 +89,10 @@ impl Path {
         unsafe { (*self.0).contains(point.into()) }
     }
 
-    /// Combines `one` and `two` with the given boolean operation. `None` if
-    /// the operation couldn't produce a result.
     pub fn op(one: &Path, two: &Path, op: PathOp) -> Option<Path> {
         unsafe { Self::from_raw(sys::skialin_bridge_Path_op(one.0, two.0, op.into())) }
     }
 
-    /// A path with the same non-overlapping-contour area as this one,
-    /// with self-intersections removed. `None` on failure.
     pub fn simplify(&self) -> Option<Path> {
         unsafe { Self::from_raw(sys::skialin_bridge_Path_simplify(self.0)) }
     }
@@ -161,9 +156,6 @@ impl Drop for Path {
     }
 }
 
-/// Mutable path construction, mirroring Skia's `SkPathBuilder`. Call
-/// [`PathBuilder::snapshot`] to obtain a drawable [`Path`] without
-/// consuming the builder, or [`PathBuilder::detach`] to take it and reset.
 pub struct PathBuilder(Box<sys::SkPathBuilder>);
 
 impl PathBuilder {
@@ -303,19 +295,14 @@ impl PathBuilder {
         unsafe { sys::skialin_bridge_PathBuilder_computeBounds(&*self.0) }.into()
     }
 
-    /// Snapshots the current contents into a drawable [`Path`] without
-    /// consuming the builder.
     pub fn snapshot(&self) -> Path {
         Path(unsafe { sys::skialin_bridge_PathBuilder_snapshot(&*self.0, std::ptr::null()) })
     }
 
-    /// Snapshots and applies `matrix`, without consuming the builder.
     pub fn snapshot_with_matrix(&self, matrix: &Matrix) -> Path {
         Path(unsafe { sys::skialin_bridge_PathBuilder_snapshot(&*self.0, &matrix.0) })
     }
 
-    /// Takes the current contents into a drawable [`Path`], resetting the
-    /// builder to empty.
     pub fn detach(&mut self) -> Path {
         Path(unsafe { sys::skialin_bridge_PathBuilder_detach(&mut *self.0, std::ptr::null()) })
     }

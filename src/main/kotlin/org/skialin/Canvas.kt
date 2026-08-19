@@ -197,7 +197,6 @@ class Canvas internal constructor(
         paint?.nativePtr ?: 0L,
     )
 
-    /** [src] defaults to the whole image when `null`. */
     fun drawImageRect(
         image: Image,
         dst: Rect,
@@ -223,8 +222,6 @@ class Canvas internal constructor(
         constraint.ordinal,
     )
 
-    /** Draws [image] as a 9-patch: [center] scales to fill the interior of [dst], while the
-     * surrounding edges/corners scale only along one axis (or not at all). */
     fun drawImageNine(
         image: Image,
         center: IRect,
@@ -243,9 +240,6 @@ class Canvas internal constructor(
         paint?.nativePtr ?: 0L,
     )
 
-    /** Draws a Coons patch: [cubics] is the 12-point boundary (4 cubic Bezier edges sharing
-     * corner points), [colors] are the 4 corner colors, [texCoords] optionally maps a source
-     * image's 4 corners onto the patch via a shader on [paint]. */
     fun drawPatch(
         cubics: Array<Point>,
         colors: Array<Color>,
@@ -273,8 +267,6 @@ class Canvas internal constructor(
         CanvasNative.nDrawPatch(ptr, flatCubics, colors.toIntArray(), flatTex, mode.ordinal, paint.nativePtr)
     }
 
-    /** Attaches a key/value annotation to the document at [rect] (e.g. a hyperlink or named
-     * destination when drawing into a PDF-backed canvas); a no-op for raster/GPU canvases. */
     fun drawAnnotation(
         rect: Rect,
         key: String,
@@ -305,7 +297,6 @@ class Canvas internal constructor(
         paint: Paint? = null,
     ) = CanvasNative.nDrawPictureMatrix(ptr, picture.nativePtr, matrix?.values, paint?.nativePtr ?: 0L)
 
-    /** Draws the ring between [outer] and [inner]; [inner] must be contained within [outer]. */
     fun drawDRRect(
         outer: RRect,
         inner: RRect,
@@ -376,7 +367,6 @@ class Canvas internal constructor(
         paint: Paint,
     ) = drawMesh(VertexMode.TRIANGLE_FAN, positions, colors, texCoords, indices, blendMode, paint)
 
-    /** Concatenates a 4x4 local-to-device transform onto the canvas's current matrix. */
     fun concat44(matrix: M44) = CanvasNative.nConcat44(ptr, matrix.nativePtr)
 
     fun concat(matrix: Matrix33) = CanvasNative.nConcat(ptr, matrix.values)
@@ -399,19 +389,11 @@ class Canvas internal constructor(
         y: Int = 0,
     ): Boolean = CanvasNative.nWritePixels(ptr, bitmap.nativePtr, x, y)
 
-    /**
-     * Saves the canvas state, then redirects drawing to a new layer. [bounds], if given, is
-     * a hint for the layer's extent. Returns the new save count, for [restoreToCount].
-     */
     fun saveLayer(
         bounds: Rect? = null,
         paint: Paint? = null,
     ): Int = CanvasNative.nSaveLayer(ptr, bounds?.let { floatArrayOf(it.left, it.top, it.right, it.bottom) }, paint?.nativePtr ?: 0L)
 
-    /**
-     * Like [saveLayer], but [backdrop], if given, filters the current layer's content before
-     * it's drawn into the new one (instead of the new layer starting out transparent-black).
-     */
     fun saveLayer(
         bounds: Rect? = null,
         paint: Paint? = null,
@@ -426,7 +408,6 @@ class Canvas internal constructor(
             flags,
         )
 
-    /** Runs [block] between [save] and [restore]. */
     inline fun withSave(block: Canvas.() -> Unit) {
         save()
         try {
