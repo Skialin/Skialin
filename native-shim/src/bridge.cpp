@@ -158,6 +158,26 @@ SkRect skialin_bridge_PathBuilder_computeBounds(const SkPathBuilder* builder) {
     return builder->computeBounds();
 }
 
+int32_t skialin_bridge_Font_getEdging(const SkFont* font) {
+    return static_cast<int32_t>(font->getEdging());
+}
+
+void skialin_bridge_Font_setEdging(SkFont* font, int32_t edging) {
+    SkFont::Edging value;
+    switch (edging) {
+        case 1:
+            value = SkFont::Edging::kAntiAlias;
+            break;
+        case 2:
+            value = SkFont::Edging::kSubpixelAntiAlias;
+            break;
+        default:
+            value = SkFont::Edging::kAlias;
+            break;
+    }
+    font->setEdging(value);
+}
+
 void skialin_bridge_Canvas_getTotalMatrix(const SkCanvas* canvas, SkMatrix* outMatrix) {
     *outMatrix = canvas->getTotalMatrix();
 }
@@ -1042,7 +1062,9 @@ size_t skialin_bridge_TextStyle_countFontFeatures(const skia::textlayout::TextSt
 }
 
 SkData* skialin_bridge_TextStyle_fontFeatureName(const skia::textlayout::TextStyle* style, size_t index) {
-    const SkString& name = style->getFontFeatures()[index].fName;
+    // don't inline `features` (thanks c++)
+    const auto features = style->getFontFeatures();
+    const SkString& name = features[index].fName;
     return SkData::MakeWithCopy(name.c_str(), name.size()).release();
 }
 

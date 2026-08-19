@@ -98,6 +98,12 @@ SkPoint skialin_bridge_Matrix_mapPoint(const SkMatrix* matrix, SkPoint point);
 SkRect skialin_bridge_Matrix_mapRect(const SkMatrix* matrix, const SkRect* rect);
 SkRect skialin_bridge_PathBuilder_computeBounds(const SkPathBuilder* builder);
 void skialin_bridge_Canvas_getTotalMatrix(const SkCanvas* canvas, SkMatrix* outMatrix);
+
+/* SkFont::Edging is a nested C++ enum whose bindgen name varies with the
+ * target Clang ABI. Keep the Rust-facing ABI stable by representing it as
+ * 0 = alias, 1 = antialias, 2 = subpixel antialias. */
+int32_t skialin_bridge_Font_getEdging(const SkFont* font);
+void skialin_bridge_Font_setEdging(SkFont* font, int32_t edging);
 /* Full SkCanvas::SaveLayerRec overload: bounds/paint/backdrop may each be
  * null. backdrop is borrowed (ref'd internally), not consumed. flags is
  * SkCanvas::SaveLayerFlags bits. Returns the new save count. */

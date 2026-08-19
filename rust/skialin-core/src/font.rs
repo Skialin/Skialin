@@ -7,21 +7,19 @@ pub enum Edging {
     SubpixelAntiAlias,
 }
 
-impl From<Edging> for sys::SkFont_Edging {
-    fn from(edging: Edging) -> Self {
-        (match edging {
-            Edging::Alias => sys::SkFont_Edging_kAlias,
-            Edging::AntiAlias => sys::SkFont_Edging_kAntiAlias,
-            Edging::SubpixelAntiAlias => sys::SkFont_Edging_kSubpixelAntiAlias,
-        }) as sys::SkFont_Edging
+impl Edging {
+    fn as_raw(self) -> i32 {
+        match self {
+            Edging::Alias => 0,
+            Edging::AntiAlias => 1,
+            Edging::SubpixelAntiAlias => 2,
+        }
     }
-}
 
-impl From<sys::SkFont_Edging> for Edging {
-    fn from(edging: sys::SkFont_Edging) -> Self {
+    fn from_raw(edging: i32) -> Self {
         match edging {
-            sys::SkFont_Edging_kAntiAlias => Edging::AntiAlias,
-            sys::SkFont_Edging_kSubpixelAntiAlias => Edging::SubpixelAntiAlias,
+            1 => Edging::AntiAlias,
+            2 => Edging::SubpixelAntiAlias,
             _ => Edging::Alias,
         }
     }
@@ -169,11 +167,11 @@ impl Font {
     }
 
     pub fn edging(&self) -> Edging {
-        unsafe { sys::SkFont_getEdging(self.0) }.into()
+        Edging::from_raw(unsafe { sys::skialin_bridge_Font_getEdging(self.0) })
     }
 
     pub fn set_edging(&mut self, edging: Edging) {
-        unsafe { sys::SkFont_setEdging(self.0, edging.into()) };
+        unsafe { sys::skialin_bridge_Font_setEdging(self.0, edging.as_raw()) };
     }
 
     pub fn hinting(&self) -> Hinting {
