@@ -262,7 +262,10 @@ fn link_skia(skia_dir: &Path) {
             println!("cargo:rustc-link-lib=framework={framework}");
         }
     } else if cfg!(target_os = "linux") {
-        for lib in ["fontconfig", "freetype"] {
+        // GL is for Skia's GLX interface (GrGLMakeGLXInterface.cpp calls
+        // glXGetProcAddress/glXGetCurrentContext directly), which args.gn pulls
+        // in via skia_use_gl.
+        for lib in ["fontconfig", "freetype", "GL"] {
             println!("cargo:rustc-link-lib=dylib={lib}");
         }
     }
