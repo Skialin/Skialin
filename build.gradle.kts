@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "dev.lunasa"
-version = "1.0-SNAPSHOT"
+version = (findProperty("skialin.version") as String?) ?: "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -190,6 +190,17 @@ publishing {
         maven {
             name = "local"
             url = uri(layout.buildDirectory.dir("publishing-repo"))
+        }
+        val releaseUrl = System.getenv("SKIALIN_MAVEN_REPO_URL")
+        if (releaseUrl != null) {
+            maven {
+                name = "release"
+                url = uri(releaseUrl)
+                credentials {
+                    username = System.getenv("SKIALIN_MAVEN_REPO_USERNAME")
+                    password = System.getenv("SKIALIN_MAVEN_REPO_PASSWORD")
+                }
+            }
         }
     }
 }

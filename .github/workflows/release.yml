@@ -1,7 +1,12 @@
-name: Publish dry run
+name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (e.g. 1.2.0)"
+        required: true
+        type: string
 
 jobs:
   publish:
@@ -23,6 +28,10 @@ jobs:
     defaults:
       run:
         shell: bash
+    env:
+      SKIALIN_MAVEN_REPO_URL: ${{ secrets.SKIALIN_MAVEN_REPO_URL }}
+      SKIALIN_MAVEN_REPO_USERNAME: ${{ secrets.SKIALIN_MAVEN_REPO_USERNAME }}
+      SKIALIN_MAVEN_REPO_PASSWORD: ${{ secrets.SKIALIN_MAVEN_REPO_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -56,9 +65,9 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             rust/target
-          key: cargo-${{ matrix.name }}-${{ hashFiles('rust/Cargo.lock') }}
+          key: cargo-release-${{ matrix.name }}-${{ hashFiles('rust/Cargo.lock') }}
           restore-keys: |
-            cargo-${{ matrix.name }}-
+            cargo-release-${{ matrix.name }}-
 
       - name: Cache Gradle
         uses: actions/cache@v4
@@ -66,9 +75,9 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ matrix.name }}-${{ hashFiles('**/*.gradle*', 'gradle/wrapper/gradle-wrapper.properties') }}
+          key: gradle-release-${{ matrix.name }}-${{ hashFiles('**/*.gradle*', 'gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
-            gradle-${{ matrix.name }}-
+            gradle-release-${{ matrix.name }}-
 
       - name: Sync Skia third-party deps
         working-directory: external/skia
@@ -85,10 +94,8 @@ jobs:
       - name: Build Skia
         run: ./gradlew buildSkia --console=plain
 
-      - name: Publish to local repo
-        run: ./gradlew publish -Pskialin.buildNative=true --console=plain
+      - name: Test
+        run: ./gradlew test -Pskialin.buildNative=true --console=plain
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: skialin-publish-${{ matrix.name }}
-          path: build/publishing-repo
+      - name: Publish
+        run: ./gradlew publish -Pskialin.buildNative=true -Pskialin.version=${{ inputs.version }} --console=plain
