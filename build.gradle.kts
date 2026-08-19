@@ -138,8 +138,16 @@ fun registerCopyNativeLib(
     dependsOn(cargoBuild)
     from(rustDir.dir("target/$cargoProfile")) {
         include(nativeLibName)
-        into(nativePlatformDir)
     }
+    into(destination.map { it.dir("natives/$nativePlatformDir") })
+}
+
+fun registerCopyIcuData(
+    name: String,
+    destination: Provider<Directory>,
+) = tasks.register<Copy>(name) {
+    onlyIf { buildNative }
+    dependsOn(cargoBuild)
     from(skiaLibDir) {
         include("icudtl.dat")
     }
@@ -147,10 +155,16 @@ fun registerCopyNativeLib(
 }
 
 val copyNativeLib = registerCopyNativeLib("copyNativeLib", layout.buildDirectory.dir("skialin-natives"))
+val copyIcuData = registerCopyIcuData("copyIcuData", layout.buildDirectory.dir("resources/main"))
 val copyNativeLibForTest = registerCopyNativeLib("copyNativeLibForTest", layout.buildDirectory.dir("resources/test"))
+val copyIcuDataForTest = registerCopyIcuData("copyIcuDataForTest", layout.buildDirectory.dir("resources/test"))
+
+tasks.named("processResources") {
+    dependsOn(copyIcuData)
+}
 
 tasks.named("processTestResources") {
-    dependsOn(copyNativeLibForTest)
+    dependsOn(copyNativeLibForTest, copyIcuDataForTest)
 }
 
 val nativesJar =
