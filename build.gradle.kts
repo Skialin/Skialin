@@ -96,7 +96,8 @@ val buildSkia =
     tasks.register<Exec>("buildSkia") {
         dependsOn(setupSkia)
         workingDir = skiaDir.asFile
-        val ninja = if (hostOs == "windows") "ninja.exe" else "ninja"
+        val ninjaName = if (hostOs == "windows") "ninja.exe" else "ninja"
+        val ninja = skiaDir.file("third_party/ninja/$ninjaName").asFile.absolutePath
         commandLine(
             ninja,
             "-C",
