@@ -111,6 +111,15 @@ impl Bitmap {
     pub fn notify_pixels_changed(&self) {
         unsafe { self.0.notifyPixelsChanged() };
     }
+
+    pub fn is_immutable(&self) -> bool {
+        unsafe { self.0.isImmutable() }
+    }
+
+    /// Marks this bitmap as immutable; irreversible, mirrors `SkBitmap::setImmutable`.
+    pub fn set_immutable(&mut self) {
+        unsafe { self.0.setImmutable() };
+    }
 }
 
 unsafe extern "C" fn release_install_pixels(_addr: *mut std::ffi::c_void, context: *mut std::ffi::c_void) {

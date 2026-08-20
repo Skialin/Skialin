@@ -35,7 +35,33 @@ class Typeface internal constructor(
         length: Long = getTableSize(tag),
     ): ByteArray = TypefaceNative.nTableData(nativePtr, tag, offset, length)
 
+    /** Clones this typeface with the given variable-font axis settings and/or font-collection
+     * (ttc/dfont) index applied. `axes` is a list of (four-byte axis tag, value) pairs, e.g.
+     * `FourByteTag('w','g','h','t') to 700f`. Returns `null` if the clone fails (e.g. a bad
+     * [collectionIndex]); an axis tag the font doesn't support is simply ignored by Skia, not an
+     * error. Mirrors `SkTypeface::makeClone(const SkFontArguments&)`. */
+    fun makeClone(
+        axes: List<Pair<Int, Float>> = emptyList(),
+        collectionIndex: Int = 0,
+    ): Typeface? {
+        val ptr =
+            TypefaceNative.nMakeClone(
+                nativePtr,
+                axes.map { it.first }.toIntArray(),
+                axes.map { it.second }.toFloatArray(),
+                collectionIndex,
+            )
+        return if (ptr == 0L) null else Typeface(ptr)
+    }
+
     companion object {
+        /** Packs a 4-character axis/table tag (e.g. `"wght"`) into Skia's four-byte-tag
+         * encoding, matching `SkSetFourByteTag`/`SK_FOURCC`. */
+        fun fourByteTag(tag: String): Int {
+            require(tag.length == 4) { "tag must be exactly 4 characters: $tag" }
+            return (tag[0].code shl 24) or (tag[1].code shl 16) or (tag[2].code shl 8) or tag[3].code
+        }
+
         fun makeEmpty(): Typeface = Typeface(TypefaceNative.nMakeEmpty())
     }
 }
@@ -87,4 +113,11 @@ private object TypefaceNative {
         offset: Long,
         length: Long,
     ): ByteArray
+
+    external fun nMakeClone(
+        ptr: Long,
+        axisTags: IntArray,
+        axisValues: FloatArray,
+        collectionIndex: Int,
+    ): Long
 }

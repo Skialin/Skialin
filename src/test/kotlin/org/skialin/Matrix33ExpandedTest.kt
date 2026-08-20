@@ -31,4 +31,24 @@ class Matrix33ExpandedTest {
         assertEquals(5f, mapped.x)
         assertEquals(10f, mapped.y)
     }
+
+    @Test
+    fun valuesExposesRawRowMajorComponents() {
+        val values = Matrix33.makeTranslate(3f, 4f).values()
+        assertEquals(9, values.size)
+        // Row-major: [scaleX, skewX, translateX, skewY, scaleY, translateY, persp0, persp1, persp2]
+        assertEquals(1f, values[0])
+        assertEquals(3f, values[2])
+        assertEquals(1f, values[4])
+        assertEquals(4f, values[5])
+        assertEquals(1f, values[8])
+    }
+
+    @Test
+    fun makeFromValuesRoundTripsThroughValues() {
+        val original = Matrix33.makeScale(2f, 3f).postConcat(Matrix33.makeTranslate(5f, 6f))
+        val rebuilt = Matrix33.makeFromValues(original.values())
+        assertEquals(original, rebuilt)
+        assertEquals(original.mapPoint(Point(1f, 1f)), rebuilt.mapPoint(Point(1f, 1f)))
+    }
 }

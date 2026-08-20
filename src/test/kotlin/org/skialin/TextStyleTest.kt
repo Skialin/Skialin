@@ -123,6 +123,34 @@ class TextStyleTest {
     }
 
     @Test
+    fun baselineShiftRoundtrips() {
+        TextStyle().use { style ->
+            assertEquals(0f, style.baselineShift)
+            style.baselineShift = -5f
+            assertEquals(-5f, style.baselineShift)
+        }
+    }
+
+    @Test
+    fun halfLeadingRoundtrips() {
+        TextStyle().use { style ->
+            assertTrue(!style.halfLeading)
+            style.halfLeading = true
+            assertTrue(style.halfLeading)
+        }
+    }
+
+    @Test
+    fun fontEdgingAndHintingRoundtrip() {
+        TextStyle().use { style ->
+            style.fontEdging = TextStyle.FontEdging.SUBPIXEL_ANTI_ALIAS
+            assertEquals(TextStyle.FontEdging.SUBPIXEL_ANTI_ALIAS, style.fontEdging)
+            style.fontHinting = TextStyle.FontHinting.FULL
+            assertEquals(TextStyle.FontHinting.FULL, style.fontHinting)
+        }
+    }
+
+    @Test
     fun cloneIsIndependent() {
         TextStyle().use { style ->
             style.fontSize = 20f

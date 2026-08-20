@@ -105,3 +105,13 @@ pub extern "system" fn Java_org_skialin_BitmapNative_nExtractAlpha(_env: JNIEnv,
 pub extern "system" fn Java_org_skialin_BitmapNative_nNotifyPixelsChanged(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) {
     unsafe { borrow::<Bitmap>(ptr) }.notify_pixels_changed();
 }
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_BitmapNative_nIsImmutable(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jboolean {
+    unsafe { borrow::<Bitmap>(ptr) }.is_immutable() as jboolean
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_BitmapNative_nSetImmutable(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) {
+    unsafe { borrow_mut::<Bitmap>(ptr) }.set_immutable();
+}

@@ -47,6 +47,11 @@ class ParagraphStyle internal constructor(
         get() = ParagraphStyleNative.nTextHeightBehavior(nativePtr)
         set(value) = ParagraphStyleNative.nSetTextHeightBehavior(nativePtr, value)
 
+    /** Whether `\t` characters are replaced by aligned whitespace runs during shaping. */
+    var replaceTabCharacters: Boolean
+        get() = ParagraphStyleNative.nReplaceTabCharacters(nativePtr)
+        set(value) = ParagraphStyleNative.nSetReplaceTabCharacters(nativePtr, value)
+
     /** The default style new text runs start from. */
     var textStyle: TextStyle
         get() = TextStyle(ParagraphStyleNative.nTextStyle(nativePtr))
@@ -107,6 +112,13 @@ private object ParagraphStyleNative {
     external fun nSetTextHeightBehavior(
         ptr: Long,
         behavior: Int,
+    )
+
+    external fun nReplaceTabCharacters(ptr: Long): Boolean
+
+    external fun nSetReplaceTabCharacters(
+        ptr: Long,
+        value: Boolean,
     )
 
     external fun nTextStyle(ptr: Long): Long

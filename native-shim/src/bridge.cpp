@@ -33,6 +33,8 @@
 #include "modules/skparagraph/include/ParagraphBuilder.h"
 #include "modules/skparagraph/include/Paragraph.h"
 #include "modules/skparagraph/include/Metrics.h"
+#include "modules/skparagraph/include/TypefaceFontProvider.h"
+#include "include/core/SkFontArguments.h"
 #include "modules/skunicode/include/SkUnicode_icu.h"
 #include "include/core/SkColorFilter.h"
 #include "include/core/SkImageFilter.h"
@@ -811,6 +813,18 @@ SkData* skialin_bridge_Typeface_familyName(const SkTypeface* typeface) {
     return SkData::MakeWithCopy(name.c_str(), name.size()).release();
 }
 
+SkTypeface* skialin_bridge_Typeface_makeClone(const SkTypeface* typeface, const uint32_t* axisTags, const float* axisValues, int32_t axisCount, int32_t collectionIndex) {
+    std::vector<SkFontArguments::VariationPosition::Coordinate> coords;
+    coords.reserve(axisCount);
+    for (int32_t i = 0; i < axisCount; i++) {
+        coords.push_back({static_cast<SkFourByteTag>(axisTags[i]), axisValues[i]});
+    }
+    SkFontArguments args;
+    args.setCollectionIndex(collectionIndex);
+    args.setVariationDesignPosition({coords.data(), static_cast<int>(coords.size())});
+    return typeface->makeClone(args).release();
+}
+
 void skialin_bridge_FontMgr_unref(SkFontMgr* mgr) {
     SkSafeUnref(mgr);
 }
@@ -850,6 +864,20 @@ SkTypeface* skialin_bridge_FontMgr_makeFromData(const SkFontMgr* mgr, SkData* da
 
 SkTypeface* skialin_bridge_FontMgr_makeFromFile(const SkFontMgr* mgr, const char* path, int32_t ttcIndex) {
     return mgr->makeFromFile(path, ttcIndex).release();
+}
+
+SkFontMgr* skialin_bridge_TypefaceFontProvider_new(void) {
+    return sk_make_sp<skia::textlayout::TypefaceFontProvider>().release();
+}
+
+size_t skialin_bridge_TypefaceFontProvider_registerTypeface(SkFontMgr* provider, SkTypeface* typeface) {
+    auto* p = static_cast<skia::textlayout::TypefaceFontProvider*>(provider);
+    return p->registerTypeface(sk_ref_sp(typeface));
+}
+
+size_t skialin_bridge_TypefaceFontProvider_registerTypefaceAlias(SkFontMgr* provider, SkTypeface* typeface, const char* alias, size_t aliasLength) {
+    auto* p = static_cast<skia::textlayout::TypefaceFontProvider*>(provider);
+    return p->registerTypeface(sk_ref_sp(typeface), SkString(alias, aliasLength));
 }
 
 SkFont* skialin_bridge_Font_MakeDefault(void) {
@@ -1035,6 +1063,38 @@ void skialin_bridge_TextStyle_setHeightOverride(skia::textlayout::TextStyle* sty
     style->setHeightOverride(heightOverride);
 }
 
+float skialin_bridge_TextStyle_getBaselineShift(const skia::textlayout::TextStyle* style) {
+    return style->getBaselineShift();
+}
+
+void skialin_bridge_TextStyle_setBaselineShift(skia::textlayout::TextStyle* style, float baselineShift) {
+    style->setBaselineShift(baselineShift);
+}
+
+bool skialin_bridge_TextStyle_getHalfLeading(const skia::textlayout::TextStyle* style) {
+    return style->getHalfLeading();
+}
+
+void skialin_bridge_TextStyle_setHalfLeading(skia::textlayout::TextStyle* style, bool halfLeading) {
+    style->setHalfLeading(halfLeading);
+}
+
+int32_t skialin_bridge_TextStyle_getFontEdging(const skia::textlayout::TextStyle* style) {
+    return static_cast<int32_t>(style->getFontEdging());
+}
+
+void skialin_bridge_TextStyle_setFontEdging(skia::textlayout::TextStyle* style, int32_t edging) {
+    style->setFontEdging(static_cast<SkFont::Edging>(edging));
+}
+
+int32_t skialin_bridge_TextStyle_getFontHinting(const skia::textlayout::TextStyle* style) {
+    return static_cast<int32_t>(style->getFontHinting());
+}
+
+void skialin_bridge_TextStyle_setFontHinting(skia::textlayout::TextStyle* style, int32_t hinting) {
+    style->setFontHinting(static_cast<SkFontHinting>(hinting));
+}
+
 int32_t skialin_bridge_TextStyle_getShadows(const skia::textlayout::TextStyle* style, uint32_t* outColors, float* outFloats, int32_t capacity) {
     std::vector<skia::textlayout::TextShadow> shadows = style->getShadows();
     int32_t count = static_cast<int32_t>(shadows.size());
@@ -1184,6 +1244,14 @@ int32_t skialin_bridge_ParagraphStyle_getTextHeightBehavior(const skia::textlayo
 
 void skialin_bridge_ParagraphStyle_setTextHeightBehavior(skia::textlayout::ParagraphStyle* style, int32_t behavior) {
     style->setTextHeightBehavior(static_cast<skia::textlayout::TextHeightBehavior>(behavior));
+}
+
+bool skialin_bridge_ParagraphStyle_getReplaceTabCharacters(const skia::textlayout::ParagraphStyle* style) {
+    return style->getReplaceTabCharacters();
+}
+
+void skialin_bridge_ParagraphStyle_setReplaceTabCharacters(skia::textlayout::ParagraphStyle* style, bool value) {
+    style->setReplaceTabCharacters(value);
 }
 
 skia::textlayout::TextStyle* skialin_bridge_ParagraphStyle_getTextStyle(const skia::textlayout::ParagraphStyle* style) {
@@ -1422,6 +1490,22 @@ size_t skialin_bridge_Paragraph_lineNumber(skia::textlayout::Paragraph* paragrap
 
 int32_t skialin_bridge_Paragraph_unresolvedGlyphs(skia::textlayout::Paragraph* paragraph) {
     return paragraph->unresolvedGlyphs();
+}
+
+int32_t skialin_bridge_Paragraph_unresolvedCodepoints(skia::textlayout::Paragraph* paragraph, int32_t* outBuf, int32_t capacity) {
+    std::unordered_set<SkUnichar> codepoints = paragraph->unresolvedCodepoints();
+    int32_t count = static_cast<int32_t>(codepoints.size());
+    int32_t toWrite = count < capacity ? count : capacity;
+    int32_t i = 0;
+    for (SkUnichar cp : codepoints) {
+        if (i >= toWrite) break;
+        outBuf[i++] = static_cast<int32_t>(cp);
+    }
+    return count;
+}
+
+void skialin_bridge_Paragraph_markDirty(skia::textlayout::Paragraph* paragraph) {
+    paragraph->markDirty();
 }
 
 int32_t skialin_bridge_Paragraph_getGlyphPositionAtCoordinate(skia::textlayout::Paragraph* paragraph, float dx, float dy, int32_t* affinity) {

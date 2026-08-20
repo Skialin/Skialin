@@ -56,6 +56,15 @@ class Paragraph internal constructor(
     val unresolvedGlyphs: Int?
         get() = ParagraphNative.nUnresolvedGlyphs(nativePtr).takeIf { it >= 0 }
 
+    /** The codepoints skparagraph could not resolve to a glyph during shaping - the actual
+     * characters behind [unresolvedGlyphs]'s count, for font-fallback-registry lookups. */
+    val unresolvedCodepoints: IntArray
+        get() = ParagraphNative.nUnresolvedCodepoints(nativePtr)
+
+    /** Invalidates cached layout state so the next [layout] call redoes shaping/positioning
+     * instead of being a no-op for an unchanged width. */
+    fun markDirty() = ParagraphNative.nMarkDirty(nativePtr)
+
     fun glyphPositionAtCoordinate(
         dx: Float,
         dy: Float,
@@ -185,6 +194,10 @@ private object ParagraphNative {
     external fun nLineNumber(ptr: Long): Long
 
     external fun nUnresolvedGlyphs(ptr: Long): Int
+
+    external fun nUnresolvedCodepoints(ptr: Long): IntArray
+
+    external fun nMarkDirty(ptr: Long)
 
     external fun nGlyphPositionAtCoordinate(
         ptr: Long,

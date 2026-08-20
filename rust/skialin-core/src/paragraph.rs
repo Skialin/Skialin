@@ -93,6 +93,24 @@ impl Paragraph {
         (count >= 0).then_some(count)
     }
 
+    /// The codepoints skparagraph could not resolve to a glyph during shaping - the actual
+    /// characters behind [`Self::unresolved_glyphs`]'s count, for font-fallback-registry lookups.
+    pub fn unresolved_codepoints(&mut self) -> Vec<i32> {
+        let count = unsafe { sys::skialin_bridge_Paragraph_unresolvedCodepoints(self.0, std::ptr::null_mut(), 0) };
+        if count <= 0 {
+            return Vec::new();
+        }
+        let mut buf = vec![0i32; count as usize];
+        unsafe { sys::skialin_bridge_Paragraph_unresolvedCodepoints(self.0, buf.as_mut_ptr(), count) };
+        buf
+    }
+
+    /// Invalidates cached layout state so the next [`Self::layout`] call redoes
+    /// shaping/positioning instead of being a no-op for an unchanged width.
+    pub fn mark_dirty(&mut self) {
+        unsafe { sys::skialin_bridge_Paragraph_markDirty(self.0) };
+    }
+
     pub fn glyph_position_at_coordinate(&mut self, dx: f32, dy: f32) -> GlyphPosition {
         let mut affinity = 0i32;
         let position = unsafe { sys::skialin_bridge_Paragraph_getGlyphPositionAtCoordinate(self.0, dx, dy, &mut affinity) };

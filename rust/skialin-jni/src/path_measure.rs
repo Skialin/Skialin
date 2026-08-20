@@ -11,6 +11,12 @@ pub extern "system" fn Java_org_skialin_PathMeasureNative_nNew(_env: JNIEnv, _cl
     box_ptr(PathMeasure::new(path, force_closed != 0, res_scale))
 }
 
+/// A path measure with no path attached; call `setPath` before using it.
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PathMeasureNative_nNewEmpty(_env: JNIEnv, _class: jni::objects::JClass) -> jlong {
+    box_ptr(PathMeasure::empty())
+}
+
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_PathMeasureNative_nRelease(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) {
     unsafe { drop_ptr::<PathMeasure>(ptr) };

@@ -47,6 +47,36 @@ class Path internal constructor(
 
     val generationId: Int get() = PathNative.nGenerationId(nativePtr)
 
+    /**
+     * Walks this path's verbs (move/line/quad/conic/cubic/close), mirroring `SkPath::Iter`.
+     *
+     * When [convertConicsToQuads] is true, conic segments are approximated with one or more
+     * [PathVerb.QUAD] segments instead of being reported as [PathVerb.CONIC]; [tolerance] controls
+     * the maximum deviation of the approximation from the true conic.
+     */
+    fun segments(
+        convertConicsToQuads: Boolean = false,
+        tolerance: Float = 0.25f,
+    ): List<PathSegment> {
+        val flat = PathNative.nSegments(nativePtr, convertConicsToQuads, tolerance)
+        val result = ArrayList<PathSegment>(flat.size / 10)
+        var i = 0
+        while (i < flat.size) {
+            val verb = PathVerb.entries[flat[i].toInt()]
+            val points =
+                arrayOf(
+                    Point(flat[i + 1], flat[i + 2]),
+                    Point(flat[i + 3], flat[i + 4]),
+                    Point(flat[i + 5], flat[i + 6]),
+                    Point(flat[i + 7], flat[i + 8]),
+                )
+            val conicWeight = flat[i + 9]
+            result.add(PathSegment(verb, points, conicWeight))
+            i += 10
+        }
+        return result
+    }
+
     companion object {
         /** Combines [one] and [two] with the given boolean operation. `null` if the operation couldn't produce a result. */
         fun op(
@@ -97,4 +127,29 @@ private object PathNative {
     external fun nPoints(ptr: Long): FloatArray
 
     external fun nGenerationId(ptr: Long): Int
+
+    external fun nSegments(
+        ptr: Long,
+        convertConicsToQuads: Boolean,
+        tolerance: Float,
+    ): FloatArray
+}
+
+/** A single verb in a [Path], as produced by [Path.segments]. Mirrors `SkPath::Verb`. */
+enum class PathVerb { MOVE, LINE, QUAD, CONIC, CUBIC, CLOSE }
+
+/**
+ * One segment of a [Path], as produced by [Path.segments]. The meaningful prefix of [points]
+ * depends on [verb]: MOVE=1, LINE=2, QUAD=3, CONIC=3, CUBIC=4, CLOSE=0. [conicWeight] is only
+ * meaningful when [verb] is [PathVerb.CONIC].
+ */
+data class PathSegment(
+    val verb: PathVerb,
+    val points: Array<Point>,
+    val conicWeight: Float,
+) {
+    override fun equals(other: Any?): Boolean =
+        other is PathSegment && verb == other.verb && points.contentEquals(other.points) && conicWeight == other.conicWeight
+
+    override fun hashCode(): Int = 31 * (31 * verb.hashCode() + points.contentHashCode()) + conicWeight.hashCode()
 }

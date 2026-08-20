@@ -8,7 +8,7 @@ pub enum Edging {
 }
 
 impl Edging {
-    fn as_raw(self) -> i32 {
+    pub(crate) fn as_raw(self) -> i32 {
         match self {
             Edging::Alias => 0,
             Edging::AntiAlias => 1,
@@ -16,7 +16,7 @@ impl Edging {
         }
     }
 
-    fn from_raw(edging: i32) -> Self {
+    pub(crate) fn from_raw(edging: i32) -> Self {
         match edging {
             1 => Edging::AntiAlias,
             2 => Edging::SubpixelAntiAlias,
@@ -41,6 +41,26 @@ impl From<Hinting> for sys::SkFontHinting {
             Hinting::Normal => sys::SkFontHinting_kNormal,
             Hinting::Full => sys::SkFontHinting_kFull,
         }) as sys::SkFontHinting
+    }
+}
+
+impl Hinting {
+    pub(crate) fn as_raw_i32(self) -> i32 {
+        match self {
+            Hinting::None => 0,
+            Hinting::Slight => 1,
+            Hinting::Normal => 2,
+            Hinting::Full => 3,
+        }
+    }
+
+    pub(crate) fn from_raw_i32(hinting: i32) -> Self {
+        match hinting {
+            0 => Hinting::None,
+            2 => Hinting::Normal,
+            3 => Hinting::Full,
+            _ => Hinting::Slight,
+        }
     }
 }
 

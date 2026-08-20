@@ -8,6 +8,11 @@ class FontCollection : Managed(FontCollectionNative.nNew(), FontCollectionNative
 
     fun setAssetFontManager(fontManager: FontMgr) = FontCollectionNative.nSetAssetFontManager(nativePtr, fontManager.nativePtr)
 
+    /** Same as [setAssetFontManager], but for a [TypefaceFontProvider] - the usual way to make
+     * in-memory-registered custom typefaces resolvable by name (including as a fallback source)
+     * during paragraph shaping. */
+    fun setAssetTypefaceProvider(provider: TypefaceFontProvider) = FontCollectionNative.nSetAssetTypefaceProvider(nativePtr, provider.nativePtr)
+
     fun setDynamicFontManager(fontManager: FontMgr) = FontCollectionNative.nSetDynamicFontManager(nativePtr, fontManager.nativePtr)
 
     fun setTestFontManager(fontManager: FontMgr) = FontCollectionNative.nSetTestFontManager(nativePtr, fontManager.nativePtr)
@@ -36,6 +41,11 @@ private object FontCollectionNative {
     external fun nSetAssetFontManager(
         ptr: Long,
         fontMgrPtr: Long,
+    )
+
+    external fun nSetAssetTypefaceProvider(
+        ptr: Long,
+        providerPtr: Long,
     )
 
     external fun nSetDynamicFontManager(

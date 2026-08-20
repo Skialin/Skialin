@@ -1,9 +1,43 @@
 use jni::sys::{jboolean, jdouble, jfloat, jfloatArray, jint, jlong, jobjectArray, jstring};
 use jni::JNIEnv;
 
-use skialin_core::{FontStyle, Paint, Shadow, TextDecoration, TextDecorationMode, TextDecorationStyle, TextStyle, Typeface};
+use skialin_core::{Edging, FontStyle, Hinting, Paint, Shadow, TextDecoration, TextDecorationMode, TextDecorationStyle, TextStyle, Typeface};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
+
+fn edging_from_ordinal(ordinal: jint) -> Edging {
+    match ordinal {
+        0 => Edging::Alias,
+        2 => Edging::SubpixelAntiAlias,
+        _ => Edging::AntiAlias,
+    }
+}
+
+fn edging_to_ordinal(edging: Edging) -> jint {
+    match edging {
+        Edging::Alias => 0,
+        Edging::AntiAlias => 1,
+        Edging::SubpixelAntiAlias => 2,
+    }
+}
+
+fn hinting_from_ordinal(ordinal: jint) -> Hinting {
+    match ordinal {
+        0 => Hinting::None,
+        2 => Hinting::Normal,
+        3 => Hinting::Full,
+        _ => Hinting::Slight,
+    }
+}
+
+fn hinting_to_ordinal(hinting: Hinting) -> jint {
+    match hinting {
+        Hinting::None => 0,
+        Hinting::Slight => 1,
+        Hinting::Normal => 2,
+        Hinting::Full => 3,
+    }
+}
 
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_TextStyleNative_nNew(_env: JNIEnv, _class: jni::objects::JClass) -> jlong {
@@ -306,4 +340,44 @@ pub extern "system" fn Java_org_skialin_TextStyleNative_nLocale<'l>(env: JNIEnv<
 pub extern "system" fn Java_org_skialin_TextStyleNative_nSetLocale<'l>(mut env: JNIEnv<'l>, _class: jni::objects::JClass<'l>, ptr: jlong, locale: jni::objects::JString<'l>) {
     let locale: String = env.get_string(&locale).expect("get_string").into();
     unsafe { borrow_mut::<TextStyle>(ptr) }.set_locale(&locale);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nBaselineShift(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jfloat {
+    unsafe { borrow::<TextStyle>(ptr) }.baseline_shift()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nSetBaselineShift(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, baseline_shift: jfloat) {
+    unsafe { borrow_mut::<TextStyle>(ptr) }.set_baseline_shift(baseline_shift);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nHalfLeading(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jboolean {
+    unsafe { borrow::<TextStyle>(ptr) }.half_leading() as jboolean
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nSetHalfLeading(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, half_leading: jboolean) {
+    unsafe { borrow_mut::<TextStyle>(ptr) }.set_half_leading(half_leading != 0);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nFontEdging(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jint {
+    edging_to_ordinal(unsafe { borrow::<TextStyle>(ptr) }.font_edging())
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nSetFontEdging(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, edging: jint) {
+    unsafe { borrow_mut::<TextStyle>(ptr) }.set_font_edging(edging_from_ordinal(edging));
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nFontHinting(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jint {
+    hinting_to_ordinal(unsafe { borrow::<TextStyle>(ptr) }.font_hinting())
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TextStyleNative_nSetFontHinting(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, hinting: jint) {
+    unsafe { borrow_mut::<TextStyle>(ptr) }.set_font_hinting(hinting_from_ordinal(hinting));
 }

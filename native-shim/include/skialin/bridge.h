@@ -563,6 +563,11 @@ uint16_t skialin_bridge_Typeface_unicharToGlyph(const SkTypeface* typeface, int3
 void skialin_bridge_Typeface_fontStyle(const SkTypeface* typeface, int32_t* weight, int32_t* width, int32_t* slant);
 /* UTF-8 bytes, no NUL terminator. Ref-owned by the caller; free with skialin_bridge_Data_unref. */
 SkData* skialin_bridge_Typeface_familyName(const SkTypeface* typeface);
+/* Owned by the caller; free with skialin_bridge_Typeface_unref. Null if SkTypeface::makeClone
+ * fails (e.g. bad collection index). axisTags/axisValues are parallel arrays of length axisCount
+ * (tag is a four-byte tag such as 'wght'/'wdth'/'slnt'/'ital'/'opsz'); neither is retained past
+ * the call. Mirrors SkTypeface::makeClone(const SkFontArguments&). */
+SkTypeface* skialin_bridge_Typeface_makeClone(const SkTypeface* typeface, const uint32_t* axisTags, const float* axisValues, int32_t axisCount, int32_t collectionIndex);
 
 /* FontMgr: ref-owned by the caller. Free with skialin_bridge_FontMgr_unref.
  * SkFontMgr is abstract (pure virtual methods), so it's routed entirely
@@ -582,6 +587,20 @@ SkTypeface* skialin_bridge_FontMgr_matchFamilyStyle(const SkFontMgr* mgr, const 
 SkTypeface* skialin_bridge_FontMgr_makeFromData(const SkFontMgr* mgr, SkData* data, int32_t ttcIndex);
 /* Null if the file isn't found or isn't a recognized font format. */
 SkTypeface* skialin_bridge_FontMgr_makeFromFile(const SkFontMgr* mgr, const char* path, int32_t ttcIndex);
+
+/* TypefaceFontProvider (skia::textlayout::TypefaceFontProvider): a concrete SkFontMgr subclass
+ * that resolves family names to in-memory-registered typefaces. Ref-owned by the caller like any
+ * other SkFontMgr; free with skialin_bridge_FontMgr_unref (virtual dtor via SkRefCnt handles the
+ * derived type correctly) and hand it to skialin_bridge_FontCollection_setAssetFontManager (or
+ * set*FontManager) so paragraph shaping can resolve names to these typefaces, including as a
+ * fallback source. */
+SkFontMgr* skialin_bridge_TypefaceFontProvider_new(void);
+/* typeface is ref'd by the provider, not consumed: it stays independently valid and closeable
+ * afterward. Returns 1 on success, 0 if the family name (the typeface's own, or the given alias)
+ * is empty. The alias variant registers the typeface under the given alias instead of its own
+ * family name (e.g. so a LoadedFont's synthetic identity resolves by name). */
+size_t skialin_bridge_TypefaceFontProvider_registerTypeface(SkFontMgr* provider, SkTypeface* typeface);
+size_t skialin_bridge_TypefaceFontProvider_registerTypefaceAlias(SkFontMgr* provider, SkTypeface* typeface, const char* alias, size_t aliasLength);
 
 /* Font: heap-allocated with `new`/`delete`, not ref-counted itself (it holds
  * a strong sk_sp ref to its Typeface internally). SkFont carries
@@ -668,6 +687,24 @@ void skialin_bridge_TextStyle_setHeight(skia::textlayout::TextStyle* style, floa
 bool skialin_bridge_TextStyle_getHeightOverride(const skia::textlayout::TextStyle* style);
 void skialin_bridge_TextStyle_setHeightOverride(skia::textlayout::TextStyle* style, bool heightOverride);
 
+/* Baseline offset in px, applied on top of the run's normal baseline (e.g. for superscript/
+ * subscript positioning). Mirrors skparagraph's TextStyle::getBaselineShift/setBaselineShift. */
+float skialin_bridge_TextStyle_getBaselineShift(const skia::textlayout::TextStyle* style);
+void skialin_bridge_TextStyle_setBaselineShift(skia::textlayout::TextStyle* style, float baselineShift);
+
+/* Whether extra line-height leading is split evenly above/below the run (true) or added entirely
+ * below per legacy behavior (false) - the skparagraph analog of LineHeightStyle.Alignment's
+ * proportional split. Mirrors TextStyle::getHalfLeading/setHalfLeading. */
+bool skialin_bridge_TextStyle_getHalfLeading(const skia::textlayout::TextStyle* style);
+void skialin_bridge_TextStyle_setHalfLeading(skia::textlayout::TextStyle* style, bool halfLeading);
+
+/* Per-run rasterization settings, forwarded to the SkFont skparagraph builds internally for this
+ * run. Values match the SkFont::Edging / SkFontHinting C++ enums' integer values. */
+int32_t skialin_bridge_TextStyle_getFontEdging(const skia::textlayout::TextStyle* style);
+void skialin_bridge_TextStyle_setFontEdging(skia::textlayout::TextStyle* style, int32_t edging);
+int32_t skialin_bridge_TextStyle_getFontHinting(const skia::textlayout::TextStyle* style);
+void skialin_bridge_TextStyle_setFontHinting(skia::textlayout::TextStyle* style, int32_t hinting);
+
 /* outColors/outFloats (3 floats per shadow: offsetX, offsetY, blurSigma) are
  * caller-allocated buffers of `capacity` entries; pass capacity 0 (buffers
  * may be null) to query the real count first. Returns the real count,
@@ -726,6 +763,11 @@ float skialin_bridge_ParagraphStyle_getHeight(const skia::textlayout::ParagraphS
 void skialin_bridge_ParagraphStyle_setHeight(skia::textlayout::ParagraphStyle* style, float height);
 int32_t skialin_bridge_ParagraphStyle_getTextHeightBehavior(const skia::textlayout::ParagraphStyle* style);
 void skialin_bridge_ParagraphStyle_setTextHeightBehavior(skia::textlayout::ParagraphStyle* style, int32_t behavior);
+
+/* Whether \t characters are replaced by aligned whitespace runs during shaping. Mirrors
+ * ParagraphStyle::getReplaceTabCharacters/setReplaceTabCharacters. */
+bool skialin_bridge_ParagraphStyle_getReplaceTabCharacters(const skia::textlayout::ParagraphStyle* style);
+void skialin_bridge_ParagraphStyle_setReplaceTabCharacters(skia::textlayout::ParagraphStyle* style, bool value);
 
 /* Owned by the caller; free with skialin_bridge_TextStyle_delete. */
 skia::textlayout::TextStyle* skialin_bridge_ParagraphStyle_getTextStyle(const skia::textlayout::ParagraphStyle* style);
@@ -821,6 +863,14 @@ bool skialin_bridge_Paragraph_didExceedMaxLines(const skia::textlayout::Paragrap
 size_t skialin_bridge_Paragraph_lineNumber(skia::textlayout::Paragraph* paragraph);
 /* -1 if not applicable (not shaped yet). */
 int32_t skialin_bridge_Paragraph_unresolvedGlyphs(skia::textlayout::Paragraph* paragraph);
+/* Fills outBuf (capacity elements) with the codepoints skparagraph could not resolve to a glyph
+ * during shaping and always returns the true count (as with getRectsForRange, a caller can pass
+ * capacity 0 / outBuf null to size the buffer first, then call again). Mirrors
+ * Paragraph::unresolvedCodepoints(). */
+int32_t skialin_bridge_Paragraph_unresolvedCodepoints(skia::textlayout::Paragraph* paragraph, int32_t* outBuf, int32_t capacity);
+/* Invalidates cached layout state so the next layout() call redoes shaping/positioning instead of
+ * being a no-op for an unchanged width. Mirrors Paragraph::markDirty(). */
+void skialin_bridge_Paragraph_markDirty(skia::textlayout::Paragraph* paragraph);
 
 /* affinity: 0 = upstream, 1 = downstream. */
 int32_t skialin_bridge_Paragraph_getGlyphPositionAtCoordinate(skia::textlayout::Paragraph* paragraph, float dx, float dy, int32_t* affinity);

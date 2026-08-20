@@ -142,6 +142,124 @@ impl Path {
     pub fn generation_id(&self) -> u32 {
         unsafe { (*self.0).getGenerationID() }
     }
+
+    /// Walks this path's verbs (move/line/quad/conic/cubic/close), mirroring `SkPath::Iter`.
+    ///
+    /// When `convert_conics_to_quads` is true, conic segments are approximated with one or more
+    /// [`PathVerb::Quad`] segments instead of being reported as [`PathVerb::Conic`]; `tolerance`
+    /// controls the maximum deviation of the approximation from the true conic, following the
+    /// same tolerance-driven subdivision Skia's own `SkConic::computeQuadPOW2` uses.
+    pub fn segments(&self, convert_conics_to_quads: bool, tolerance: f32) -> Vec<PathSegment> {
+        let mut iter = unsafe { sys::SkPath_Iter::new1(self.0, false) };
+        let mut out = Vec::new();
+        loop {
+            let mut pts = [sys::SkPoint::default(); 4];
+            let verb = unsafe { iter.next(pts.as_mut_ptr()) };
+            match verb {
+                sys::SkPath_Verb_kMove_Verb => out.push(PathSegment {
+                    verb: PathVerb::Move,
+                    points: points_from(&pts, 1),
+                    conic_weight: 0.0,
+                }),
+                sys::SkPath_Verb_kLine_Verb => out.push(PathSegment {
+                    verb: PathVerb::Line,
+                    points: points_from(&pts, 2),
+                    conic_weight: 0.0,
+                }),
+                sys::SkPath_Verb_kQuad_Verb => out.push(PathSegment {
+                    verb: PathVerb::Quad,
+                    points: points_from(&pts, 3),
+                    conic_weight: 0.0,
+                }),
+                sys::SkPath_Verb_kConic_Verb => {
+                    // `SkPath::Iter::conicWeight()` is header-inline (`return *fConicWeights;`)
+                    // and isn't exported as a linkable symbol by the prebuilt Skia static lib, so
+                    // we read the field directly the same way the inline accessor does. `next()`
+                    // has already advanced `fConicWeights` to point at *this* conic's weight.
+                    let weight = unsafe { *iter.fConicWeights };
+                    if convert_conics_to_quads {
+                        push_conic_as_quads(&mut out, &pts, weight, tolerance);
+                    } else {
+                        out.push(PathSegment { verb: PathVerb::Conic, points: points_from(&pts, 3), conic_weight: weight });
+                    }
+                }
+                sys::SkPath_Verb_kCubic_Verb => out.push(PathSegment {
+                    verb: PathVerb::Cubic,
+                    points: points_from(&pts, 4),
+                    conic_weight: 0.0,
+                }),
+                sys::SkPath_Verb_kClose_Verb => out.push(PathSegment { verb: PathVerb::Close, points: [Point::new(0.0, 0.0); 4], conic_weight: 0.0 }),
+                _ => break,
+            }
+        }
+        out
+    }
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum PathVerb {
+    Move,
+    Line,
+    Quad,
+    Conic,
+    Cubic,
+    Close,
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct PathSegment {
+    pub verb: PathVerb,
+    /// Meaningful prefix depends on `verb`: Move=1, Line=2, Quad=3, Conic=3, Cubic=4, Close=0.
+    pub points: [Point; 4],
+    /// Only meaningful when `verb` is [`PathVerb::Conic`].
+    pub conic_weight: f32,
+}
+
+fn points_from(pts: &[sys::SkPoint; 4], n: usize) -> [Point; 4] {
+    let mut out = [Point::new(0.0, 0.0); 4];
+    for i in 0..n {
+        out[i] = pts[i].into();
+    }
+    out
+}
+
+/// Approximates a conic with 1+ quadratics, mirroring Skia's `SkConic::computeQuadPOW2` tolerance
+/// heuristic (the private class isn't exposed to bindgen, so the formula is reimplemented here).
+fn conic_to_quad_pow2(p0: sys::SkPoint, p1: sys::SkPoint, p2: sys::SkPoint, w: f32, tol: f32) -> i32 {
+    const MAX_POW2: i32 = 5;
+    if !(tol >= 0.0) || !tol.is_finite() {
+        return 0;
+    }
+    let a = w - 1.0;
+    let k = a / (4.0 * (2.0 + a));
+    let x = k * (p0.fX - 2.0 * p1.fX + p2.fX);
+    let y = k * (p0.fY - 2.0 * p1.fY + p2.fY);
+    let mut error = (x * x + y * y).sqrt();
+    let mut pow2 = 0;
+    while pow2 < MAX_POW2 {
+        if error <= tol {
+            break;
+        }
+        error *= 0.25;
+        pow2 += 1;
+    }
+    pow2
+}
+
+fn push_conic_as_quads(out: &mut Vec<PathSegment>, pts: &[sys::SkPoint; 4], w: f32, tol: f32) {
+    let (p0, p1, p2) = (pts[0], pts[1], pts[2]);
+    let pow2 = conic_to_quad_pow2(p0, p1, p2, w, tol);
+    let quad_count = 1usize << pow2;
+    let mut buf = vec![sys::SkPoint::default(); 2 * quad_count + 1];
+    let n = unsafe { sys::SkPath::ConvertConicToQuads(&p0, &p1, &p2, w, buf.as_mut_ptr(), pow2) };
+    for i in 0..n as usize {
+        let base = i * 2;
+        out.push(PathSegment {
+            verb: PathVerb::Quad,
+            points: [buf[base].into(), buf[base + 1].into(), buf[base + 2].into(), Point::new(0.0, 0.0)],
+            conic_weight: 0.0,
+        });
+    }
 }
 
 impl Clone for Path {
@@ -161,6 +279,34 @@ pub struct PathBuilder(Box<sys::SkPathBuilder>);
 impl PathBuilder {
     pub fn new() -> Self {
         PathBuilder(crate::support::new_boxed(sys::SkPathBuilder_SkPathBuilder))
+    }
+
+    /// Seeds a new builder with a copy of `path`'s fill type and verbs, so building can continue
+    /// on top of an existing immutable [`Path`] (mirrors `SkPathBuilder(const SkPath&)`).
+    pub fn from_path(path: &Path) -> Self {
+        let layout = std::alloc::Layout::new::<sys::SkPathBuilder>();
+        let ptr = unsafe { std::alloc::alloc(layout) } as *mut sys::SkPathBuilder;
+        if ptr.is_null() {
+            std::alloc::handle_alloc_error(layout);
+        }
+        unsafe { sys::SkPathBuilder_SkPathBuilder4(ptr, path.0) };
+        PathBuilder(unsafe { Box::from_raw(ptr) })
+    }
+
+    /// Sets the fill type that will be baked into paths produced by [`Self::snapshot`]/[`Self::detach`].
+    pub fn set_fill_type(&mut self, fill_type: PathFillType) -> &mut Self {
+        let sk_fill_type: sys::SkPathFillType = match fill_type {
+            PathFillType::Winding => sys::SkPathFillType_kWinding,
+            PathFillType::EvenOdd => sys::SkPathFillType_kEvenOdd,
+            PathFillType::InverseWinding => sys::SkPathFillType_kInverseWinding,
+            PathFillType::InverseEvenOdd => sys::SkPathFillType_kInverseEvenOdd,
+        };
+        unsafe { self.0.setFillType(sk_fill_type) };
+        self
+    }
+
+    pub fn fill_type(&self) -> PathFillType {
+        unsafe { self.0.fillType() }.into()
     }
 
     pub(crate) fn as_raw_mut(&mut self) -> *mut sys::SkPathBuilder {

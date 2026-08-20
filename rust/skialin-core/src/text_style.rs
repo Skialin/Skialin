@@ -1,4 +1,4 @@
-use crate::{sys, Color, FontStyle, Typeface};
+use crate::{sys, Color, Edging, FontStyle, Hinting, Typeface};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TextDecoration(pub i32);
@@ -210,6 +210,46 @@ impl TextStyle {
 
     pub fn set_height_override(&mut self, height_override: bool) {
         unsafe { sys::skialin_bridge_TextStyle_setHeightOverride(self.0, height_override) };
+    }
+
+    /// Baseline offset in px, applied on top of the run's normal baseline (e.g. for
+    /// superscript/subscript positioning).
+    pub fn baseline_shift(&self) -> f32 {
+        unsafe { sys::skialin_bridge_TextStyle_getBaselineShift(self.0) }
+    }
+
+    pub fn set_baseline_shift(&mut self, baseline_shift: f32) {
+        unsafe { sys::skialin_bridge_TextStyle_setBaselineShift(self.0, baseline_shift) };
+    }
+
+    /// Whether extra line-height leading is split evenly above/below the run (true) or added
+    /// entirely below per legacy behavior (false).
+    pub fn half_leading(&self) -> bool {
+        unsafe { sys::skialin_bridge_TextStyle_getHalfLeading(self.0) }
+    }
+
+    pub fn set_half_leading(&mut self, half_leading: bool) {
+        unsafe { sys::skialin_bridge_TextStyle_setHalfLeading(self.0, half_leading) };
+    }
+
+    /// Per-run rasterization edging, forwarded to the `SkFont` skparagraph builds internally
+    /// for this run.
+    pub fn font_edging(&self) -> Edging {
+        Edging::from_raw(unsafe { sys::skialin_bridge_TextStyle_getFontEdging(self.0) })
+    }
+
+    pub fn set_font_edging(&mut self, edging: Edging) {
+        unsafe { sys::skialin_bridge_TextStyle_setFontEdging(self.0, edging.as_raw()) };
+    }
+
+    /// Per-run rasterization hinting, forwarded to the `SkFont` skparagraph builds internally
+    /// for this run.
+    pub fn font_hinting(&self) -> Hinting {
+        Hinting::from_raw_i32(unsafe { sys::skialin_bridge_TextStyle_getFontHinting(self.0) })
+    }
+
+    pub fn set_font_hinting(&mut self, hinting: Hinting) {
+        unsafe { sys::skialin_bridge_TextStyle_setFontHinting(self.0, hinting.as_raw_i32()) };
     }
 
     pub fn shadows(&self) -> Vec<Shadow> {

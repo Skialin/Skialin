@@ -95,6 +95,34 @@ class TextStyle internal constructor(
         get() = TextStyleNative.nHeightOverride(nativePtr)
         set(value) = TextStyleNative.nSetHeightOverride(nativePtr, value)
 
+    /** Baseline offset in px, applied on top of the run's normal baseline (e.g. for
+     * superscript/subscript positioning). */
+    var baselineShift: Float
+        get() = TextStyleNative.nBaselineShift(nativePtr)
+        set(value) = TextStyleNative.nSetBaselineShift(nativePtr, value)
+
+    /** Whether extra line-height leading is split evenly above/below the run (true) or added
+     * entirely below per legacy behavior (false). */
+    var halfLeading: Boolean
+        get() = TextStyleNative.nHalfLeading(nativePtr)
+        set(value) = TextStyleNative.nSetHalfLeading(nativePtr, value)
+
+    enum class FontEdging { ALIAS, ANTI_ALIAS, SUBPIXEL_ANTI_ALIAS }
+
+    enum class FontHinting { NONE, SLIGHT, NORMAL, FULL }
+
+    /** Per-run rasterization edging, forwarded to the `SkFont` skparagraph builds internally
+     * for this run. */
+    var fontEdging: FontEdging
+        get() = FontEdging.entries[TextStyleNative.nFontEdging(nativePtr)]
+        set(value) = TextStyleNative.nSetFontEdging(nativePtr, value.ordinal)
+
+    /** Per-run rasterization hinting, forwarded to the `SkFont` skparagraph builds internally
+     * for this run. */
+    var fontHinting: FontHinting
+        get() = FontHinting.entries[TextStyleNative.nFontHinting(nativePtr)]
+        set(value) = TextStyleNative.nSetFontHinting(nativePtr, value.ordinal)
+
     var typeface: Typeface?
         get() = TextStyleNative.nTypeface(nativePtr).takeIf { it != 0L }?.let { Typeface(it) }
         set(value) = TextStyleNative.nSetTypeface(nativePtr, value?.nativePtr ?: 0L)
@@ -262,6 +290,34 @@ private object TextStyleNative {
     external fun nSetHeightOverride(
         ptr: Long,
         heightOverride: Boolean,
+    )
+
+    external fun nBaselineShift(ptr: Long): Float
+
+    external fun nSetBaselineShift(
+        ptr: Long,
+        baselineShift: Float,
+    )
+
+    external fun nHalfLeading(ptr: Long): Boolean
+
+    external fun nSetHalfLeading(
+        ptr: Long,
+        halfLeading: Boolean,
+    )
+
+    external fun nFontEdging(ptr: Long): Int
+
+    external fun nSetFontEdging(
+        ptr: Long,
+        edging: Int,
+    )
+
+    external fun nFontHinting(ptr: Long): Int
+
+    external fun nSetFontHinting(
+        ptr: Long,
+        hinting: Int,
     )
 
     external fun nTypeface(ptr: Long): Long

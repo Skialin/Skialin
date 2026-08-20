@@ -1,4 +1,4 @@
-use jni::sys::{jboolean, jbyteArray, jint, jintArray, jlong, jstring};
+use jni::sys::{jboolean, jbyteArray, jfloatArray, jint, jintArray, jlong, jstring};
 use jni::JNIEnv;
 
 use skialin_core::Typeface;
@@ -92,4 +92,27 @@ pub extern "system" fn Java_org_skialin_TypefaceNative_nTableData(env: JNIEnv, _
     let array = env.new_byte_array(signed.len() as i32).expect("new_byte_array");
     env.set_byte_array_region(&array, 0, &signed).expect("set_byte_array_region");
     array.into_raw()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_TypefaceNative_nMakeClone(
+    env: JNIEnv,
+    _class: jni::objects::JClass,
+    ptr: jlong,
+    axis_tags: jintArray,
+    axis_values: jfloatArray,
+    collection_index: jint,
+) -> jlong {
+    let axis_tags = unsafe { jni::objects::JIntArray::from_raw(axis_tags) };
+    let axis_values = unsafe { jni::objects::JFloatArray::from_raw(axis_values) };
+    let len = env.get_array_length(&axis_tags).expect("get_array_length") as usize;
+    let mut tags = vec![0i32; len];
+    env.get_int_array_region(&axis_tags, 0, &mut tags).expect("get_int_array_region");
+    let mut values = vec![0f32; len];
+    env.get_float_array_region(&axis_values, 0, &mut values).expect("get_float_array_region");
+    let axes: Vec<(u32, f32)> = tags.into_iter().map(|t| t as u32).zip(values).collect();
+    match unsafe { borrow::<Typeface>(ptr) }.make_clone(&axes, collection_index) {
+        Some(clone) => box_ptr(clone),
+        None => 0,
+    }
 }

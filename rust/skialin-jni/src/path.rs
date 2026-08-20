@@ -1,7 +1,7 @@
 use jni::sys::{jboolean, jfloat, jfloatArray, jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{AddPathMode, Matrix, Path, PathBuilder, PathDirection, PathFillType, PathOp, Point, RRect, Rect};
+use skialin_core::{AddPathMode, Matrix, Path, PathBuilder, PathDirection, PathFillType, PathOp, PathVerb, Point, RRect, Rect};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 
@@ -21,14 +21,76 @@ fn direction_from_ordinal(ordinal: jint) -> PathDirection {
     }
 }
 
+fn fill_type_from_ordinal(ordinal: jint) -> PathFillType {
+    match ordinal {
+        1 => PathFillType::EvenOdd,
+        2 => PathFillType::InverseWinding,
+        3 => PathFillType::InverseEvenOdd,
+        _ => PathFillType::Winding,
+    }
+}
+
+fn fill_type_to_ordinal(fill_type: PathFillType) -> jint {
+    match fill_type {
+        PathFillType::Winding => 0,
+        PathFillType::EvenOdd => 1,
+        PathFillType::InverseWinding => 2,
+        PathFillType::InverseEvenOdd => 3,
+    }
+}
+
+fn verb_to_ordinal(verb: PathVerb) -> jint {
+    match verb {
+        PathVerb::Move => 0,
+        PathVerb::Line => 1,
+        PathVerb::Quad => 2,
+        PathVerb::Conic => 3,
+        PathVerb::Cubic => 4,
+        PathVerb::Close => 5,
+    }
+}
+
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_PathBuilderNative_nMake(_env: JNIEnv, _class: jni::objects::JClass) -> jlong {
     box_ptr(PathBuilder::new())
 }
 
 #[no_mangle]
+pub extern "system" fn Java_org_skialin_PathBuilderNative_nMakeFromPath(_env: JNIEnv, _class: jni::objects::JClass, path_ptr: jlong) -> jlong {
+    let path = unsafe { borrow::<Path>(path_ptr) };
+    box_ptr(PathBuilder::from_path(path))
+}
+
+#[no_mangle]
 pub extern "system" fn Java_org_skialin_PathBuilderNative_nRelease(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) {
     unsafe { drop_ptr::<PathBuilder>(ptr) };
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PathBuilderNative_nSetFillType(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, fill_type: jint) {
+    unsafe { borrow_mut::<PathBuilder>(ptr) }.set_fill_type(fill_type_from_ordinal(fill_type));
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PathBuilderNative_nFillType(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jint {
+    fill_type_to_ordinal(unsafe { borrow::<PathBuilder>(ptr) }.fill_type())
+}
+
+#[allow(clippy::too_many_arguments)]
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PathBuilderNative_nArcTo(
+    _env: JNIEnv,
+    _class: jni::objects::JClass,
+    ptr: jlong,
+    left: jfloat,
+    top: jfloat,
+    right: jfloat,
+    bottom: jfloat,
+    start_angle_deg: jfloat,
+    sweep_angle_deg: jfloat,
+    force_move_to: jboolean,
+) {
+    unsafe { borrow_mut::<PathBuilder>(ptr) }.arc_to(Rect::new(left, top, right, bottom), start_angle_deg, sweep_angle_deg, force_move_to != 0);
 }
 
 #[no_mangle]
@@ -371,4 +433,23 @@ pub extern "system" fn Java_org_skialin_PathNative_nPoints(env: JNIEnv, _class: 
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_PathNative_nGenerationId(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jint {
     unsafe { borrow::<Path>(ptr) }.generation_id() as jint
+}
+
+/// Flattens this path's verbs into groups of 10 floats each:
+/// `[verbOrdinal, x0,y0, x1,y1, x2,y2, x3,y3, conicWeight]`.
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_PathNative_nSegments(env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, convert_conics_to_quads: jboolean, tolerance: jfloat) -> jfloatArray {
+    let segments = unsafe { borrow::<Path>(ptr) }.segments(convert_conics_to_quads != 0, tolerance);
+    let mut flat = Vec::with_capacity(segments.len() * 10);
+    for seg in segments {
+        flat.push(verb_to_ordinal(seg.verb) as f32);
+        for p in seg.points {
+            flat.push(p.x);
+            flat.push(p.y);
+        }
+        flat.push(seg.conic_weight);
+    }
+    let array = env.new_float_array(flat.len() as i32).expect("new_float_array");
+    env.set_float_array_region(&array, 0, &flat).expect("set_float_array_region");
+    array.into_raw()
 }

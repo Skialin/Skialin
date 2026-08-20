@@ -1,4 +1,4 @@
-use jni::sys::{jfloat, jint, jlong, jstring};
+use jni::sys::{jboolean, jfloat, jint, jlong, jstring};
 use jni::JNIEnv;
 
 use skialin_core::{ParagraphStyle, StrutStyle, TextAlign, TextDirection, TextHeightBehavior, TextStyle};
@@ -75,6 +75,16 @@ pub extern "system" fn Java_org_skialin_ParagraphStyleNative_nTextHeightBehavior
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_ParagraphStyleNative_nSetTextHeightBehavior(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, behavior: jint) {
     unsafe { borrow_mut::<ParagraphStyle>(ptr) }.set_text_height_behavior(TextHeightBehavior(behavior));
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_ParagraphStyleNative_nReplaceTabCharacters(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jboolean {
+    unsafe { borrow::<ParagraphStyle>(ptr) }.replace_tab_characters() as jboolean
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_ParagraphStyleNative_nSetReplaceTabCharacters(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, value: jboolean) {
+    unsafe { borrow_mut::<ParagraphStyle>(ptr) }.set_replace_tab_characters(value != 0);
 }
 
 #[no_mangle]

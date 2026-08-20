@@ -2,8 +2,18 @@ package org.skialin
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class ParagraphStyleTest {
+    @Test
+    fun replaceTabCharactersRoundtrips() {
+        ParagraphStyle().use { style ->
+            assertTrue(!style.replaceTabCharacters)
+            style.replaceTabCharacters = true
+            assertTrue(style.replaceTabCharacters)
+        }
+    }
+
     @Test
     fun defaultsToLtr() {
         ParagraphStyle().use { style -> assertEquals(ParagraphStyle.TextDirection.LTR, style.textDirection) }

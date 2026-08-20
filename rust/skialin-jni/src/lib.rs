@@ -46,6 +46,7 @@ mod text_blob;
 mod text_blob_builder;
 mod text_style;
 mod typeface;
+mod typeface_font_provider;
 mod util;
 mod vertices;
 mod vulkan_loader;

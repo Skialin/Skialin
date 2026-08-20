@@ -134,6 +134,15 @@ impl ParagraphStyle {
         unsafe { sys::skialin_bridge_ParagraphStyle_setTextHeightBehavior(self.0, behavior.0) };
     }
 
+    /// Whether `\t` characters are replaced by aligned whitespace runs during shaping.
+    pub fn replace_tab_characters(&self) -> bool {
+        unsafe { sys::skialin_bridge_ParagraphStyle_getReplaceTabCharacters(self.0) }
+    }
+
+    pub fn set_replace_tab_characters(&mut self, value: bool) {
+        unsafe { sys::skialin_bridge_ParagraphStyle_setReplaceTabCharacters(self.0, value) };
+    }
+
     /// The default style new text runs start from.
     pub fn text_style(&self) -> TextStyle {
         unsafe { TextStyle::from_raw(sys::skialin_bridge_ParagraphStyle_getTextStyle(self.0)) }

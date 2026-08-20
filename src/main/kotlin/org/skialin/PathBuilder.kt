@@ -3,7 +3,19 @@ package org.skialin
 import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
-class PathBuilder : Managed(PathBuilderNative.nMake(), PathBuilderNative::nRelease) {
+class PathBuilder private constructor(ptr: Long) : Managed(ptr, PathBuilderNative::nRelease) {
+    constructor() : this(PathBuilderNative.nMake())
+
+    /** Seeds this builder with a copy of [path]'s fill type and verbs, so building can continue on top of it. */
+    constructor(path: Path) : this(PathBuilderNative.nMakeFromPath(path.nativePtr))
+
+    /** The fill type that will be baked into [Path]s produced by [snapshot]/[detach]. */
+    var fillType: PathFillType
+        get() = PathFillType.entries[PathBuilderNative.nFillType(nativePtr)]
+        set(value) {
+            PathBuilderNative.nSetFillType(nativePtr, value.ordinal)
+        }
+
     fun moveTo(
         x: Float,
         y: Float,
@@ -31,6 +43,17 @@ class PathBuilder : Managed(PathBuilderNative.nMake(), PathBuilderNative::nRelea
     ): PathBuilder = apply { PathBuilderNative.nCubicTo(nativePtr, x1, y1, x2, y2, x3, y3) }
 
     fun closePath(): PathBuilder = apply { PathBuilderNative.nClose(nativePtr) }
+
+    /** Appends an elliptical arc; mirrors `SkPathBuilder::arcTo(const SkRect&, float, float, bool)`. */
+    fun arcTo(
+        oval: Rect,
+        startAngleDegrees: Float,
+        sweepAngleDegrees: Float,
+        forceMoveTo: Boolean,
+    ): PathBuilder =
+        apply {
+            PathBuilderNative.nArcTo(nativePtr, oval.left, oval.top, oval.right, oval.bottom, startAngleDegrees, sweepAngleDegrees, forceMoveTo)
+        }
 
     fun rMoveTo(
         dx: Float,
@@ -155,7 +178,27 @@ private object PathBuilderNative {
 
     external fun nMake(): Long
 
+    external fun nMakeFromPath(pathPtr: Long): Long
+
     external fun nRelease(ptr: Long)
+
+    external fun nSetFillType(
+        ptr: Long,
+        fillType: Int,
+    )
+
+    external fun nFillType(ptr: Long): Int
+
+    external fun nArcTo(
+        ptr: Long,
+        left: Float,
+        top: Float,
+        right: Float,
+        bottom: Float,
+        startAngleDeg: Float,
+        sweepAngleDeg: Float,
+        forceMoveTo: Boolean,
+    )
 
     external fun nMoveTo(
         ptr: Long,

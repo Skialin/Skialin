@@ -1,7 +1,7 @@
 use jni::sys::{jboolean, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{FontCollection, FontMgr};
+use skialin_core::{FontCollection, FontMgr, TypefaceFontProvider};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 
@@ -25,6 +25,12 @@ pub extern "system" fn Java_org_skialin_FontCollectionNative_nSetDefaultFontMana
 pub extern "system" fn Java_org_skialin_FontCollectionNative_nSetAssetFontManager(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, font_mgr_ptr: jlong) {
     let font_mgr = unsafe { borrow::<FontMgr>(font_mgr_ptr) };
     unsafe { borrow_mut::<FontCollection>(ptr) }.set_asset_font_manager(font_mgr);
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_FontCollectionNative_nSetAssetTypefaceProvider(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, provider_ptr: jlong) {
+    let provider = unsafe { borrow::<TypefaceFontProvider>(provider_ptr) };
+    unsafe { borrow_mut::<FontCollection>(ptr) }.set_asset_typeface_provider(provider);
 }
 
 #[no_mangle]

@@ -52,3 +52,46 @@ impl Drop for FontMgr {
         unsafe { sys::skialin_bridge_FontMgr_unref(self.0) };
     }
 }
+
+/// A concrete `SkFontMgr` (`skia::textlayout::TypefaceFontProvider`) that resolves family names
+/// to in-memory-registered typefaces. Register typefaces with [`Self::register_typeface`], then
+/// hand it to [`crate::FontCollection::set_asset_font_manager`] (or one of the other
+/// `set_*_font_manager` methods) so paragraph shaping/fallback can resolve names to these
+/// typefaces - the standard way to make custom/embedded fonts participate in name-based
+/// fallback resolution during layout, the same as system fonts.
+pub struct TypefaceFontProvider(*mut sys::SkFontMgr);
+
+impl TypefaceFontProvider {
+    pub fn new() -> Self {
+        TypefaceFontProvider(unsafe { sys::skialin_bridge_TypefaceFontProvider_new() })
+    }
+
+    /// Registers `typeface` under its own family name. `typeface` is ref'd, not consumed: it
+    /// stays independently valid and closeable afterward. Returns 1 on success, 0 if the
+    /// typeface has no family name.
+    pub fn register_typeface(&mut self, typeface: &Typeface) -> usize {
+        unsafe { sys::skialin_bridge_TypefaceFontProvider_registerTypeface(self.0, typeface.0) }
+    }
+
+    /// Registers `typeface` under `alias` instead of its own family name - useful for giving a
+    /// `LoadedFont`'s synthetic identity a resolvable family name.
+    pub fn register_typeface_with_alias(&mut self, typeface: &Typeface, alias: &str) -> usize {
+        unsafe { sys::skialin_bridge_TypefaceFontProvider_registerTypefaceAlias(self.0, typeface.0, alias.as_ptr().cast(), alias.len()) }
+    }
+
+    pub(crate) fn as_ptr(&self) -> *mut sys::SkFontMgr {
+        self.0
+    }
+}
+
+impl Default for TypefaceFontProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Drop for TypefaceFontProvider {
+    fn drop(&mut self) {
+        unsafe { sys::skialin_bridge_FontMgr_unref(self.0) };
+    }
+}

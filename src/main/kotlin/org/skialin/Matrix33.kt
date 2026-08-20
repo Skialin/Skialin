@@ -29,6 +29,12 @@ class Matrix33 internal constructor(
 
     val isIdentity: Boolean get() = MatrixNative.nIsIdentity(values)
 
+    /**
+     * The raw row-major 3x3 matrix components (`[scaleX, skewX, translateX, skewY, scaleY,
+     * translateY, persp0, persp1, persp2]`), matching Skia's `SkMatrix::get9`/`set9` layout.
+     */
+    fun values(): FloatArray = values.copyOf()
+
     override fun equals(other: Any?): Boolean = other is Matrix33 && values.contentEquals(other.values)
 
     override fun hashCode(): Int = values.contentHashCode()
@@ -47,6 +53,12 @@ class Matrix33 internal constructor(
         ): Matrix33 = Matrix33(MatrixNative.nScale(sx, sy))
 
         fun makeRotate(degrees: Float): Matrix33 = Matrix33(MatrixNative.nRotate(degrees))
+
+        /**
+         * Builds a matrix from its raw row-major 3x3 components, matching Skia's
+         * `SkMatrix::get9`/`set9` layout (see [Matrix33.values]).
+         */
+        fun makeFromValues(values: FloatArray): Matrix33 = Matrix33(values.copyOf())
 
         fun makeSkew(
             sx: Float,

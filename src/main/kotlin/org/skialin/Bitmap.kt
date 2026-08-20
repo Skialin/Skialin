@@ -64,6 +64,12 @@ class Bitmap internal constructor(
     fun extractAlpha(dst: Bitmap): Boolean = BitmapNative.nExtractAlpha(nativePtr, dst.nativePtr)
 
     fun notifyPixelsChanged() = BitmapNative.nNotifyPixelsChanged(nativePtr)
+
+    /** Whether this bitmap's contents are guaranteed not to change; mirrors `SkBitmap::isImmutable`. */
+    val isImmutable: Boolean get() = BitmapNative.nIsImmutable(nativePtr)
+
+    /** Marks this bitmap as immutable; irreversible, mirrors `SkBitmap::setImmutable`. */
+    fun setImmutable() = BitmapNative.nSetImmutable(nativePtr)
 }
 
 private object BitmapNative {
@@ -117,4 +123,8 @@ private object BitmapNative {
     ): Boolean
 
     external fun nNotifyPixelsChanged(ptr: Long)
+
+    external fun nIsImmutable(ptr: Long): Boolean
+
+    external fun nSetImmutable(ptr: Long)
 }

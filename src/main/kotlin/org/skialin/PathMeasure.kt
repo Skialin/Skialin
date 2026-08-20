@@ -4,11 +4,16 @@ import org.skialin.impl.Managed
 import org.skialin.impl.NativeLoader
 
 /** Measures distance along a path (length, position/tangent, matrix at a point). Mirrors Skia's `SkPathMeasure`. */
-class PathMeasure(
-    path: Path,
-    forceClosed: Boolean = false,
-    resScale: Float = 1f,
-) : Managed(PathMeasureNative.nNew(path.nativePtr, forceClosed, resScale), PathMeasureNative::nRelease) {
+class PathMeasure private constructor(ptr: Long) : Managed(ptr, PathMeasureNative::nRelease) {
+    constructor(
+        path: Path,
+        forceClosed: Boolean = false,
+        resScale: Float = 1f,
+    ) : this(PathMeasureNative.nNew(path.nativePtr, forceClosed, resScale))
+
+    /** A path measure with no path attached; call [setPath] before using it. */
+    constructor() : this(PathMeasureNative.nNewEmpty())
+
     data class PosTan(
         val position: Point,
         val tangent: Point,
@@ -64,6 +69,8 @@ private object PathMeasureNative {
         forceClosed: Boolean,
         resScale: Float,
     ): Long
+
+    external fun nNewEmpty(): Long
 
     external fun nRelease(ptr: Long)
 

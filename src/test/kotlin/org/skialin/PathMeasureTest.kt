@@ -74,4 +74,16 @@ class PathMeasureTest {
             }
         }
     }
+
+    @Test
+    fun noArgConstructorStartsWithNoPath() {
+        PathMeasure().use { measure ->
+            assertEquals(0f, measure.length())
+            assertNull(measure.posTan(0f))
+            makeSquare().use { path ->
+                measure.setPath(path)
+                assertEquals(40f, measure.length())
+            }
+        }
+    }
 }

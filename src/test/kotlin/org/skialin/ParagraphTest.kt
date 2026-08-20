@@ -239,4 +239,50 @@ class ParagraphTest {
             }
         }
     }
+
+    @Test
+    fun markDirtyForcesRelayout() {
+        fontCollection().use { collection ->
+            ParagraphStyle().use { style ->
+                ParagraphBuilder(style, collection).use { builder ->
+                    TextStyle().use { textStyle ->
+                        textStyle.fontSize = 18f
+                        builder.pushStyle(textStyle)
+                        builder.addText("Hello, world!")
+                        builder.pop()
+
+                        builder.build().use { paragraph ->
+                            paragraph.layout(200f)
+                            val firstHeight = paragraph.height
+                            assertTrue(firstHeight > 0f)
+                            paragraph.markDirty()
+                            paragraph.layout(200f)
+                            assertTrue(paragraph.height > 0f)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun unresolvedCodepointsIsEmptyForResolvedText() {
+        fontCollection().use { collection ->
+            ParagraphStyle().use { style ->
+                ParagraphBuilder(style, collection).use { builder ->
+                    TextStyle().use { textStyle ->
+                        textStyle.fontSize = 18f
+                        builder.pushStyle(textStyle)
+                        builder.addText("Hello")
+                        builder.pop()
+
+                        builder.build().use { paragraph ->
+                            paragraph.layout(200f)
+                            assertTrue(paragraph.unresolvedCodepoints.isEmpty())
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

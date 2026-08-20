@@ -68,6 +68,16 @@ impl Typeface {
         buf.truncate(copied);
         buf
     }
+
+    /// Clones this typeface with the given variable-font axis settings and/or font-collection
+    /// (ttc/dfont) index applied. `axes` is a list of (four-byte axis tag, value) pairs, e.g.
+    /// `(0x77676874 /* 'wght' */, 700.0)`. Returns `None` if the clone fails (e.g. bad
+    /// `collection_index`); an unsupported axis tag is simply ignored by Skia, not an error.
+    pub fn make_clone(&self, axes: &[(u32, f32)], collection_index: i32) -> Option<Typeface> {
+        let tags: Vec<u32> = axes.iter().map(|(tag, _)| *tag).collect();
+        let values: Vec<f32> = axes.iter().map(|(_, value)| *value).collect();
+        unsafe { Self::from_raw(sys::skialin_bridge_Typeface_makeClone(self.0, tags.as_ptr(), values.as_ptr(), tags.len() as i32, collection_index)) }
+    }
 }
 
 impl Drop for Typeface {

@@ -38,4 +38,21 @@ class TypefaceTest {
             assertEquals("", typeface.familyName)
         }
     }
+
+    @Test
+    fun fourByteTagPacksBigEndian() {
+        // 'w'=0x77 'g'=0x67 'h'=0x68 't'=0x74
+        assertEquals(0x77676874, Typeface.fourByteTag("wght"))
+    }
+
+    @Test
+    fun makeCloneWithNoAxesReturnsAWorkingTypeface() {
+        val mgr = FontMgr.system()
+        val name = mgr.familyName(0)
+        mgr.matchFamilyStyle(name)!!.use { typeface ->
+            typeface.makeClone()!!.use { clone ->
+                assertEquals(typeface.familyName, clone.familyName)
+            }
+        }
+    }
 }

@@ -107,6 +107,19 @@ pub extern "system" fn Java_org_skialin_ParagraphNative_nUnresolvedGlyphs(_env: 
 }
 
 #[no_mangle]
+pub extern "system" fn Java_org_skialin_ParagraphNative_nUnresolvedCodepoints(env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jni::sys::jintArray {
+    let codepoints = unsafe { borrow_mut::<Paragraph>(ptr) }.unresolved_codepoints();
+    let array = env.new_int_array(codepoints.len() as i32).expect("new_int_array");
+    env.set_int_array_region(&array, 0, &codepoints).expect("set_int_array_region");
+    array.into_raw()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_ParagraphNative_nMarkDirty(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) {
+    unsafe { borrow_mut::<Paragraph>(ptr) }.mark_dirty();
+}
+
+#[no_mangle]
 pub extern "system" fn Java_org_skialin_ParagraphNative_nGlyphPositionAtCoordinate(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, dx: jfloat, dy: jfloat) -> jlong {
     let pos = unsafe { borrow_mut::<Paragraph>(ptr) }.glyph_position_at_coordinate(dx, dy);
     let affinity = if pos.affinity == Affinity::Upstream { 0i64 } else { 1i64 };

@@ -2,6 +2,7 @@ package org.skialin
 
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class BitmapExpandedTest {
@@ -39,6 +40,16 @@ class BitmapExpandedTest {
         Bitmap().use { bitmap ->
             bitmap.allocPixels(4, 4)
             bitmap.notifyPixelsChanged()
+        }
+    }
+
+    @Test
+    fun isImmutableReflectsSetImmutable() {
+        Bitmap().use { bitmap ->
+            bitmap.allocPixels(4, 4)
+            assertFalse(bitmap.isImmutable)
+            bitmap.setImmutable()
+            assertTrue(bitmap.isImmutable)
         }
     }
 }
