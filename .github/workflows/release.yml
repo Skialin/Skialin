@@ -37,7 +37,10 @@ jobs:
 
       - name: Install Linux system deps
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libfreetype-dev libfontconfig1-dev
+        timeout-minutes: 5
+        run: |
+          sudo apt-get update -o Acquire::Retries=3 -o Acquire::http::Timeout=15 -o Acquire::https::Timeout=15
+          sudo apt-get install -y --no-install-recommends libfreetype-dev libfontconfig1-dev libgl1-mesa-dev mesa-common-dev
 
       - uses: maxim-lobanov/setup-xcode@v1
         if: runner.os == 'macOS'
