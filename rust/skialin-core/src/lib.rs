@@ -1,5 +1,6 @@
 pub use skialin_sys as sys;
 
+pub mod backend_render_target;
 pub mod backend_texture;
 pub mod bitmap;
 pub mod blender;
@@ -59,6 +60,7 @@ pub mod tile_mode;
 pub mod typeface;
 pub mod vertices;
 
+pub use backend_render_target::BackendRenderTarget;
 pub use backend_texture::BackendTexture;
 pub use bitmap::{AlphaType, Bitmap};
 pub use blender::Blender;

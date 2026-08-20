@@ -1003,6 +1003,29 @@ bool skialin_bridge_BackendTexture_isValid(const GrBackendTexture* texture);
 bool skialin_bridge_BackendTexture_isProtected(const GrBackendTexture* texture);
 bool skialin_bridge_BackendTexture_hasMipmaps(const GrBackendTexture* texture);
 
+/* GrBackendRenderTarget: same rationale as GrBackendTexture (heap-allocated,
+ * type-erased backend data, routed entirely through the bridge). Wraps an
+ * existing GPU render target that is not necessarily a sampleable texture
+ * (e.g. the window-system framebuffer/FBO 0, or a multisampled renderbuffer)
+ * for use with skialin_bridge_Surface_WrapBackendRenderTarget. Owned by the
+ * caller; free with skialin_bridge_BackendRenderTarget_delete. glInfo maps
+ * directly onto GrGLFramebufferInfo, imageInfo directly onto GrVkImageInfo --
+ * both plain bindgen-bound structs, construct them directly in Rust. */
+GrBackendRenderTarget* skialin_bridge_BackendRenderTarget_MakeGL(int32_t width, int32_t height, int32_t sampleCnt, int32_t stencilBits, const GrGLFramebufferInfo* glInfo);
+/* stencilBits is always 0 and sampleCnt is taken from imageInfo.fSampleCount
+ * for Vulkan render targets -- Skia derives both from the image info rather
+ * than accepting them as separate params, unlike the GL factory above. */
+GrBackendRenderTarget* skialin_bridge_BackendRenderTarget_MakeVk(int32_t width, int32_t height, const GrVkImageInfo* imageInfo);
+void skialin_bridge_BackendRenderTarget_delete(GrBackendRenderTarget* renderTarget);
+GrBackendRenderTarget* skialin_bridge_BackendRenderTarget_clone(const GrBackendRenderTarget* renderTarget);
+int32_t skialin_bridge_BackendRenderTarget_width(const GrBackendRenderTarget* renderTarget);
+int32_t skialin_bridge_BackendRenderTarget_height(const GrBackendRenderTarget* renderTarget);
+int32_t skialin_bridge_BackendRenderTarget_sampleCnt(const GrBackendRenderTarget* renderTarget);
+int32_t skialin_bridge_BackendRenderTarget_stencilBits(const GrBackendRenderTarget* renderTarget);
+bool skialin_bridge_BackendRenderTarget_isValid(const GrBackendRenderTarget* renderTarget);
+bool skialin_bridge_BackendRenderTarget_isProtected(const GrBackendRenderTarget* renderTarget);
+bool skialin_bridge_BackendRenderTarget_isFramebufferOnly(const GrBackendRenderTarget* renderTarget);
+
 /* Direct wrapper around SkSurfaces::WrapBackendTexture (SkSurfaceGanesh.h);
  * params map 1:1 to the real signature (colorSpace/surfaceProps may be
  * null, releaseProc may be null to skip the release callback). Wraps an
@@ -1013,6 +1036,17 @@ typedef void (*SkialinTextureReleaseProc)(void* releaseContext);
 SkSurface* skialin_bridge_Surface_WrapBackendTexture(
     GrDirectContext* context, const GrBackendTexture* backendTexture, GrSurfaceOrigin origin,
     int32_t sampleCnt, SkColorType colorType, SkColorSpace* colorSpace, const SkSurfaceProps* surfaceProps,
+    SkialinTextureReleaseProc releaseProc, void* releaseContext);
+
+/* Direct wrapper around SkSurfaces::WrapBackendRenderTarget (SkSurfaceGanesh.h),
+ * the render-target counterpart of WrapBackendTexture above -- same param
+ * mapping and null-handling rules, minus sampleCnt (GrBackendRenderTarget
+ * already carries its own sample count). Wraps an existing GPU framebuffer
+ * (e.g. from skialin_bridge_BackendRenderTarget_MakeGL) as a Surface.
+ * Ref-owned; free with skialin_bridge_Surface_unref. Null on failure. */
+SkSurface* skialin_bridge_Surface_WrapBackendRenderTarget(
+    GrDirectContext* context, const GrBackendRenderTarget* backendRenderTarget, GrSurfaceOrigin origin,
+    SkColorType colorType, SkColorSpace* colorSpace, const SkSurfaceProps* surfaceProps,
     SkialinTextureReleaseProc releaseProc, void* releaseContext);
 
 /* Graphite (skgpu::graphite::Context + Recorder + Recording), Vulkan only.

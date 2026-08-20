@@ -1,7 +1,7 @@
 use jni::sys::{jboolean, jfloat, jint, jlong};
 use jni::JNIEnv;
 
-use skialin_core::{BackendTexture, Canvas, ColorSpace, DirectContext, GraphiteBackendTexture, GraphiteRecorder, IRect, ImageInfo, Paint, Surface, SurfaceOrigin, SurfaceProps};
+use skialin_core::{BackendRenderTarget, BackendTexture, Canvas, ColorSpace, DirectContext, GraphiteBackendTexture, GraphiteRecorder, IRect, ImageInfo, Paint, Surface, SurfaceOrigin, SurfaceProps};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 
@@ -78,6 +78,29 @@ pub extern "system" fn Java_org_skialin_SurfaceNative_nWrapBackendTexture(
     let color_space = (color_space_ptr != 0).then(|| unsafe { borrow::<ColorSpace>(color_space_ptr) });
     let surface_props = (surface_props_ptr != 0).then(|| unsafe { borrow::<SurfaceProps>(surface_props_ptr) });
     match Surface::wrap_backend_texture(context, backend_texture, origin, sample_cnt, color_type, color_space, surface_props) {
+        Some(surface) => box_ptr(surface),
+        None => 0,
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_SurfaceNative_nWrapBackendRenderTarget(
+    _env: JNIEnv,
+    _class: jni::objects::JClass,
+    context_ptr: jlong,
+    backend_render_target_ptr: jlong,
+    origin: jint,
+    color_type: jint,
+    color_space_ptr: jlong,
+    surface_props_ptr: jlong,
+) -> jlong {
+    let context = unsafe { borrow_mut::<DirectContext>(context_ptr) };
+    let backend_render_target = unsafe { borrow::<BackendRenderTarget>(backend_render_target_ptr) };
+    let origin = if origin == 0 { SurfaceOrigin::TopLeft } else { SurfaceOrigin::BottomLeft };
+    let color_type = crate::color_type::color_type_from_ordinal(color_type);
+    let color_space = (color_space_ptr != 0).then(|| unsafe { borrow::<ColorSpace>(color_space_ptr) });
+    let surface_props = (surface_props_ptr != 0).then(|| unsafe { borrow::<SurfaceProps>(surface_props_ptr) });
+    match Surface::wrap_backend_render_target(context, backend_render_target, origin, color_type, color_space, surface_props) {
         Some(surface) => box_ptr(surface),
         None => 0,
     }

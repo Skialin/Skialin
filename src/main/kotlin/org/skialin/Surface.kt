@@ -110,6 +110,26 @@ class Surface private constructor(
             return if (ptr == 0L) null else Surface(ptr)
         }
 
+        fun wrapBackendRenderTarget(
+            context: DirectContext,
+            backendRenderTarget: BackendRenderTarget,
+            origin: SurfaceOrigin,
+            colorType: ColorType,
+            colorSpace: ColorSpace? = null,
+            surfaceProps: SurfaceProps? = null,
+        ): Surface? {
+            val ptr =
+                SurfaceNative.nWrapBackendRenderTarget(
+                    context.nativePtr,
+                    backendRenderTarget.nativePtr,
+                    origin.ordinal,
+                    colorType.ordinal,
+                    colorSpace?.nativePtr ?: 0L,
+                    surfaceProps?.nativePtr ?: 0L,
+                )
+            return if (ptr == 0L) null else Surface(ptr)
+        }
+
         fun makeGraphiteRenderTarget(
             recorder: GraphiteRecorder,
             info: ImageInfo,
@@ -168,6 +188,15 @@ private object SurfaceNative {
         backendTexturePtr: Long,
         origin: Int,
         sampleCnt: Int,
+        colorType: Int,
+        colorSpacePtr: Long,
+        surfacePropsPtr: Long,
+    ): Long
+
+    external fun nWrapBackendRenderTarget(
+        contextPtr: Long,
+        backendRenderTargetPtr: Long,
+        origin: Int,
         colorType: Int,
         colorSpacePtr: Long,
         surfacePropsPtr: Long,

@@ -1,6 +1,6 @@
 use crate::{
-    sys, BackendTexture, Canvas, ColorSpace, ColorType, DirectContext, GraphiteBackendTexture, GraphiteRecorder, Image, ImageInfo,
-    SurfaceOrigin, SurfaceProps,
+    sys, BackendRenderTarget, BackendTexture, Canvas, ColorSpace, ColorType, DirectContext, GraphiteBackendTexture, GraphiteRecorder, Image,
+    ImageInfo, SurfaceOrigin, SurfaceProps,
 };
 use std::marker::PhantomData;
 
@@ -67,6 +67,36 @@ impl Surface {
                 backend_texture.0,
                 origin.into(),
                 sample_count,
+                color_type.into(),
+                color_space_ptr,
+                props_ptr,
+                None,
+                std::ptr::null_mut(),
+            )
+        };
+        (!ptr.is_null()).then_some(Surface(ptr))
+    }
+
+    /// Wraps an existing GPU render target (e.g. `BackendRenderTarget::new_gl`,
+    /// for the window-system framebuffer or a renderbuffer that isn't a
+    /// sampleable texture) as a Surface instead of allocating a new one.
+    /// Must be called on the thread `context`'s GL context is current on.
+    /// `backend_render_target` must outlive the returned Surface.
+    pub fn wrap_backend_render_target(
+        context: &mut DirectContext,
+        backend_render_target: &BackendRenderTarget,
+        origin: SurfaceOrigin,
+        color_type: ColorType,
+        color_space: Option<&ColorSpace>,
+        surface_props: Option<&SurfaceProps>,
+    ) -> Option<Self> {
+        let color_space_ptr = color_space.map_or(std::ptr::null_mut(), |cs| cs.0);
+        let props_ptr = surface_props.map_or(std::ptr::null(), |props| props.0 as *const _);
+        let ptr = unsafe {
+            sys::skialin_bridge_Surface_WrapBackendRenderTarget(
+                context.0,
+                backend_render_target.0,
+                origin.into(),
                 color_type.into(),
                 color_space_ptr,
                 props_ptr,

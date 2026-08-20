@@ -2387,12 +2387,66 @@ bool skialin_bridge_BackendTexture_hasMipmaps(const GrBackendTexture* texture) {
     return texture->hasMipmaps();
 }
 
+GrBackendRenderTarget* skialin_bridge_BackendRenderTarget_MakeGL(int32_t width, int32_t height, int32_t sampleCnt, int32_t stencilBits, const GrGLFramebufferInfo* glInfo) {
+    return new GrBackendRenderTarget(GrBackendRenderTargets::MakeGL(width, height, sampleCnt, stencilBits, *glInfo));
+}
+
+GrBackendRenderTarget* skialin_bridge_BackendRenderTarget_MakeVk(int32_t width, int32_t height, const GrVkImageInfo* imageInfo) {
+    return new GrBackendRenderTarget(GrBackendRenderTargets::MakeVk(width, height, *imageInfo));
+}
+
+void skialin_bridge_BackendRenderTarget_delete(GrBackendRenderTarget* renderTarget) {
+    delete renderTarget;
+}
+
+GrBackendRenderTarget* skialin_bridge_BackendRenderTarget_clone(const GrBackendRenderTarget* renderTarget) {
+    return new GrBackendRenderTarget(*renderTarget);
+}
+
+int32_t skialin_bridge_BackendRenderTarget_width(const GrBackendRenderTarget* renderTarget) {
+    return renderTarget->width();
+}
+
+int32_t skialin_bridge_BackendRenderTarget_height(const GrBackendRenderTarget* renderTarget) {
+    return renderTarget->height();
+}
+
+int32_t skialin_bridge_BackendRenderTarget_sampleCnt(const GrBackendRenderTarget* renderTarget) {
+    return renderTarget->sampleCnt();
+}
+
+int32_t skialin_bridge_BackendRenderTarget_stencilBits(const GrBackendRenderTarget* renderTarget) {
+    return renderTarget->stencilBits();
+}
+
+bool skialin_bridge_BackendRenderTarget_isValid(const GrBackendRenderTarget* renderTarget) {
+    return renderTarget->isValid();
+}
+
+bool skialin_bridge_BackendRenderTarget_isProtected(const GrBackendRenderTarget* renderTarget) {
+    return renderTarget->isProtected();
+}
+
+bool skialin_bridge_BackendRenderTarget_isFramebufferOnly(const GrBackendRenderTarget* renderTarget) {
+    return renderTarget->isFramebufferOnly();
+}
+
 SkSurface* skialin_bridge_Surface_WrapBackendTexture(
     GrDirectContext* context, const GrBackendTexture* backendTexture, GrSurfaceOrigin origin,
     int32_t sampleCnt, SkColorType colorType, SkColorSpace* colorSpace, const SkSurfaceProps* surfaceProps,
     SkialinTextureReleaseProc releaseProc, void* releaseContext) {
     return SkSurfaces::WrapBackendTexture(
                    context, *backendTexture, origin, sampleCnt, colorType, sk_ref_sp(colorSpace), surfaceProps,
+                   releaseProc, releaseContext)
+        .release();
+}
+
+SkSurface* skialin_bridge_Surface_WrapBackendRenderTarget(
+    GrDirectContext* context, const GrBackendRenderTarget* backendRenderTarget, GrSurfaceOrigin origin,
+    SkColorType colorType, SkColorSpace* colorSpace, const SkSurfaceProps* surfaceProps,
+    SkialinTextureReleaseProc releaseProc, void* releaseContext) {
+    return SkSurfaces::WrapBackendRenderTarget(
+                   context, *backendRenderTarget, origin, colorType, sk_ref_sp(colorSpace), surfaceProps,
                    releaseProc, releaseContext)
         .release();
 }
