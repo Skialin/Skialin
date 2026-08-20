@@ -1,9 +1,21 @@
 package org.skialin
 
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertTrue
 
 class BitmapExpandedTest {
+    @Test
+    fun installPixelsSetsContents() {
+        val pixels = byteArrayOf(0x11, 0x22, 0x33.toByte(), 0xFF.toByte())
+        ImageInfo.make(1, 1, ColorType.N32, AlphaType.PREMUL).use { info ->
+            Bitmap().use { bitmap ->
+                assertTrue(bitmap.installPixels(info, pixels))
+                assertContentEquals(pixels, bitmap.readPixels())
+            }
+        }
+    }
+
     @Test
     fun extractSubsetCopiesRegion() {
         Bitmap().use { src ->

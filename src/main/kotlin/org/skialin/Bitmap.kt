@@ -34,6 +34,12 @@ class Bitmap internal constructor(
         ImageInfo.make(width, height, colorType, alphaType).use { allocPixels(it) }
     }
 
+    fun installPixels(
+        info: ImageInfo,
+        pixels: ByteArray,
+        rowBytes: Long = info.minRowBytes,
+    ): Boolean = BitmapNative.nInstallPixels(nativePtr, info.nativePtr, pixels, rowBytes)
+
     val width: Int get() = BitmapNative.nWidth(nativePtr)
     val height: Int get() = BitmapNative.nHeight(nativePtr)
     val rowBytes: Long get() = BitmapNative.nRowBytes(nativePtr)
@@ -73,6 +79,13 @@ private object BitmapNative {
         ptr: Long,
         infoPtr: Long,
     )
+
+    external fun nInstallPixels(
+        ptr: Long,
+        infoPtr: Long,
+        pixels: ByteArray,
+        rowBytes: Long,
+    ): Boolean
 
     external fun nWidth(ptr: Long): Int
 

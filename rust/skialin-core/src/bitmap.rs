@@ -71,6 +71,20 @@ impl Bitmap {
         unsafe { self.0.eraseARGB(a as u32, r as u32, g as u32, b as u32) };
     }
 
+    /// Sets this bitmap's [ImageInfo] and pixel storage to a copy of
+    /// `pixels`, replacing whatever pixel storage it had before. The copy is
+    /// heap-allocated on the Rust side and freed via Skia's releaseProc once
+    /// the bitmap no longer needs it, so `pixels` doesn't need to outlive
+    /// this call.
+    pub fn install_pixels(&mut self, info: &ImageInfo, pixels: &[u8], row_bytes: usize) -> bool {
+        let owned: Box<[u8]> = pixels.into();
+        let ptr = owned.as_ptr() as *mut std::ffi::c_void;
+        let context = Box::into_raw(Box::new(owned)) as *mut std::ffi::c_void;
+        // installPixels invokes releaseProc itself on every path (failure,
+        // null pixels, or success), so it always reclaims `context`.
+        unsafe { self.0.installPixels(info.0, ptr, row_bytes, Some(release_install_pixels), context) }
+    }
+
     pub fn pixels(&mut self) -> &mut [u8] {
         let len = self.row_bytes() * self.height().max(0) as usize;
         let ptr = unsafe { self.0.getPixels() } as *mut u8;
@@ -97,6 +111,10 @@ impl Bitmap {
     pub fn notify_pixels_changed(&self) {
         unsafe { self.0.notifyPixelsChanged() };
     }
+}
+
+unsafe extern "C" fn release_install_pixels(_addr: *mut std::ffi::c_void, context: *mut std::ffi::c_void) {
+    drop(Box::from_raw(context as *mut Box<[u8]>));
 }
 
 impl Default for Bitmap {

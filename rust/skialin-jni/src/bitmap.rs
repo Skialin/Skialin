@@ -22,6 +22,25 @@ pub extern "system" fn Java_org_skialin_BitmapNative_nAllocPixels(_env: JNIEnv, 
 }
 
 #[no_mangle]
+pub extern "system" fn Java_org_skialin_BitmapNative_nInstallPixels(
+    env: JNIEnv,
+    _class: jni::objects::JClass,
+    ptr: jlong,
+    info_ptr: jlong,
+    pixels: jni::sys::jbyteArray,
+    row_bytes: jlong,
+) -> jboolean {
+    let pixels = unsafe { jni::objects::JByteArray::from_raw(pixels) };
+    let len = env.get_array_length(&pixels).expect("get_array_length") as usize;
+    let mut buf = vec![0i8; len];
+    env.get_byte_array_region(&pixels, 0, &mut buf).expect("get_byte_array_region");
+    let buf: Vec<u8> = buf.into_iter().map(|b| b as u8).collect();
+
+    let info = unsafe { borrow::<ImageInfo>(info_ptr) };
+    unsafe { borrow_mut::<Bitmap>(ptr) }.install_pixels(info, &buf, row_bytes as usize) as jboolean
+}
+
+#[no_mangle]
 pub extern "system" fn Java_org_skialin_BitmapNative_nWidth(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jint {
     unsafe { borrow::<Bitmap>(ptr) }.width()
 }
