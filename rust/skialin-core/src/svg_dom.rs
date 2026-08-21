@@ -23,6 +23,14 @@ impl SVGDOM {
         (width, height)
     }
 
+    /// Sets the container size AND forcibly overrides the root's width/height/preserveAspectRatio
+    /// so the document always stretches to fill (width, height) on render, regardless of its own
+    /// intrinsic size or viewBox. Unlike `set_container_size`, this affects absolute-unit root
+    /// width/height too, not just percentage ones.
+    pub fn set_size_and_stretch(&mut self, width: f32, height: f32) {
+        unsafe { sys::skialin_bridge_SVGDOM_setSizeAndStretch(self.0, width, height) };
+    }
+
     pub fn render(&self, canvas: &mut Canvas) {
         unsafe { sys::skialin_bridge_SVGDOM_render(self.0, canvas.as_raw()) };
     }

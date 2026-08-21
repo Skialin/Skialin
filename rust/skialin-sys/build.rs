@@ -110,6 +110,8 @@ fn main() {
 
     shim_build()
         .file(shim_src.join("bridge.cpp"))
+        .file(shim_src.join("node/RenderNode.cpp"))
+        .file(shim_src.join("node/RenderNodeContext.cpp"))
         .files(pathops_sources.iter().map(|f| pathops_dir.join(f)))
         .compile("skialin_bridge");
 
@@ -137,6 +139,7 @@ fn main() {
         .clang_arg("-DSK_USE_INTERNAL_VULKAN_HEADERS")
         .clang_args(defines.iter().map(|define| format!("-D{define}")))
         .allowlist_type("Sk.*")
+        .allowlist_type("skialin::.*")
         .allowlist_function("Sk.*")
         .allowlist_function("skialin_bridge_.*")
         .allowlist_var("Sk.*")

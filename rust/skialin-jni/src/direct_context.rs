@@ -67,6 +67,11 @@ pub extern "system" fn Java_org_skialin_DirectContextNative_nAbandonContext(_env
 }
 
 #[no_mangle]
+pub extern "system" fn Java_org_skialin_DirectContextNative_nResetAll(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) {
+    unsafe { borrow_mut::<DirectContext>(ptr) }.reset_all();
+}
+
+#[no_mangle]
 pub extern "system" fn Java_org_skialin_DirectContextNative_nGetResourceCacheLimit(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jlong {
     unsafe { borrow::<DirectContext>(ptr) }.resource_cache_limit()
 }

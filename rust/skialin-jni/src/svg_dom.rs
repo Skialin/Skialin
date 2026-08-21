@@ -37,6 +37,11 @@ pub extern "system" fn Java_org_skialin_SVGDOMNative_nGetContainerSize(env: JNIE
 }
 
 #[no_mangle]
+pub extern "system" fn Java_org_skialin_SVGDOMNative_nSetSizeAndStretch(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, width: jfloat, height: jfloat) {
+    unsafe { borrow_mut::<SVGDOM>(ptr) }.set_size_and_stretch(width, height);
+}
+
+#[no_mangle]
 pub extern "system" fn Java_org_skialin_SVGDOMNative_nRender(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, canvas_ptr: jlong) {
     let mut canvas = unsafe { Canvas::from_raw(canvas_ptr as *mut skialin_core::sys::SkCanvas) };
     unsafe { borrow::<SVGDOM>(ptr) }.render(&mut canvas);

@@ -48,11 +48,52 @@ class RRect internal constructor(
             yRad: Float,
         ): RRect = RRect(RRectNative.nMakeRectXY(floatArrayOf(rect.left, rect.top, rect.right, rect.bottom), xRad, yRad))
 
+        fun makeXYWH(
+            left: Float,
+            top: Float,
+            width: Float,
+            height: Float,
+            radius: Float,
+        ): RRect = makeRectXY(Rect.makeXYWH(left, top, width, height), radius, radius)
+
+        fun makeXYWH(
+            left: Float,
+            top: Float,
+            width: Float,
+            height: Float,
+            xRad: Float,
+            yRad: Float,
+        ): RRect = makeRectXY(Rect.makeXYWH(left, top, width, height), xRad, yRad)
+
+        /** Per-corner radii, in `[topLeft, topRight, bottomRight, bottomLeft]` order. */
+        fun makeXYWH(
+            left: Float,
+            top: Float,
+            width: Float,
+            height: Float,
+            topLeftRadius: Float,
+            topRightRadius: Float,
+            bottomRightRadius: Float,
+            bottomLeftRadius: Float,
+        ): RRect =
+            makeRectRadii(
+                Rect.makeXYWH(left, top, width, height),
+                arrayOf(
+                    Point(topLeftRadius, topLeftRadius),
+                    Point(topRightRadius, topRightRadius),
+                    Point(bottomRightRadius, bottomRightRadius),
+                    Point(bottomLeftRadius, bottomLeftRadius),
+                ),
+            )
+
         /** [radii] is `[upperLeft, upperRight, lowerRight, lowerLeft]`. */
         fun makeRectRadii(
             rect: Rect,
             radii: Array<Point>,
         ): RRect {
+            require(radii.size == 4) {
+                "radii must have exactly 4 entries (one per corner), got ${radii.size}"
+            }
             val flat = FloatArray(8)
             radii.forEachIndexed { i, p ->
                 flat[i * 2] = p.x

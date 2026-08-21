@@ -37,6 +37,16 @@ class DirectContext private constructor(
         DirectContextNative.nAbandonContext(nativePtr)
     }
 
+    /**
+     * Invalidates Ganesh's cached GL state (texture bindings, blend state,
+     * etc.), needed whenever code outside Skia's control (e.g. the host
+     * application's own GL renderer) may have changed GL state since the
+     * last draw through this context. No-op for Vulkan contexts.
+     */
+    fun resetAll() {
+        DirectContextNative.nResetAll(nativePtr)
+    }
+
     var resourceCacheLimit: Long
         get() = DirectContextNative.nGetResourceCacheLimit(nativePtr)
         set(value) = DirectContextNative.nSetResourceCacheLimit(nativePtr, value)
@@ -113,6 +123,8 @@ private object DirectContextNative {
     )
 
     external fun nAbandonContext(ptr: Long)
+
+    external fun nResetAll(ptr: Long)
 
     external fun nGetResourceCacheLimit(ptr: Long): Long
 

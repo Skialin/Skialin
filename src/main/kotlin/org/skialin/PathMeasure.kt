@@ -53,7 +53,8 @@ class PathMeasure private constructor(ptr: Long) : Managed(ptr, PathMeasureNativ
         startWithMoveTo: Boolean,
     ): Boolean = PathMeasureNative.nSegment(nativePtr, startD, stopD, dst.nativePtr, startWithMoveTo)
 
-    val isClosed: Boolean get() = PathMeasureNative.nIsClosed(nativePtr)
+    /** Whether the current contour is closed. */
+    val isContourClosed: Boolean get() = PathMeasureNative.nIsClosed(nativePtr)
 
     /** Advances to the next contour in the path. `true` if one exists. */
     fun nextContour(): Boolean = PathMeasureNative.nNextContour(nativePtr)

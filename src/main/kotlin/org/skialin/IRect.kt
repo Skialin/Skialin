@@ -8,4 +8,13 @@ data class IRect(
 ) {
     val width: Int get() = right - left
     val height: Int get() = bottom - top
+
+    companion object {
+        fun makeXYWH(
+            left: Int,
+            top: Int,
+            width: Int,
+            height: Int,
+        ): IRect = IRect(left, top, left + width, top + height)
+    }
 }

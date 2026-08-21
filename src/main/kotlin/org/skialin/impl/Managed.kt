@@ -27,6 +27,8 @@ abstract class Managed internal constructor(
             return ptr
         }
 
+    val isClosed: Boolean get() = ptr == 0L
+
     override fun close() {
         if (ptr != 0L) {
             ptr = 0L

@@ -32,6 +32,11 @@ class Paint internal constructor(
         get() = StrokeJoin.entries[PaintNative.nGetStrokeJoin(nativePtr)]
         set(value) = PaintNative.nSetStrokeJoin(nativePtr, value.ordinal)
 
+    /** Shorthand for `style = if (stroke) PaintStyle.STROKE else PaintStyle.FILL`. */
+    fun setStroke(stroke: Boolean) {
+        style = if (stroke) PaintStyle.STROKE else PaintStyle.FILL
+    }
+
     fun setBlendMode(mode: BlendMode) {
         PaintNative.nSetBlendMode(nativePtr, mode.ordinal)
     }

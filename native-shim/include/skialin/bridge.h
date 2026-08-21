@@ -67,6 +67,12 @@ enum GrSurfaceOrigin : int;
 namespace skgpu {
 enum class Budgeted : bool;
 }
+namespace skialin {
+namespace node {
+class RenderNode;
+class RenderNodeContext;
+}
+}
 enum class SkBlendMode;
 enum class SkClipOp;
 enum SkBlurStyle : int;
@@ -404,6 +410,12 @@ void skialin_bridge_SVGDOM_unref(SkSVGDOM* dom);
 void skialin_bridge_SVGDOM_setContainerSize(SkSVGDOM* dom, float width, float height);
 void skialin_bridge_SVGDOM_getContainerSize(const SkSVGDOM* dom, float* outWidth, float* outHeight);
 void skialin_bridge_SVGDOM_render(const SkSVGDOM* dom, SkCanvas* canvas);
+/* Sets the container size AND forcibly overrides the root <svg>'s width/height (to exactly
+ * width/height, in px) and preserveAspectRatio (to "none"), so the document always stretches to
+ * fill (width, height) on render regardless of its own intrinsic size/viewBox -- setContainerSize
+ * alone only affects percentage-valued root width/height, not absolute ones. No-op if the document
+ * has no root (shouldn't happen for a successfully parsed SVGDOM). */
+void skialin_bridge_SVGDOM_setSizeAndStretch(SkSVGDOM* dom, float width, float height);
 
 /* SVGCanvas: records SkCanvas draw calls as SVG XML. Owned by the caller;
  * free with skialin_bridge_SVGCanvas_finish, which also flushes and returns
@@ -1007,6 +1019,10 @@ void skialin_bridge_DirectContext_unref(GrDirectContext* context);
 void skialin_bridge_DirectContext_flush(GrDirectContext* context);
 void skialin_bridge_DirectContext_submit(GrDirectContext* context, bool syncCpu);
 void skialin_bridge_DirectContext_abandonContext(GrDirectContext* context);
+/* Tells Ganesh that GL state was modified by code outside Skia's control
+ * (e.g. Minecraft's own renderer) and its cached GL state is stale. GL
+ * DirectContexts only; a no-op for Vulkan. */
+void skialin_bridge_DirectContext_resetAll(GrDirectContext* context);
 int64_t skialin_bridge_DirectContext_getResourceCacheLimit(GrDirectContext* context);
 void skialin_bridge_DirectContext_setResourceCacheLimit(GrDirectContext* context, int64_t maxResourceBytes);
 
@@ -1205,5 +1221,66 @@ SkImage* skialin_bridge_Image_AdoptTextureFrom(
 SkImage* skialin_bridge_Image_WrapGraphiteTexture(
     skgpu::graphite::Recorder* recorder, const skgpu::graphite::BackendTexture* backendTexture,
     SkAlphaType alphaType, SkColorSpace* colorSpace, skgpu::Origin origin, SkImages::GenerateMipmapsFromBase generateMipmapsFromBase);
+
+/* RenderNodeContext: ref-owned by the caller. Free with skialin_bridge_RenderNodeContext_unref. */
+skialin::node::RenderNodeContext* skialin_bridge_RenderNodeContext_Make(bool measureDrawBounds, bool snapshotCache);
+void skialin_bridge_RenderNodeContext_unref(skialin::node::RenderNodeContext* context);
+void skialin_bridge_RenderNodeContext_setLightingInfo(
+    skialin::node::RenderNodeContext* context,
+    float centerX, float centerY, float centerZ, float radius,
+    float ambientShadowAlpha, float spotShadowAlpha);
+
+/* RenderNode: a real SkDrawable so nested RenderNodes stay live references across a parent's
+ * cached recording rather than frozen snapshots -- see skialin/node/RenderNode.h. Ref-owned by
+ * the caller; free with skialin_bridge_RenderNode_unref. */
+skialin::node::RenderNode* skialin_bridge_RenderNode_Make(skialin::node::RenderNodeContext* context);
+void skialin_bridge_RenderNode_unref(skialin::node::RenderNode* node);
+/* Copy-assigns the layer paint into *outPaint (which must already be a valid, live SkPaint --
+ * e.g. Rust's caller default-constructs one via its own allocator first) and returns true, or
+ * leaves *outPaint untouched and returns false if no layer paint is set. Avoids handing out a
+ * pointer to Rust that would need freeing with a C++ delete rather than Rust's allocator. */
+bool skialin_bridge_RenderNode_getLayerPaint(const skialin::node::RenderNode* node, SkPaint* outPaint);
+/* paint is copied; the caller keeps ownership of it. Pass null to clear. */
+void skialin_bridge_RenderNode_setLayerPaint(skialin::node::RenderNode* node, const SkPaint* paint);
+void skialin_bridge_RenderNode_getBounds(const skialin::node::RenderNode* node, SkRect* outBounds);
+void skialin_bridge_RenderNode_setBounds(skialin::node::RenderNode* node, const SkRect* bounds);
+/* NaN x/y (Skia's SkPoint::isFinite() convention) means "unset" (center pivot). */
+void skialin_bridge_RenderNode_getPivot(const skialin::node::RenderNode* node, SkPoint* outPivot);
+void skialin_bridge_RenderNode_setPivot(skialin::node::RenderNode* node, float x, float y);
+float skialin_bridge_RenderNode_getAlpha(const skialin::node::RenderNode* node);
+void skialin_bridge_RenderNode_setAlpha(skialin::node::RenderNode* node, float alpha);
+float skialin_bridge_RenderNode_getScaleX(const skialin::node::RenderNode* node);
+void skialin_bridge_RenderNode_setScaleX(skialin::node::RenderNode* node, float scaleX);
+float skialin_bridge_RenderNode_getScaleY(const skialin::node::RenderNode* node);
+void skialin_bridge_RenderNode_setScaleY(skialin::node::RenderNode* node, float scaleY);
+float skialin_bridge_RenderNode_getTranslationX(const skialin::node::RenderNode* node);
+void skialin_bridge_RenderNode_setTranslationX(skialin::node::RenderNode* node, float translationX);
+float skialin_bridge_RenderNode_getTranslationY(const skialin::node::RenderNode* node);
+void skialin_bridge_RenderNode_setTranslationY(skialin::node::RenderNode* node, float translationY);
+float skialin_bridge_RenderNode_getShadowElevation(const skialin::node::RenderNode* node);
+void skialin_bridge_RenderNode_setShadowElevation(skialin::node::RenderNode* node, float shadowElevation);
+uint32_t skialin_bridge_RenderNode_getAmbientShadowColor(const skialin::node::RenderNode* node);
+void skialin_bridge_RenderNode_setAmbientShadowColor(skialin::node::RenderNode* node, uint32_t color);
+uint32_t skialin_bridge_RenderNode_getSpotShadowColor(const skialin::node::RenderNode* node);
+void skialin_bridge_RenderNode_setSpotShadowColor(skialin::node::RenderNode* node, uint32_t color);
+float skialin_bridge_RenderNode_getRotationX(const skialin::node::RenderNode* node);
+void skialin_bridge_RenderNode_setRotationX(skialin::node::RenderNode* node, float rotationX);
+float skialin_bridge_RenderNode_getRotationY(const skialin::node::RenderNode* node);
+void skialin_bridge_RenderNode_setRotationY(skialin::node::RenderNode* node, float rotationY);
+float skialin_bridge_RenderNode_getRotationZ(const skialin::node::RenderNode* node);
+void skialin_bridge_RenderNode_setRotationZ(skialin::node::RenderNode* node, float rotationZ);
+float skialin_bridge_RenderNode_getCameraDistance(const skialin::node::RenderNode* node);
+void skialin_bridge_RenderNode_setCameraDistance(skialin::node::RenderNode* node, float cameraDistance);
+/* rect/rrect/path is copied; the caller keeps ownership of it. */
+void skialin_bridge_RenderNode_setClipRect(skialin::node::RenderNode* node, const SkRect* rect, SkClipOp op, bool antiAlias);
+void skialin_bridge_RenderNode_setClipRRect(skialin::node::RenderNode* node, const SkRRect* rrect, SkClipOp op, bool antiAlias);
+void skialin_bridge_RenderNode_setClipPath(skialin::node::RenderNode* node, const SkPath* path, SkClipOp op, bool antiAlias);
+bool skialin_bridge_RenderNode_getClip(const skialin::node::RenderNode* node);
+void skialin_bridge_RenderNode_setClip(skialin::node::RenderNode* node, bool clip);
+/* Borrowed: valid only between this call and the matching skialin_bridge_RenderNode_endRecording,
+ * do not free independently. */
+SkCanvas* skialin_bridge_RenderNode_beginRecording(skialin::node::RenderNode* node);
+void skialin_bridge_RenderNode_endRecording(skialin::node::RenderNode* node);
+void skialin_bridge_RenderNode_drawInto(skialin::node::RenderNode* node, SkCanvas* canvas);
 
 }  // extern "C"

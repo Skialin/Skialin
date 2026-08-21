@@ -56,7 +56,7 @@ class PathMeasureTest {
     fun isClosedAndNextContour() {
         makeSquare().use { path ->
             PathMeasure(path).use { measure ->
-                assertTrue(measure.isClosed)
+                assertTrue(measure.isContourClosed)
                 assertFalse(measure.nextContour())
             }
         }

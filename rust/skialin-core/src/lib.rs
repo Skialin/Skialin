@@ -100,7 +100,7 @@ pub use pixmap::Pixmap;
 pub use point::{IPoint, Point};
 pub use rect::{IRect, Rect};
 pub use region::{Region, RegionOp};
-pub use render_node::{LightGeometry, LightInfo, RenderNode, RenderNodeContext};
+pub use render_node::{RenderNode, RenderNodeContext};
 pub use rrect::{CornerRadii, RRect, RRectType};
 pub use runtime_effect::RuntimeEffect;
 pub use sampling_options::SamplingOptions;

@@ -67,6 +67,58 @@ class RenderNodeTest {
             }
         }
     }
+
+    @Test
+    fun nestedNodeStaysLiveAcrossParentCache() {
+        RenderNodeContext().use { context ->
+            RenderNode(context).use { child ->
+                RenderNode(context).use { parent ->
+                    child.bounds = Rect(0f, 0f, 16f, 16f)
+                    parent.bounds = Rect(0f, 0f, 16f, 16f)
+
+                    fun recordChild(color: Color) {
+                        val canvas = child.beginRecording()
+                        Paint().use { paint ->
+                            paint.color = color
+                            canvas.drawRect(Rect(0f, 0f, 16f, 16f), paint)
+                        }
+                        child.endRecording()
+                    }
+
+                    fun recordParent() {
+                        val canvas = parent.beginRecording()
+                        child.drawInto(canvas)
+                        parent.endRecording()
+                    }
+
+                    fun readRed(): Int {
+                        Surface.makeRasterN32Premul(16, 16)!!.use { surface ->
+                            parent.drawInto(surface.canvas)
+                            surface.makeImageSnapshot()!!.use { image ->
+                                val info = ImageInfo.make(16, 16, ColorType.N32, AlphaType.PREMUL)
+                                val buffer = java.nio.ByteBuffer.allocateDirect(16 * 16 * 4)
+                                assertTrueOrFail(image.readPixels(info, buffer, 16L * 4))
+                                // BGRA8888: byte 2 is the red channel.
+                                return buffer.get(2).toInt() and 0xFF
+                            }
+                        }
+                    }
+
+                    // Record the child red, record the parent once (embedding the child as of
+                    // now), then re-record *only* the child to a different color without ever
+                    // re-recording the parent. If the child were baked into the parent as a
+                    // frozen SkPicture snapshot instead of a live SkDrawable reference, the
+                    // parent would still show the old red here.
+                    recordChild(Colors.RED)
+                    recordParent()
+                    assertEquals(255, readRed())
+
+                    recordChild(Colors.BLUE)
+                    assertEquals(0, readRed())
+                }
+            }
+        }
+    }
 }
 
 private fun assertTrueOrFail(value: Boolean) {

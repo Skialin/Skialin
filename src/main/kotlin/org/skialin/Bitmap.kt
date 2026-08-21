@@ -46,6 +46,36 @@ class Bitmap internal constructor(
 
     fun eraseColor(color: Color) = BitmapNative.nEraseColor(nativePtr, color)
 
+    /** Overwrites [subset] (the whole bitmap if `null`) with [color], replacing alpha too. */
+    fun erase(
+        color: Color,
+        subset: IRect? = null,
+    ) {
+        if (subset == null) {
+            eraseColor(color)
+            return
+        }
+        Canvas(this).use { canvas ->
+            Paint().use { paint ->
+                paint.color = color
+                paint.setBlendMode(BlendMode.SRC)
+                canvas.drawRect(
+                    Rect(subset.left.toFloat(), subset.top.toFloat(), subset.right.toFloat(), subset.bottom.toFloat()),
+                    paint,
+                )
+            }
+        }
+    }
+
+    /** The color of the pixel at ([x], [y]). Round-trips through a temporary [Image]/[Pixmap]. */
+    fun getColor(
+        x: Int,
+        y: Int,
+    ): Color =
+        asImage()!!.use { image ->
+            image.peekPixels()!!.use { it.getColor(x, y) }
+        }
+
     /**
      * @return copy of the current pixel buffer
      */

@@ -12,6 +12,17 @@ class SVGDOM private constructor(
         get() = SVGDOMNative.nGetContainerSize(nativePtr).let { it[0] to it[1] }
         set(value) = SVGDOMNative.nSetContainerSize(nativePtr, value.first, value.second)
 
+    /**
+     * Sets the container size AND forcibly overrides the root `<svg>`'s width/height/
+     * preserveAspectRatio so the document always stretches to fill (width, height) on render,
+     * regardless of its own intrinsic size or viewBox -- unlike [containerSize] alone, which only
+     * affects percentage-valued root width/height, not absolute ones (e.g. `width="24"`).
+     */
+    fun setSizeAndStretch(
+        width: Float,
+        height: Float,
+    ) = SVGDOMNative.nSetSizeAndStretch(nativePtr, width, height)
+
     fun render(canvas: Canvas) = SVGDOMNative.nRender(nativePtr, canvas.ptr)
 
     companion object {
@@ -36,6 +47,12 @@ private object SVGDOMNative {
     )
 
     external fun nGetContainerSize(ptr: Long): FloatArray
+
+    external fun nSetSizeAndStretch(
+        ptr: Long,
+        width: Float,
+        height: Float,
+    )
 
     external fun nRender(
         ptr: Long,

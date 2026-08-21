@@ -1,381 +1,242 @@
-use crate::{color, Canvas, Color, Paint, Path, Picture, PictureRecorder, RRect, Rect, M44};
-use std::cell::RefCell;
-use std::rc::Rc;
+use crate::{sys, Canvas, ClipOp, Paint, Path, RRect, Rect};
 
-use crate::canvas::ClipOp;
-
-const NON_ZERO_EPSILON: f32 = 0.001;
-
-fn is_zero(value: f32) -> bool {
-    value.abs() <= NON_ZERO_EPSILON
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct LightGeometry {
-    /// (x, y, z)
-    pub center: (f32, f32, f32),
-    pub radius: f32,
-}
-
-impl Default for LightGeometry {
-    fn default() -> Self {
-        LightGeometry { center: (0.0, 0.0, 0.0), radius: 0.0 }
-    }
-}
-
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub struct LightInfo {
-    pub ambient_shadow_alpha: f32,
-    pub spot_shadow_alpha: f32,
-}
-
-struct RenderNodeContextState {
-    light_geometry: LightGeometry,
-    light_info: LightInfo,
-}
-
-pub struct RenderNodeContext {
-    pub measure_draw_bounds: bool,
-    pub snapshot_cache: bool,
-    state: RefCell<RenderNodeContextState>,
-}
+/// A thin wrapper around the C++ `skialin::node::RenderNodeContext` (native-shim/src/node/).
+/// See `RenderNode` for why the actual recording/drawing logic lives in C++ rather than here.
+pub struct RenderNodeContext(pub(crate) *mut sys::skialin::node::RenderNodeContext);
 
 impl RenderNodeContext {
-    pub fn new(measure_draw_bounds: bool, snapshot_cache: bool) -> Rc<Self> {
-        Rc::new(RenderNodeContext {
-            measure_draw_bounds,
-            snapshot_cache,
-            state: RefCell::new(RenderNodeContextState { light_geometry: LightGeometry::default(), light_info: LightInfo::default() }),
-        })
+    pub fn new(measure_draw_bounds: bool, snapshot_cache: bool) -> Self {
+        let ptr = unsafe { sys::skialin_bridge_RenderNodeContext_Make(measure_draw_bounds, snapshot_cache) };
+        RenderNodeContext(ptr)
     }
 
-    pub fn light_geometry(&self) -> LightGeometry {
-        self.state.borrow().light_geometry
-    }
-
-    pub fn light_info(&self) -> LightInfo {
-        self.state.borrow().light_info
-    }
-
-    pub fn set_lighting_info(&self, light_geometry: LightGeometry, light_info: LightInfo) {
-        let mut state = self.state.borrow_mut();
-        state.light_geometry = light_geometry;
-        state.light_info = light_info;
-    }
-}
-
-enum ClipShape {
-    Rect(Rect),
-    RRect(RRect),
-    Path(Path),
-}
-
-pub struct RenderNode {
-    #[allow(dead_code)]
-    context: Rc<RenderNodeContext>,
-    recorder: PictureRecorder,
-    content: Option<Picture>,
-
-    layer_paint: Option<Paint>,
-    bounds: Rect,
-    pivot: Option<(f32, f32)>,
-    alpha: f32,
-    scale_x: f32,
-    scale_y: f32,
-    translation_x: f32,
-    translation_y: f32,
-    shadow_elevation: f32,
-    ambient_shadow_color: Color,
-    spot_shadow_color: Color,
-    rotation_x: f32,
-    rotation_y: f32,
-    rotation_z: f32,
-    camera_distance: f32,
-
-    clip_shape: Option<ClipShape>,
-    clip_op: ClipOp,
-    clip_antialias: bool,
-    clip: bool,
-}
-
-impl RenderNode {
-    pub fn new(context: Rc<RenderNodeContext>) -> Self {
-        RenderNode {
-            context,
-            recorder: PictureRecorder::new(),
-            content: None,
-            layer_paint: None,
-            bounds: Rect::new(0.0, 0.0, 0.0, 0.0),
-            pivot: None,
-            alpha: 1.0,
-            scale_x: 1.0,
-            scale_y: 1.0,
-            translation_x: 0.0,
-            translation_y: 0.0,
-            shadow_elevation: 0.0,
-            ambient_shadow_color: color::BLACK,
-            spot_shadow_color: color::BLACK,
-            rotation_x: 0.0,
-            rotation_y: 0.0,
-            rotation_z: 0.0,
-            camera_distance: 8.0,
-            clip_shape: None,
-            clip_op: ClipOp::Intersect,
-            clip_antialias: false,
-            clip: false,
+    #[allow(clippy::too_many_arguments)]
+    pub fn set_lighting_info(
+        &mut self,
+        center_x: f32,
+        center_y: f32,
+        center_z: f32,
+        radius: f32,
+        ambient_shadow_alpha: f32,
+        spot_shadow_alpha: f32,
+    ) {
+        unsafe {
+            sys::skialin_bridge_RenderNodeContext_setLightingInfo(
+                self.0,
+                center_x,
+                center_y,
+                center_z,
+                radius,
+                ambient_shadow_alpha,
+                spot_shadow_alpha,
+            );
         }
     }
+}
 
-    pub fn layer_paint(&self) -> Option<&Paint> {
-        self.layer_paint.as_ref()
+impl Drop for RenderNodeContext {
+    fn drop(&mut self) {
+        unsafe { sys::skialin_bridge_RenderNodeContext_unref(self.0) };
+    }
+}
+
+/// A thin wrapper around the C++ `skialin::node::RenderNode` (native-shim/src/node/RenderNode.cpp),
+/// itself a port of skiko's `org.jetbrains.skiko.node.RenderNode`. This has to be a real
+/// `SkDrawable` subclass living in C++ rather than a plain Rust struct recording an `SkPicture`:
+/// when one RenderNode's recording embeds another (a nested Compose GraphicsLayer), the embedded
+/// node must stay a *live* reference -- `SkCanvas::drawDrawable` replays the referenced
+/// `SkDrawable::draw()` fresh on every playback -- rather than a frozen snapshot of whatever it
+/// looked like at record time. A plain `SkPicture`-of-a-`SkPicture` would bake the child's content
+/// in as of record time, so a parent that stops re-recording (the whole point of the cache) would
+/// never show that child's later updates. See RenderNode.h in native-shim for the longer version.
+pub struct RenderNode(pub(crate) *mut sys::skialin::node::RenderNode);
+
+impl RenderNode {
+    pub fn new(context: &RenderNodeContext) -> Self {
+        let ptr = unsafe { sys::skialin_bridge_RenderNode_Make(context.0) };
+        RenderNode(ptr)
     }
 
-    pub fn set_layer_paint(&mut self, layer_paint: Option<Paint>) {
-        self.layer_paint = layer_paint;
+    pub fn layer_paint(&self) -> Option<Paint> {
+        let mut paint = Paint::new();
+        let has_value = unsafe { sys::skialin_bridge_RenderNode_getLayerPaint(self.0, &mut *paint.0) };
+        has_value.then_some(paint)
+    }
+
+    pub fn set_layer_paint(&mut self, paint: Option<&Paint>) {
+        unsafe {
+            sys::skialin_bridge_RenderNode_setLayerPaint(
+                self.0,
+                paint.map_or(std::ptr::null(), |p| &*p.0 as *const sys::SkPaint),
+            );
+        }
     }
 
     pub fn bounds(&self) -> Rect {
-        self.bounds
+        let mut sk_rect = sys::SkRect::default();
+        unsafe { sys::skialin_bridge_RenderNode_getBounds(self.0, &mut sk_rect) };
+        sk_rect.into()
     }
 
     pub fn set_bounds(&mut self, bounds: Rect) {
-        self.bounds = bounds;
+        let sk_rect: sys::SkRect = bounds.into();
+        unsafe { sys::skialin_bridge_RenderNode_setBounds(self.0, &sk_rect) };
     }
 
+    /// `None` mirrors an unset (NaN) pivot, i.e. "use the bounds' center".
     pub fn pivot(&self) -> Option<(f32, f32)> {
-        self.pivot
+        let mut sk_point = sys::SkPoint::default();
+        unsafe { sys::skialin_bridge_RenderNode_getPivot(self.0, &mut sk_point) };
+        (!sk_point.fX.is_nan()).then_some((sk_point.fX, sk_point.fY))
     }
 
     pub fn set_pivot(&mut self, pivot: Option<(f32, f32)>) {
-        self.pivot = pivot;
+        let (x, y) = pivot.unwrap_or((f32::NAN, f32::NAN));
+        unsafe { sys::skialin_bridge_RenderNode_setPivot(self.0, x, y) };
     }
 
     pub fn alpha(&self) -> f32 {
-        self.alpha
+        unsafe { sys::skialin_bridge_RenderNode_getAlpha(self.0) }
     }
-
-    pub fn set_alpha(&mut self, alpha: f32) {
-        self.alpha = alpha;
+    pub fn set_alpha(&mut self, value: f32) {
+        unsafe { sys::skialin_bridge_RenderNode_setAlpha(self.0, value) };
     }
 
     pub fn scale_x(&self) -> f32 {
-        self.scale_x
+        unsafe { sys::skialin_bridge_RenderNode_getScaleX(self.0) }
     }
-    pub fn set_scale_x(&mut self, v: f32) {
-        self.scale_x = v;
+    pub fn set_scale_x(&mut self, value: f32) {
+        unsafe { sys::skialin_bridge_RenderNode_setScaleX(self.0, value) };
     }
+
     pub fn scale_y(&self) -> f32 {
-        self.scale_y
+        unsafe { sys::skialin_bridge_RenderNode_getScaleY(self.0) }
     }
-    pub fn set_scale_y(&mut self, v: f32) {
-        self.scale_y = v;
+    pub fn set_scale_y(&mut self, value: f32) {
+        unsafe { sys::skialin_bridge_RenderNode_setScaleY(self.0, value) };
     }
+
     pub fn translation_x(&self) -> f32 {
-        self.translation_x
+        unsafe { sys::skialin_bridge_RenderNode_getTranslationX(self.0) }
     }
-    pub fn set_translation_x(&mut self, v: f32) {
-        self.translation_x = v;
+    pub fn set_translation_x(&mut self, value: f32) {
+        unsafe { sys::skialin_bridge_RenderNode_setTranslationX(self.0, value) };
     }
+
     pub fn translation_y(&self) -> f32 {
-        self.translation_y
+        unsafe { sys::skialin_bridge_RenderNode_getTranslationY(self.0) }
     }
-    pub fn set_translation_y(&mut self, v: f32) {
-        self.translation_y = v;
+    pub fn set_translation_y(&mut self, value: f32) {
+        unsafe { sys::skialin_bridge_RenderNode_setTranslationY(self.0, value) };
     }
+
     pub fn rotation_x(&self) -> f32 {
-        self.rotation_x
+        unsafe { sys::skialin_bridge_RenderNode_getRotationX(self.0) }
     }
-    pub fn set_rotation_x(&mut self, v: f32) {
-        self.rotation_x = v;
+    pub fn set_rotation_x(&mut self, value: f32) {
+        unsafe { sys::skialin_bridge_RenderNode_setRotationX(self.0, value) };
     }
+
     pub fn rotation_y(&self) -> f32 {
-        self.rotation_y
+        unsafe { sys::skialin_bridge_RenderNode_getRotationY(self.0) }
     }
-    pub fn set_rotation_y(&mut self, v: f32) {
-        self.rotation_y = v;
+    pub fn set_rotation_y(&mut self, value: f32) {
+        unsafe { sys::skialin_bridge_RenderNode_setRotationY(self.0, value) };
     }
+
     pub fn rotation_z(&self) -> f32 {
-        self.rotation_z
+        unsafe { sys::skialin_bridge_RenderNode_getRotationZ(self.0) }
     }
-    pub fn set_rotation_z(&mut self, v: f32) {
-        self.rotation_z = v;
+    pub fn set_rotation_z(&mut self, value: f32) {
+        unsafe { sys::skialin_bridge_RenderNode_setRotationZ(self.0, value) };
     }
+
     pub fn camera_distance(&self) -> f32 {
-        self.camera_distance
+        unsafe { sys::skialin_bridge_RenderNode_getCameraDistance(self.0) }
     }
-    pub fn set_camera_distance(&mut self, v: f32) {
-        self.camera_distance = v;
+    pub fn set_camera_distance(&mut self, value: f32) {
+        unsafe { sys::skialin_bridge_RenderNode_setCameraDistance(self.0, value) };
     }
 
     pub fn shadow_elevation(&self) -> f32 {
-        self.shadow_elevation
+        unsafe { sys::skialin_bridge_RenderNode_getShadowElevation(self.0) }
     }
-    pub fn set_shadow_elevation(&mut self, v: f32) {
-        self.shadow_elevation = v;
-    }
-    pub fn ambient_shadow_color(&self) -> Color {
-        self.ambient_shadow_color
-    }
-    pub fn set_ambient_shadow_color(&mut self, v: Color) {
-        self.ambient_shadow_color = v;
-    }
-    pub fn spot_shadow_color(&self) -> Color {
-        self.spot_shadow_color
-    }
-    pub fn set_spot_shadow_color(&mut self, v: Color) {
-        self.spot_shadow_color = v;
+    pub fn set_shadow_elevation(&mut self, value: f32) {
+        unsafe { sys::skialin_bridge_RenderNode_setShadowElevation(self.0, value) };
     }
 
-    pub fn set_clip_rect(&mut self, rect: Option<Rect>, op: ClipOp, antialias: bool) {
-        self.clip_shape = rect.map(ClipShape::Rect);
-        self.clip_op = op;
-        self.clip_antialias = antialias;
+    pub fn ambient_shadow_color(&self) -> u32 {
+        unsafe { sys::skialin_bridge_RenderNode_getAmbientShadowColor(self.0) }
+    }
+    pub fn set_ambient_shadow_color(&mut self, value: u32) {
+        unsafe { sys::skialin_bridge_RenderNode_setAmbientShadowColor(self.0, value) };
     }
 
-    pub fn set_clip_rrect(&mut self, rrect: Option<RRect>, op: ClipOp, antialias: bool) {
-        self.clip_shape = rrect.map(ClipShape::RRect);
-        self.clip_op = op;
-        self.clip_antialias = antialias;
+    pub fn spot_shadow_color(&self) -> u32 {
+        unsafe { sys::skialin_bridge_RenderNode_getSpotShadowColor(self.0) }
     }
-
-    pub fn set_clip_path(&mut self, path: Option<Path>, op: ClipOp, antialias: bool) {
-        self.clip_shape = path.map(ClipShape::Path);
-        self.clip_op = op;
-        self.clip_antialias = antialias;
+    pub fn set_spot_shadow_color(&mut self, value: u32) {
+        unsafe { sys::skialin_bridge_RenderNode_setSpotShadowColor(self.0, value) };
     }
 
     pub fn clip(&self) -> bool {
-        self.clip
+        unsafe { sys::skialin_bridge_RenderNode_getClip(self.0) }
     }
     pub fn set_clip(&mut self, clip: bool) {
-        self.clip = clip;
+        unsafe { sys::skialin_bridge_RenderNode_setClip(self.0, clip) };
     }
 
+    pub fn set_clip_rect(&mut self, rect: Option<Rect>, op: ClipOp, antialias: bool) {
+        let sk_rect: Option<sys::SkRect> = rect.map(Into::into);
+        unsafe {
+            sys::skialin_bridge_RenderNode_setClipRect(
+                self.0,
+                sk_rect.as_ref().map_or(std::ptr::null(), |r| r as *const _),
+                op.into(),
+                antialias,
+            );
+        }
+    }
+
+    pub fn set_clip_rrect(&mut self, rrect: Option<&RRect>, op: ClipOp, antialias: bool) {
+        unsafe {
+            sys::skialin_bridge_RenderNode_setClipRRect(
+                self.0,
+                rrect.map_or(std::ptr::null(), |r| r.0),
+                op.into(),
+                antialias,
+            );
+        }
+    }
+
+    pub fn set_clip_path(&mut self, path: Option<&Path>, op: ClipOp, antialias: bool) {
+        unsafe {
+            sys::skialin_bridge_RenderNode_setClipPath(
+                self.0,
+                path.map_or(std::ptr::null(), |p| p.0),
+                op.into(),
+                antialias,
+            );
+        }
+    }
+
+    /// Borrowed: valid only until the matching `end_recording`.
     pub fn begin_recording(&mut self) -> Canvas<'_> {
-        self.recorder.begin_recording(Rect::new(0.0, 0.0, self.bounds.width(), self.bounds.height()))
+        let ptr = unsafe { sys::skialin_bridge_RenderNode_beginRecording(self.0) };
+        unsafe { Canvas::from_raw(ptr) }
     }
 
     pub fn end_recording(&mut self) {
-        self.content = self.recorder.finish_recording_as_picture();
-    }
-
-    fn pivot_or_center(&self) -> (f32, f32) {
-        self.pivot.unwrap_or((self.bounds.width() / 2.0, self.bounds.height() / 2.0))
-    }
-
-    pub fn matrix(&self) -> M44 {
-        let (px, py) = self.pivot_or_center();
-        let to_pivot = M44::translate(px, py, 0.0);
-        let from_pivot = M44::translate(-px, -py, 0.0);
-        let translate = M44::translate(self.translation_x, self.translation_y, 0.0);
-        let scale = M44::scale(self.scale_x, self.scale_y, 1.0);
-
-        if is_zero(self.rotation_x) && is_zero(self.rotation_y) {
-            let rot = M44::rotate((0.0, 0.0, 1.0), self.rotation_z.to_radians());
-            M44::concat(&translate, &M44::concat(&to_pivot, &M44::concat(&rot, &M44::concat(&scale, &from_pivot))))
-        } else {
-            let rot_x = M44::rotate((1.0, 0.0, 0.0), self.rotation_x.to_radians());
-            let rot_y = M44::rotate((0.0, 1.0, 0.0), self.rotation_y.to_radians());
-            let rot_z = M44::rotate((0.0, 0.0, 1.0), self.rotation_z.to_radians());
-            let rotation = M44::concat(&rot_z, &M44::concat(&rot_y, &rot_x));
-
-            let camera_pt = self.camera_distance.max(0.001) * 72.0;
-            let mut persp = M44::identity().to_row_major();
-            persp[14] = -1.0 / camera_pt;
-            let persp = M44::from_row_major(&persp);
-
-            M44::concat(
-                &translate,
-                &M44::concat(&to_pivot, &M44::concat(&persp, &M44::concat(&rotation, &M44::concat(&scale, &from_pivot)))),
-            )
-        }
-    }
-
-    fn draw_shadow(&self, canvas: &mut Canvas) {
-        let light_geometry = self.context.light_geometry();
-        let light_info = self.context.light_info();
-
-        let path = match &self.clip_shape {
-            Some(ClipShape::Rect(r)) => {
-                let mut b = crate::PathBuilder::new();
-                b.add_rect(*r, crate::PathDirection::Clockwise);
-                Some(b.detach())
-            }
-            Some(ClipShape::RRect(rr)) => {
-                let mut b = crate::PathBuilder::new();
-                b.add_rect(rr.rect(), crate::PathDirection::Clockwise);
-                Some(b.detach())
-            }
-            Some(ClipShape::Path(_)) => None,
-            None => return,
-        };
-        let path_ref = match (&path, &self.clip_shape) {
-            (Some(p), _) => p,
-            (None, Some(ClipShape::Path(p))) => p,
-            _ => return,
-        };
-
-        let ambient_alpha = light_info.ambient_shadow_alpha * self.alpha;
-        let spot_alpha = light_info.spot_shadow_alpha * self.alpha;
-        let ambient_color = multiply_alpha(self.ambient_shadow_color, ambient_alpha);
-        let spot_color = multiply_alpha(self.spot_shadow_color, spot_alpha);
-
-        canvas.draw_shadow(
-            path_ref,
-            (0.0, 0.0, self.shadow_elevation),
-            light_geometry.center,
-            light_geometry.radius,
-            ambient_color,
-            spot_color,
-            if self.alpha < 1.0 { 1 } else { 0 },
-        );
+        unsafe { sys::skialin_bridge_RenderNode_endRecording(self.0) };
     }
 
     pub fn draw_into(&mut self, canvas: &mut Canvas) {
-        canvas.save();
-
-        canvas.translate(self.bounds.left, self.bounds.top);
-        canvas.concat_44(&self.matrix());
-
-        if self.shadow_elevation > 0.0 {
-            self.draw_shadow(canvas);
-        }
-
-        if self.clip {
-            canvas.save();
-            match &self.clip_shape {
-                Some(ClipShape::Rect(r)) => canvas.clip_rect(*r, self.clip_op, self.clip_antialias),
-                Some(ClipShape::RRect(rr)) => canvas.clip_rrect(rr, self.clip_op, self.clip_antialias),
-                Some(ClipShape::Path(p)) => canvas.clip_path(p, self.clip_op, self.clip_antialias),
-                None => canvas.clip_rect(Rect::new(0.0, 0.0, self.bounds.width(), self.bounds.height()), self.clip_op, self.clip_antialias),
-            }
-        }
-
-        if let Some(layer_paint) = &self.layer_paint {
-            let rect = Rect::new(0.0, 0.0, self.bounds.width(), self.bounds.height());
-            canvas.save_layer(Some(rect), Some(layer_paint));
-        } else if self.alpha < 1.0 {
-            let mut paint = Paint::new();
-            paint.set_alphaf(self.alpha);
-            canvas.save_layer(None, Some(&paint));
-        } else {
-            canvas.save();
-        }
-
-        if let Some(picture) = &self.content {
-            canvas.draw_picture(picture);
-        }
-
-        canvas.restore();
-        if self.clip {
-            canvas.restore();
-        }
-        canvas.restore();
+        unsafe { sys::skialin_bridge_RenderNode_drawInto(self.0, canvas.as_raw()) };
     }
 }
 
-fn multiply_alpha(color: Color, alpha: f32) -> Color {
-    let a = ((color >> 24) & 0xff) as f32;
-    let new_a = (a * alpha).round().clamp(0.0, 255.0) as u32;
-    (color & 0x00ff_ffff) | (new_a << 24)
+impl Drop for RenderNode {
+    fn drop(&mut self) {
+        unsafe { sys::skialin_bridge_RenderNode_unref(self.0) };
+    }
 }

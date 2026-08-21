@@ -91,6 +91,8 @@
 #include "include/gpu/graphite/BackendTexture.h"
 #include "include/gpu/graphite/Context.h"
 #include "include/gpu/graphite/ContextOptions.h"
+#include "include/gpu/graphite/Image.h"
+#include "include/gpu/graphite/ImageProvider.h"
 #include "include/gpu/graphite/Recorder.h"
 #include "include/gpu/graphite/Recording.h"
 #include "include/gpu/graphite/Surface.h"
@@ -2221,6 +2223,17 @@ void skialin_bridge_SVGDOM_render(const SkSVGDOM* dom, SkCanvas* canvas) {
     dom->render(canvas);
 }
 
+void skialin_bridge_SVGDOM_setSizeAndStretch(SkSVGDOM* dom, float width, float height) {
+    dom->setContainerSize(SkSize::Make(width, height));
+    if (SkSVGSVG* root = dom->getRoot()) {
+        root->setWidth(SkSVGLength(width, SkSVGLength::Unit::kPX));
+        root->setHeight(SkSVGLength(height, SkSVGLength::Unit::kPX));
+        SkSVGPreserveAspectRatio preserveAspectRatio;
+        preserveAspectRatio.fAlign = SkSVGPreserveAspectRatio::kNone;
+        root->setPreserveAspectRatio(preserveAspectRatio);
+    }
+}
+
 struct SkialinSvgCanvas {
     SkDynamicMemoryWStream stream;
     std::unique_ptr<SkCanvas> canvas;
@@ -2398,6 +2411,10 @@ void skialin_bridge_DirectContext_abandonContext(GrDirectContext* context) {
     context->abandonContext();
 }
 
+void skialin_bridge_DirectContext_resetAll(GrDirectContext* context) {
+    context->resetContext();
+}
+
 int64_t skialin_bridge_DirectContext_getResourceCacheLimit(GrDirectContext* context) {
     return static_cast<int64_t>(context->getResourceCacheLimit());
 }
@@ -2558,8 +2575,30 @@ void skialin_bridge_GraphiteContext_delete(skgpu::graphite::Context* context) {
     delete context;
 }
 
+namespace {
+
+// Graphite's own DefaultImageProvider (used when RecorderOptions::fImageProvider is left unset)
+// unconditionally returns nullptr from findOrCreate() -- see skia's Recorder.cpp -- so any
+// raster-backed SkImage drawn through a Recorder without a custom provider fails with "Couldn't
+// convert SkImage to a Graphite-backed representation" and the draw is silently dropped. This
+// provider does the upload skia's own default declines to do, via the public TextureFromImage API.
+class UploadingImageProvider final : public skgpu::graphite::ImageProvider {
+public:
+    sk_sp<SkImage> findOrCreate(
+        skgpu::graphite::Recorder* recorder,
+        const SkImage* image,
+        SkImage::RequiredProperties props
+    ) override {
+        return SkImages::TextureFromImage(recorder, image, props);
+    }
+};
+
+} // namespace
+
 skgpu::graphite::Recorder* skialin_bridge_GraphiteContext_makeRecorder(skgpu::graphite::Context* context) {
-    return context->makeRecorder().release();
+    skgpu::graphite::RecorderOptions options;
+    options.fImageProvider = sk_make_sp<UploadingImageProvider>();
+    return context->makeRecorder(options).release();
 }
 
 int32_t skialin_bridge_GraphiteContext_insertRecording(skgpu::graphite::Context* context, skgpu::graphite::Recording* recording, SkSurface* targetSurface) {

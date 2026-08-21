@@ -1,9 +1,8 @@
 use jni::sys::{jboolean, jfloat, jfloatArray, jint, jlong};
 use jni::JNIEnv;
-use std::rc::Rc;
 
 use skialin_core::canvas::ClipOp;
-use skialin_core::{Canvas, LightGeometry, LightInfo, Paint, Path, RRect, Rect, RenderNode, RenderNodeContext};
+use skialin_core::{Canvas, Paint, Path, RRect, Rect, RenderNode, RenderNodeContext};
 
 use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 
@@ -28,7 +27,7 @@ pub extern "system" fn Java_org_skialin_RenderNodeContextNative_nMake(_env: JNIE
 
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_RenderNodeContextNative_nRelease(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) {
-    unsafe { drop_ptr::<Rc<RenderNodeContext>>(ptr) };
+    unsafe { drop_ptr::<RenderNodeContext>(ptr) };
 }
 
 #[no_mangle]
@@ -44,16 +43,16 @@ pub extern "system" fn Java_org_skialin_RenderNodeContextNative_nSetLightingInfo
     ambient_shadow_alpha: jfloat,
     spot_shadow_alpha: jfloat,
 ) {
-    let context = unsafe { borrow::<Rc<RenderNodeContext>>(ptr) };
-    context.set_lighting_info(
-        LightGeometry { center: (center_x, center_y, center_z), radius },
-        LightInfo { ambient_shadow_alpha, spot_shadow_alpha },
-    );
+    let context = unsafe { borrow_mut::<RenderNodeContext>(ptr) };
+    context.set_lighting_info(center_x, center_y, center_z, radius, ambient_shadow_alpha, spot_shadow_alpha);
 }
 
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_RenderNodeNative_nMake(_env: JNIEnv, _class: jni::objects::JClass, context_ptr: jlong) -> jlong {
-    let context = unsafe { borrow::<Rc<RenderNodeContext>>(context_ptr) }.clone();
+    // RenderNode::new takes the context by reference: the C++ side takes its own sk_sp ref
+    // internally (see skialin_bridge_RenderNode_Make), so there's no need for Rust-side shared
+    // ownership (Rc) of the context the way a plain-Rust RenderNodeContext would have needed.
+    let context = unsafe { borrow::<RenderNodeContext>(context_ptr) };
     box_ptr(RenderNode::new(context))
 }
 
@@ -65,14 +64,14 @@ pub extern "system" fn Java_org_skialin_RenderNodeNative_nRelease(_env: JNIEnv, 
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_RenderNodeNative_nGetLayerPaint(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) -> jlong {
     match unsafe { borrow::<RenderNode>(ptr) }.layer_paint() {
-        Some(paint) => box_ptr(paint.clone()),
+        Some(paint) => box_ptr(paint),
         None => 0,
     }
 }
 
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_RenderNodeNative_nSetLayerPaint(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, paint_ptr: jlong) {
-    let paint = if paint_ptr == 0 { None } else { Some(unsafe { borrow::<Paint>(paint_ptr) }.clone()) };
+    let paint = if paint_ptr == 0 { None } else { Some(unsafe { borrow::<Paint>(paint_ptr) }) };
     unsafe { borrow_mut::<RenderNode>(ptr) }.set_layer_paint(paint);
 }
 
@@ -165,13 +164,13 @@ pub extern "system" fn Java_org_skialin_RenderNodeNative_nSetClipRect(
 
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_RenderNodeNative_nSetClipRRect(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, rrect_ptr: jlong, mode: jint, antialias: jboolean) {
-    let rrect = unsafe { borrow::<RRect>(rrect_ptr) }.clone();
+    let rrect = unsafe { borrow::<RRect>(rrect_ptr) };
     unsafe { borrow_mut::<RenderNode>(ptr) }.set_clip_rrect(Some(rrect), clip_op_from_jint(mode), antialias != 0);
 }
 
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_RenderNodeNative_nSetClipPath(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, path_ptr: jlong, mode: jint, antialias: jboolean) {
-    let path = unsafe { borrow::<Path>(path_ptr) }.clone();
+    let path = unsafe { borrow::<Path>(path_ptr) };
     unsafe { borrow_mut::<RenderNode>(ptr) }.set_clip_path(Some(path), clip_op_from_jint(mode), antialias != 0);
 }
 

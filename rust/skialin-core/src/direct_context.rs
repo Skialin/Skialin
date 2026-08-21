@@ -96,6 +96,14 @@ impl DirectContext {
         unsafe { sys::skialin_bridge_DirectContext_abandonContext(self.0) };
     }
 
+    /// Invalidates Ganesh's cached GL state (texture bindings, blend state,
+    /// etc.) so the next Skia draw doesn't assume state left over from a
+    /// prior frame. Call before drawing whenever GL state may have been
+    /// changed by code outside Skia's control. No-op for Vulkan.
+    pub fn reset_all(&mut self) {
+        unsafe { sys::skialin_bridge_DirectContext_resetAll(self.0) };
+    }
+
     pub fn resource_cache_limit(&self) -> i64 {
         unsafe { sys::skialin_bridge_DirectContext_getResourceCacheLimit(self.0) }
     }
