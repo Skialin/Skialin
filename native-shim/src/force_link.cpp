@@ -76,9 +76,11 @@ SKIALIN_NOINLINE void touch(const SkPath& path) {
     (void)path.getFillType();
 }
 
-SKIALIN_NOINLINE void touch(const SkPathBuilder& builder) {
+SKIALIN_NOINLINE void touch(SkPathBuilder& builder) {
     (void)builder.isEmpty();
     (void)builder.computeBounds();
+    (void)builder.fillType();
+    builder.setFillType(builder.fillType());
 }
 
 SKIALIN_NOINLINE void touch(const SkData& data, SkData& mutableData) {
