@@ -64,17 +64,6 @@ jobs:
           restore-keys: |
             skia-${{ matrix.name }}-
 
-      - name: Fix mtimes on restored Skia cache
-        run: |
-          # actions/checkout stamps every source file with "now", but the
-          # cached out/Release objects keep their original (older) mtimes.
-          # Ninja then sees every source as newer than every object and
-          # rebuilds from scratch. Bump the restored outputs to the current
-          # time so ninja can see them as up to date again.
-          if [ -d external/skia/out ]; then
-            find external/skia/out -exec touch -c {} +
-          fi
-
       - name: Cache Cargo
         uses: actions/cache@v4
         with:
@@ -107,6 +96,21 @@ jobs:
       - name: Fetch ninja
         working-directory: external/skia
         run: python3 bin/fetch-ninja
+
+      - name: Fix mtimes on restored Skia cache
+        run: |
+          # actions/checkout stamps every source file with "now", and
+          # git-sync-deps/fetch-gn/fetch-ninja above can similarly touch
+          # files under third_party/externals and bin even when their
+          # content is unchanged. Ninja then sees those inputs as newer
+          # than the cached out/Release objects and rebuilds from scratch.
+          # Run this last, right before ninja runs, and cover every path
+          # the Skia cache step restores so nothing upstream re-dirties it.
+          for dir in external/skia/out external/skia/third_party/externals external/skia/bin; do
+            if [ -d "$dir" ]; then
+              find "$dir" -exec touch -c {} +
+            fi
+          done
 
       - name: Build Skia
         run: ./gradlew buildSkia --console=plain
