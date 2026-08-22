@@ -68,9 +68,16 @@ class DirectContext private constructor(
          * instance/physicalDevice/device/queue are native VkInstance/
          * VkPhysicalDevice/VkDevice/VkQueue handles (e.g. from LWJGL's
          * `.address()`); they must outlive this context and everything
-         * made from it. Resolves vk*ProcAddr via the platform's own
-         * Vulkan loader, loaded natively -- independent of any loader
-         * the caller used to create the instance/device.
+         * made from it.
+         *
+         * [getInstanceProcAddr] and [getDeviceProcAddr] are native
+         * `vkGetInstanceProcAddr` / `vkGetDeviceProcAddr` function-pointer
+         * addresses, used to resolve every other entry point. Leave either
+         * at 0 for the default: the platform's own Vulkan loader, loaded
+         * natively -- independent of any loader the caller used to create
+         * the instance/device -- for [getInstanceProcAddr], and a lookup
+         * through the instance-level entry point for [getDeviceProcAddr].
+         * Both must stay valid for as long as this context is alive.
          */
         fun makeVulkan(
             instance: Long,
@@ -80,6 +87,8 @@ class DirectContext private constructor(
             graphicsQueueIndex: Int,
             maxApiVersion: Int,
             protectedContext: Boolean = false,
+            getInstanceProcAddr: Long = 0L,
+            getDeviceProcAddr: Long = 0L,
         ): DirectContext? {
             val ptr =
                 DirectContextNative.nMakeVulkan(
@@ -90,6 +99,39 @@ class DirectContext private constructor(
                     graphicsQueueIndex,
                     maxApiVersion,
                     protectedContext,
+                    getInstanceProcAddr,
+                    getDeviceProcAddr,
+                )
+            return if (ptr == 0L) null else DirectContext(ptr)
+        }
+
+        /**
+         * Same, but resolving every entry point through [getProc] instead of
+         * a pair of native function pointers. Each lookup crosses back into
+         * the JVM, so prefer the pointer-based overload unless the extra
+         * control is needed; [getProc] is retained for as long as this
+         * context is alive.
+         */
+        fun makeVulkan(
+            instance: Long,
+            physicalDevice: Long,
+            device: Long,
+            queue: Long,
+            graphicsQueueIndex: Int,
+            maxApiVersion: Int,
+            getProc: VulkanGetProc,
+            protectedContext: Boolean = false,
+        ): DirectContext? {
+            val ptr =
+                DirectContextNative.nMakeVulkanWithGetProc(
+                    instance,
+                    physicalDevice,
+                    device,
+                    queue,
+                    graphicsQueueIndex,
+                    maxApiVersion,
+                    protectedContext,
+                    getProc,
                 )
             return if (ptr == 0L) null else DirectContext(ptr)
         }
@@ -111,6 +153,19 @@ private object DirectContextNative {
         graphicsQueueIndex: Int,
         maxApiVersion: Int,
         protectedContext: Boolean,
+        getInstanceProcAddr: Long,
+        getDeviceProcAddr: Long,
+    ): Long
+
+    external fun nMakeVulkanWithGetProc(
+        instance: Long,
+        physicalDevice: Long,
+        device: Long,
+        queue: Long,
+        graphicsQueueIndex: Int,
+        maxApiVersion: Int,
+        protectedContext: Boolean,
+        getProc: VulkanGetProc,
     ): Long
 
     external fun nRelease(ptr: Long)

@@ -1,3 +1,4 @@
+use jni::objects::JObject;
 use jni::sys::{jboolean, jint, jlong};
 use jni::JNIEnv;
 
@@ -7,6 +8,7 @@ use crate::util::{borrow_mut, box_ptr, drop_ptr};
 use crate::vulkan_loader;
 
 #[no_mangle]
+#[allow(clippy::too_many_arguments)]
 pub extern "system" fn Java_org_skialin_GraphiteContextNative_nMakeVulkan(
     _env: JNIEnv,
     _class: jni::objects::JClass,
@@ -17,10 +19,68 @@ pub extern "system" fn Java_org_skialin_GraphiteContextNative_nMakeVulkan(
     graphics_queue_index: jint,
     max_api_version: jint,
     protected_context: jboolean,
+    get_instance_proc_addr: jlong,
+    get_device_proc_addr: jlong,
 ) -> jlong {
-    let Some(proc_ctx) = vulkan_loader::ProcAddrCtx::new(instance as _) else {
+    let proc_ctx = unsafe { vulkan_loader::ProcAddrCtx::from_pointers(get_instance_proc_addr as usize, get_device_proc_addr as usize, instance as _) };
+    let Some(proc_ctx) = proc_ctx else {
         return 0;
     };
+    make_vulkan(
+        instance,
+        physical_device,
+        device,
+        queue,
+        graphics_queue_index,
+        max_api_version,
+        protected_context,
+        Box::new(proc_ctx),
+        Some(vulkan_loader::get_proc),
+    )
+}
+
+#[no_mangle]
+#[allow(clippy::too_many_arguments)]
+pub extern "system" fn Java_org_skialin_GraphiteContextNative_nMakeVulkanWithGetProc(
+    env: JNIEnv,
+    _class: jni::objects::JClass,
+    instance: jlong,
+    physical_device: jlong,
+    device: jlong,
+    queue: jlong,
+    graphics_queue_index: jint,
+    max_api_version: jint,
+    protected_context: jboolean,
+    get_proc: JObject,
+) -> jlong {
+    let Some(proc_ctx) = vulkan_loader::JvmProcAddrCtx::new(&env, get_proc) else {
+        return 0;
+    };
+    make_vulkan(
+        instance,
+        physical_device,
+        device,
+        queue,
+        graphics_queue_index,
+        max_api_version,
+        protected_context,
+        Box::new(proc_ctx),
+        Some(vulkan_loader::get_proc_jvm),
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn make_vulkan(
+    instance: jlong,
+    physical_device: jlong,
+    device: jlong,
+    queue: jlong,
+    graphics_queue_index: jint,
+    max_api_version: jint,
+    protected_context: jboolean,
+    proc_ctx: Box<dyn std::any::Any>,
+    get_proc: skialin_core::sys::SkialinVulkanGetProc,
+) -> jlong {
     let context = GraphiteContext::new_vulkan(
         instance as _,
         physical_device as _,
@@ -28,8 +88,8 @@ pub extern "system" fn Java_org_skialin_GraphiteContextNative_nMakeVulkan(
         queue as _,
         graphics_queue_index as u32,
         max_api_version as u32,
-        Box::new(proc_ctx),
-        Some(vulkan_loader::get_proc),
+        proc_ctx,
+        get_proc,
         protected_context != 0,
     );
     match context {
