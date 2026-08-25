@@ -2568,7 +2568,13 @@ skgpu::graphite::Context* skialin_bridge_GraphiteContext_MakeVulkan(
         return getProc(getProcCtx, name, inst, dev);
     };
     backendContext.fMemoryAllocator = skgpu::VulkanMemoryAllocators::Make(backendContext, skgpu::ThreadSafe::kNo);
-    return skgpu::graphite::ContextFactory::MakeVulkan(backendContext, skgpu::graphite::ContextOptions()).release();
+    skgpu::graphite::ContextOptions options;
+#if defined(__APPLE__)
+    // MVK cannot express VkRenderPassBeginInfo::renderArea
+    // With MSAA off, complex are routhedd paths thru the AA'd path atlas instead
+    options.fInternalMultisampleCount = skgpu::graphite::SampleCount::k1;
+#endif
+    return skgpu::graphite::ContextFactory::MakeVulkan(backendContext, options).release();
 }
 
 void skialin_bridge_GraphiteContext_delete(skgpu::graphite::Context* context) {
