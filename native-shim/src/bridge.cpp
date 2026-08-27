@@ -66,6 +66,7 @@
 #include "include/effects/SkPerlinNoiseShader.h"
 #include "include/core/SkString.h"
 #include "include/core/SkStream.h"
+#include "src/core/SkAutoLocaleSetter.h"
 #include "include/encode/SkPngEncoder.h"
 #include "include/encode/SkJpegEncoder.h"
 #include "include/encode/SkWebpEncoder.h"
@@ -2201,6 +2202,7 @@ bool skialin_bridge_SurfaceProps_equals(const SkSurfaceProps* a, const SkSurface
 }
 
 SkSVGDOM* skialin_bridge_SVGDOM_MakeFromStream(const uint8_t* bytes, size_t length) {
+    SkAutoLocaleSetter locale("C");
     SkMemoryStream stream(bytes, length, false);
     return SkSVGDOM::MakeFromStream(stream).release();
 }
