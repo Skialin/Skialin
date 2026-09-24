@@ -1,8 +1,11 @@
 use crate::sys;
 
-/// Wraps a skgpu::graphite::BackendTexture (Vulkan only): a caller-owned
-/// VkImage for rendering into via `Surface::wrap_graphite_backend_texture`.
-pub struct GraphiteBackendTexture(pub(crate) *mut sys::skgpu::graphite::BackendTexture);
+/// Wraps a skgpu::graphite::BackendTexture: a caller-owned GPU texture (VkImage, or an
+/// ID3D12Resource imported through Dawn) for rendering into via
+/// `Surface::wrap_graphite_backend_texture`. The second field keeps alive whatever the native
+/// BackendTexture borrows without retaining (Dawn's imported texture); fields drop after `Drop::drop`
+/// runs, so it outlives the BackendTexture itself.
+pub struct GraphiteBackendTexture(pub(crate) *mut sys::skgpu::graphite::BackendTexture, #[allow(dead_code)] pub(crate) Option<Box<dyn std::any::Any>>);
 
 impl GraphiteBackendTexture {
     #[allow(clippy::too_many_arguments)]
@@ -46,7 +49,7 @@ impl GraphiteBackendTexture {
                 alloc_flags,
             )
         };
-        GraphiteBackendTexture(ptr)
+        GraphiteBackendTexture(ptr, None)
     }
 
     pub fn is_valid(&self) -> bool {

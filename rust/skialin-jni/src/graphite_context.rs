@@ -4,7 +4,7 @@ use jni::JNIEnv;
 
 use skialin_core::{GraphiteContext, GraphiteRecorder, GraphiteRecording, Surface};
 
-use crate::util::{borrow_mut, box_ptr, drop_ptr};
+use crate::util::{borrow, borrow_mut, box_ptr, drop_ptr};
 use crate::vulkan_loader;
 
 #[no_mangle]
@@ -128,6 +128,38 @@ pub extern "system" fn Java_org_skialin_GraphiteContextNative_nInsertRecording(
 #[no_mangle]
 pub extern "system" fn Java_org_skialin_GraphiteContextNative_nSubmit(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, sync_to_cpu: jboolean) -> jboolean {
     unsafe { borrow_mut::<GraphiteContext>(ptr) }.submit(sync_to_cpu != 0) as jboolean
+}
+
+#[no_mangle]
+pub extern "system" fn Java_org_skialin_GraphiteContextNative_nMakeDawnD3D12<'l>(env: JNIEnv<'l>, _class: jni::objects::JClass<'l>, adapter_index: jint) -> jni::sys::jlongArray {
+    let array = env.new_long_array(3).expect("new_long_array");
+    if let Some(dawn) = GraphiteContext::new_dawn_d3d12(adapter_index as u32) {
+        env.set_long_array_region(&array, 0, &[box_ptr(dawn.context), dawn.d3d12_device, dawn.d3d12_command_queue]).expect("set_long_array_region");
+    } else {
+        env.set_long_array_region(&array, 0, &[0i64, 0, 0]).expect("set_long_array_region");
+    }
+    array.into_raw()
+}
+
+#[no_mangle]
+#[allow(clippy::too_many_arguments)]
+pub extern "system" fn Java_org_skialin_GraphiteContextNative_nMakeD3D12BackendTexture(
+    _env: JNIEnv,
+    _class: jni::objects::JClass,
+    ptr: jlong,
+    d3d12_resource: jlong,
+    width: jint,
+    height: jint,
+    sample_count: jint,
+    mipmapped: jboolean,
+    dawn_texture_format: jint,
+    dawn_texture_usage: jint,
+) -> jlong {
+    let context = unsafe { borrow::<GraphiteContext>(ptr) };
+    match context.make_d3d12_backend_texture(d3d12_resource, width, height, sample_count, mipmapped != 0, dawn_texture_format as u32, dawn_texture_usage as u32) {
+        Some(texture) => box_ptr(texture),
+        None => 0,
+    }
 }
 
 #[no_mangle]

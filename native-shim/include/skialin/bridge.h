@@ -1166,6 +1166,40 @@ skgpu::graphite::BackendTexture* skialin_bridge_GraphiteBackendTexture_MakeVk(
 void skialin_bridge_GraphiteBackendTexture_delete(skgpu::graphite::BackendTexture* texture);
 bool skialin_bridge_GraphiteBackendTexture_isValid(const skgpu::graphite::BackendTexture* texture);
 
+/* Graphite (skgpu::graphite::Context), Dawn/D3D12 only. Unlike MakeVulkan above, Dawn owns the
+ * device it creates -- there is no way to hand Dawn a caller-created ID3D12Device -- so this
+ * enumerates D3D12 adapters itself and picks adapterIndex (0 for the default/first). The
+ * wgpu::Instance/wgpu::Device backing the returned Context are kept alive in a heap-allocated
+ * blob written to *outKeepAlive; it must outlive the Context and everything made from it, and is
+ * freed separately (after the Context) with skialin_bridge_DawnKeepAlive_delete.
+ * *outD3D12Device/*outD3D12CommandQueue are the raw COM objects Dawn is driving underneath (via
+ * dawn::native::d3d12::GetD3D12Device/GetD3D12CommandQueue), not ref-counted for the caller --
+ * they're valid exactly as long as *outKeepAlive is. A caller that wants zero-copy interop
+ * creates its own ID3D12Resources on *outD3D12Device and imports them with
+ * skialin_bridge_GraphiteBackendTexture_MakeD3D12Resource. Null on failure. */
+skgpu::graphite::Context* skialin_bridge_GraphiteContext_MakeDawnD3D12(uint32_t adapterIndex, void** outKeepAlive, void** outD3D12Device, void** outD3D12CommandQueue);
+void skialin_bridge_DawnKeepAlive_delete(void* keepAlive);
+
+/* skgpu::graphite::BackendTexture wrapping a caller-owned ID3D12Resource, via Dawn's
+ * SharedTextureMemory import (dawn::native::d3d12::SharedTextureMemoryD3D12ResourceDescriptor) --
+ * no copy, no shared handle, since the resource already lives on the same ID3D12Device Dawn is
+ * using (*outD3D12Device from MakeDawnD3D12). format/usage are wgpu::TextureFormat/
+ * wgpu::TextureUsage values (see DawnGraphiteTypes.h / webgpu.h), not DXGI_FORMAT.
+ *
+ * There is no fence-based synchronization yet: BeginAccess is called with initialized=true and
+ * zero fences, so it is the caller's job to make sure nothing else is touching d3d12Resource
+ * while Dawn/Skia draws into it (e.g. by keeping both sides on the same queue and ordering
+ * submissions by hand). Owned by the caller; free with skialin_bridge_GraphiteBackendTexture_delete
+ * (same as the Vulkan path). MakeDawn doesn't retain the imported wgpu::Texture, so it is held in
+ * *outTextureKeepAlive instead: free that with skialin_bridge_DawnTextureKeepAlive_delete *after*
+ * the BackendTexture (it also ends Dawn's access to d3d12Resource). Null on failure.
+ *
+ * Windows only (Dawn is only built there); the non-Windows builds of both functions return null. */
+skgpu::graphite::BackendTexture* skialin_bridge_GraphiteBackendTexture_MakeD3D12Resource(
+    void* keepAlive, void* d3d12Resource, int32_t width, int32_t height, int32_t sampleCount,
+    bool mipmapped, uint32_t dawnTextureFormat, uint32_t dawnTextureUsage, void** outTextureKeepAlive);
+void skialin_bridge_DawnTextureKeepAlive_delete(void* keepAlive);
+
 /* PictureRecorder/Picture: deferred-drawing recording, Skia's equivalent of
  * a display-list/render-node. SkPictureRecorder is heap-allocated with
  * new/delete (owns non-trivial internal recording state, never given to

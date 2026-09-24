@@ -101,6 +101,18 @@
 #include "include/gpu/graphite/vk/VulkanGraphiteTypes.h"
 #include "src/gpu/GpuTypesPriv.h"
 #include "src/gpu/vk/vulkanmemoryallocator/VulkanMemoryAllocatorPriv.h"
+// Graphite D3D12 goes through Dawn (Graphite has no native D3D12 backend); SK_DAWN is only set on
+// Windows builds (native-shim/args.windows.gn).
+#if defined(SK_DAWN) && defined(SK_BUILD_FOR_WIN)
+#include "include/gpu/graphite/dawn/DawnBackendContext.h"
+#include "include/gpu/graphite/dawn/DawnGraphiteTypes.h"
+#include "dawn/native/DawnNative.h"
+#include "dawn/native/D3D12Backend.h"
+#endif
+// <d3d12.h>/<wrl/client.h> (Dawn's, and Ganesh D3D's) drag in <windows.h>, which #defines
+// `interface` to `struct` for old COM/IDL compilers -- breaks every later `... interface = ...`
+// local variable in this file.
+#undef interface
 
 namespace {
 
@@ -2667,6 +2679,170 @@ void skialin_bridge_GraphiteBackendTexture_delete(skgpu::graphite::BackendTextur
 
 bool skialin_bridge_GraphiteBackendTexture_isValid(const skgpu::graphite::BackendTexture* texture) {
     return texture->isValid();
+}
+
+#if defined(SK_DAWN) && defined(SK_BUILD_FOR_WIN)
+namespace {
+
+// Keeps the Dawn wgpu::Instance/wgpu::Device alive for as long as the skgpu::graphite::Context
+// made from them is alive -- unlike the Vulkan path, Dawn creates and owns these itself, so
+// nothing outside this bridge is holding a reference otherwise.
+struct SkialinDawnKeepAlive {
+    dawn::native::Instance* nativeInstance;
+    wgpu::Device device;
+
+    ~SkialinDawnKeepAlive() { delete nativeInstance; }
+};
+
+// skgpu::graphite::BackendTextures::MakeDawn doesn't retain the WGPUTexture it wraps, so the
+// imported texture (and the SharedTextureMemory it was created from) live here instead, for as
+// long as the BackendTexture does. Ending access on teardown is what hands the resource back.
+struct SkialinDawnTextureKeepAlive {
+    wgpu::SharedTextureMemory sharedMemory;
+    wgpu::Texture texture;
+
+    ~SkialinDawnTextureKeepAlive() {
+        wgpu::SharedTextureMemoryEndAccessState endState{};
+        sharedMemory.EndAccess(texture, &endState);
+    }
+};
+
+} // namespace
+#endif
+
+skgpu::graphite::Context* skialin_bridge_GraphiteContext_MakeDawnD3D12(
+    uint32_t adapterIndex, void** outKeepAlive, void** outD3D12Device, void** outD3D12CommandQueue) {
+#if defined(SK_DAWN) && defined(SK_BUILD_FOR_WIN)
+    auto* nativeInstance = new dawn::native::Instance();
+
+    wgpu::RequestAdapterOptions adapterOptions;
+    adapterOptions.backendType = wgpu::BackendType::D3D12;
+    std::vector<dawn::native::Adapter> adapters = nativeInstance->EnumerateAdapters(&adapterOptions);
+    if (adapterIndex >= adapters.size()) {
+        delete nativeInstance;
+        return nullptr;
+    }
+
+    // Both features are Experimental, which Dawn gates behind allow_unsafe_apis.
+    const char* unsafeApisToggle = "allow_unsafe_apis";
+    wgpu::DawnTogglesDescriptor deviceToggles;
+    deviceToggles.enabledToggles = &unsafeApisToggle;
+    deviceToggles.enabledToggleCount = 1;
+
+    wgpu::FeatureName requiredFeatures[] = {
+        wgpu::FeatureName::SharedTextureMemoryD3D12Resource,
+        wgpu::FeatureName::SharedFenceDXGISharedHandle,
+    };
+    wgpu::DeviceDescriptor deviceDesc;
+    deviceDesc.nextInChain = &deviceToggles;
+    deviceDesc.requiredFeatureCount = std::size(requiredFeatures);
+    deviceDesc.requiredFeatures = requiredFeatures;
+
+    WGPUDevice wgpuDevice = adapters[adapterIndex].CreateDevice(&deviceDesc);
+    if (!wgpuDevice) {
+        delete nativeInstance;
+        return nullptr;
+    }
+
+    auto* keepAlive = new SkialinDawnKeepAlive{nativeInstance, wgpu::Device::Acquire(wgpuDevice)};
+
+    skgpu::graphite::DawnBackendContext backendContext;
+    // The implicit wgpu::Instance(WGPUInstance) constructor AddRefs, so this and nativeInstance's
+    // own destructor each release their own reference instead of double-freeing the one Dawn
+    // created (unlike wgpu::Device::Acquire below, which adopts CreateDevice's ref as-is).
+    backendContext.fInstance = wgpu::Instance(nativeInstance->Get());
+    backendContext.fDevice = keepAlive->device;
+    backendContext.fQueue = keepAlive->device.GetQueue();
+
+    skgpu::graphite::ContextOptions options;
+    std::unique_ptr<skgpu::graphite::Context> context = skgpu::graphite::ContextFactory::MakeDawn(backendContext, options);
+    if (!context) {
+        delete keepAlive;
+        return nullptr;
+    }
+
+    *outKeepAlive = keepAlive;
+    *outD3D12Device = dawn::native::d3d12::GetD3D12Device(keepAlive->device.Get()).Get();
+    *outD3D12CommandQueue = dawn::native::d3d12::GetD3D12CommandQueue(keepAlive->device.Get()).Get();
+    return context.release();
+#else
+    return nullptr;
+#endif
+}
+
+void skialin_bridge_DawnKeepAlive_delete(void* keepAlive) {
+#if defined(SK_DAWN) && defined(SK_BUILD_FOR_WIN)
+    delete static_cast<SkialinDawnKeepAlive*>(keepAlive);
+#else
+    (void)keepAlive;
+#endif
+}
+
+skgpu::graphite::BackendTexture* skialin_bridge_GraphiteBackendTexture_MakeD3D12Resource(
+    void* keepAlive, void* d3d12Resource, int32_t width, int32_t height, int32_t sampleCount,
+    bool mipmapped, uint32_t dawnTextureFormat, uint32_t dawnTextureUsage, void** outTextureKeepAlive) {
+#if defined(SK_DAWN) && defined(SK_BUILD_FOR_WIN)
+    auto* alive = static_cast<SkialinDawnKeepAlive*>(keepAlive);
+
+    dawn::native::d3d12::SharedTextureMemoryD3D12ResourceDescriptor resourceDesc;
+    resourceDesc.resource = static_cast<ID3D12Resource*>(d3d12Resource);
+
+    wgpu::SharedTextureMemoryDescriptor sharedDesc;
+    sharedDesc.nextInChain = &resourceDesc;
+
+    wgpu::SharedTextureMemory sharedMemory = alive->device.ImportSharedTextureMemory(&sharedDesc);
+    if (!sharedMemory) return nullptr;
+
+    uint32_t mipLevelCount = 1;
+    if (mipmapped) {
+        for (uint32_t w = width, h = height; w > 1 || h > 1; mipLevelCount++) {
+            w = w > 1 ? w / 2 : 1;
+            h = h > 1 ? h / 2 : 1;
+        }
+    }
+
+    wgpu::TextureDescriptor textureDesc;
+    textureDesc.dimension = wgpu::TextureDimension::e2D;
+    textureDesc.size = {static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1};
+    textureDesc.format = static_cast<wgpu::TextureFormat>(dawnTextureFormat);
+    textureDesc.usage = static_cast<wgpu::TextureUsage>(dawnTextureUsage);
+    textureDesc.sampleCount = static_cast<uint32_t>(sampleCount);
+    textureDesc.mipLevelCount = mipLevelCount;
+
+    wgpu::Texture texture = sharedMemory.CreateTexture(&textureDesc);
+    if (!texture) return nullptr;
+
+    // No fences yet (see the header doc comment): the caller is responsible for keeping
+    // d3d12Resource from being touched by anything else while this is in use.
+    wgpu::SharedTextureMemoryBeginAccessDescriptor beginDesc{};
+    beginDesc.initialized = true;
+    beginDesc.concurrentRead = false;
+    if (sharedMemory.BeginAccess(texture, &beginDesc) != wgpu::Status::Success) {
+        return nullptr;
+    }
+
+    // The 1-arg overload queries width/height/format/sampleCount/mip count back from the texture
+    // itself, so textureDesc above (which we needed anyway, for CreateTexture) doesn't need to be
+    // re-stated here.
+    auto* textureKeepAlive = new SkialinDawnTextureKeepAlive{std::move(sharedMemory), std::move(texture)};
+    skgpu::graphite::BackendTexture backendTexture = skgpu::graphite::BackendTextures::MakeDawn(textureKeepAlive->texture.Get());
+    if (!backendTexture.isValid()) {
+        delete textureKeepAlive;
+        return nullptr;
+    }
+    *outTextureKeepAlive = textureKeepAlive;
+    return new skgpu::graphite::BackendTexture(backendTexture);
+#else
+    return nullptr;
+#endif
+}
+
+void skialin_bridge_DawnTextureKeepAlive_delete(void* keepAlive) {
+#if defined(SK_DAWN) && defined(SK_BUILD_FOR_WIN)
+    delete static_cast<SkialinDawnTextureKeepAlive*>(keepAlive);
+#else
+    (void)keepAlive;
+#endif
 }
 
 SkPictureRecorder* skialin_bridge_PictureRecorder_new(void) {

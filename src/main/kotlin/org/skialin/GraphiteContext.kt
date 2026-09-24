@@ -3,7 +3,8 @@ package org.skialin
 import org.skialin.impl.NativeLoader
 
 /**
- * Wraps a skgpu::graphite::Context (Vulkan only). Thread-safe and
+ * Wraps a skgpu::graphite::Context (Vulkan, or D3D12 through Dawn on
+ * Windows -- see [makeDawnD3D12]). Thread-safe and
  * long-lived, unlike a [GraphiteRecorder] made from it.
  *
  * Doesn't extend [org.skialin.impl.Managed]: same rationale as
@@ -114,8 +115,70 @@ class GraphiteContext private constructor(
                 )
             return if (ptr == 0L) null else GraphiteContext(ptr)
         }
+
+        /**
+         * Dawn/D3D12 only. Unlike [makeVulkan], Dawn creates and owns the ID3D12Device itself --
+         * there's no way to hand it a caller-created one -- so this enumerates D3D12 adapters on
+         * its own and picks [adapterIndex] (0 for the default/first). Always null off
+         * Windows, where Dawn isn't built.
+         *
+         * The returned [DawnD3D12Context.d3d12Device]/[d3d12CommandQueue] are the raw COM objects
+         * Dawn is driving underneath, valid for as long as the context is open; a caller that
+         * wants zero-copy interop creates its own ID3D12Resources on that device and imports them
+         * with [makeD3D12BackendTexture]. Null on failure.
+         */
+        fun makeDawnD3D12(adapterIndex: Int = 0): DawnD3D12Context? {
+            val result = GraphiteContextNative.nMakeDawnD3D12(adapterIndex)
+            val ptr = result[0]
+            return if (ptr == 0L) null else DawnD3D12Context(GraphiteContext(ptr), result[1], result[2])
+        }
+    }
+
+    /**
+     * Wraps a caller-owned ID3D12Resource (created on a [DawnD3D12Context.d3d12Device] from the
+     * same [makeDawnD3D12] call this context came from) as a [GraphiteBackendTexture], via Dawn's
+     * SharedTextureMemory import -- no copy, no shared handle, since the resource already lives on
+     * Dawn's own device. [dawnTextureFormat]/[dawnTextureUsage] are `wgpu::TextureFormat`/
+     * `wgpu::TextureUsage` values, not `DXGI_FORMAT`.
+     *
+     * There is no fence-based synchronization yet, so the caller must make sure nothing else
+     * touches [d3d12Resource] while this texture is in use. Returns null if this context wasn't
+     * made with [makeDawnD3D12], or the import fails.
+     */
+    @Suppress("LongParameterList")
+    fun makeD3D12BackendTexture(
+        d3d12Resource: Long,
+        width: Int,
+        height: Int,
+        sampleCount: Int,
+        mipmapped: Boolean,
+        dawnTextureFormat: Int,
+        dawnTextureUsage: Int,
+    ): GraphiteBackendTexture? {
+        val ptr =
+            GraphiteContextNative.nMakeD3D12BackendTexture(
+                nativePtr,
+                d3d12Resource,
+                width,
+                height,
+                sampleCount,
+                mipmapped,
+                dawnTextureFormat,
+                dawnTextureUsage,
+            )
+        return if (ptr == 0L) null else GraphiteBackendTexture(ptr)
     }
 }
+
+/**
+ * [context] was made with [GraphiteContext.makeDawnD3D12]; [d3d12Device]/[d3d12CommandQueue] are
+ * the raw `ID3D12Device*`/`ID3D12CommandQueue*` Dawn created and is using for it.
+ */
+class DawnD3D12Context(
+    val context: GraphiteContext,
+    val d3d12Device: Long,
+    val d3d12CommandQueue: Long,
+)
 
 private object GraphiteContextNative {
     init {
@@ -146,6 +209,21 @@ private object GraphiteContextNative {
     ): Long
 
     external fun nRelease(ptr: Long)
+
+    /** [0] is the context pointer (0 on failure), [1] is the ID3D12Device*, [2] the ID3D12CommandQueue*. */
+    external fun nMakeDawnD3D12(adapterIndex: Int): LongArray
+
+    @Suppress("LongParameterList")
+    external fun nMakeD3D12BackendTexture(
+        ptr: Long,
+        d3d12Resource: Long,
+        width: Int,
+        height: Int,
+        sampleCount: Int,
+        mipmapped: Boolean,
+        dawnTextureFormat: Int,
+        dawnTextureUsage: Int,
+    ): Long
 
     external fun nMakeRecorder(ptr: Long): Long
 

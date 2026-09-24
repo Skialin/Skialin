@@ -80,7 +80,7 @@ pub use font_collection::FontCollection;
 pub use font_mgr::{FontMgr, TypefaceFontProvider};
 pub use font_style::{FontStyle, Slant};
 pub use graphite_backend_texture::GraphiteBackendTexture;
-pub use graphite_context::{GraphiteContext, GraphiteRecorder, GraphiteRecording};
+pub use graphite_context::{DawnD3D12Context, GraphiteContext, GraphiteRecorder, GraphiteRecording};
 pub use image::Image;
 pub use image_filter::ImageFilter;
 pub use image_info::ImageInfo;
