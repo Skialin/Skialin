@@ -55,7 +55,9 @@ impl GraphiteContext {
     /// Dawn owns the D3D12 device it creates -- unlike `new_vulkan`, there is no caller-supplied
     /// device to hand in, so this enumerates D3D12 adapters itself. `adapter_index` selects among
     /// them (0 for the default/first). `d3d12_device`/`d3d12_command_queue` on the result are the
-    /// raw COM objects Dawn is driving, valid for as long as the returned context is alive.
+    /// raw COM objects Dawn is driving, valid for as long as the returned context is alive; any
+    /// `ID3D12Resource` the caller creates on that device must be released before the context is
+    /// dropped.
     /// Always `None` off Windows, where Dawn isn't built.
     pub fn new_dawn_d3d12(adapter_index: u32) -> Option<DawnD3D12Context> {
         let mut keep_alive_ptr: *mut std::ffi::c_void = std::ptr::null_mut();
@@ -78,7 +80,8 @@ impl GraphiteContext {
     /// Wraps a caller-owned `ID3D12Resource` (created on `DawnD3D12Context::d3d12_device`) as a
     /// `GraphiteBackendTexture`, via this context's Dawn device. `None` if this context wasn't
     /// made with `new_dawn_d3d12`, or the import fails. `dawn_texture_format`/`dawn_texture_usage`
-    /// are `wgpu::TextureFormat`/`wgpu::TextureUsage` values, not `DXGI_FORMAT`.
+    /// are `wgpu::TextureFormat`/`wgpu::TextureUsage` values, not `DXGI_FORMAT`. The resource must
+    /// have been created with `D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS`.
     #[allow(clippy::too_many_arguments)]
     pub fn make_d3d12_backend_texture(
         &self,

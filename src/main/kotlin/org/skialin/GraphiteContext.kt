@@ -125,7 +125,8 @@ class GraphiteContext private constructor(
          * The returned [DawnD3D12Context.d3d12Device]/[d3d12CommandQueue] are the raw COM objects
          * Dawn is driving underneath, valid for as long as the context is open; a caller that
          * wants zero-copy interop creates its own ID3D12Resources on that device and imports them
-         * with [makeD3D12BackendTexture]. Null on failure.
+         * with [makeD3D12BackendTexture]. Those resources must be released before the context is
+         * closed, since the device they live on goes with it. Null on failure.
          */
         fun makeDawnD3D12(adapterIndex: Int = 0): DawnD3D12Context? {
             val result = GraphiteContextNative.nMakeDawnD3D12(adapterIndex)
@@ -139,7 +140,8 @@ class GraphiteContext private constructor(
      * same [makeDawnD3D12] call this context came from) as a [GraphiteBackendTexture], via Dawn's
      * SharedTextureMemory import -- no copy, no shared handle, since the resource already lives on
      * Dawn's own device. [dawnTextureFormat]/[dawnTextureUsage] are `wgpu::TextureFormat`/
-     * `wgpu::TextureUsage` values, not `DXGI_FORMAT`.
+     * `wgpu::TextureUsage` values, not `DXGI_FORMAT`. Dawn only imports resources created with
+     * `D3D12_RESOURCE_FLAG_ALLOW_SIMULTANEOUS_ACCESS`.
      *
      * There is no fence-based synchronization yet, so the caller must make sure nothing else
      * touches [d3d12Resource] while this texture is in use. Returns null if this context wasn't

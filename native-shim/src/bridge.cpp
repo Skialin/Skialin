@@ -1,5 +1,6 @@
 #include "skialin/bridge.h"
 
+#include <cstdio>
 #include <cstring>
 #include <memory>
 
@@ -114,6 +115,8 @@
 #include "include/gpu/graphite/dawn/DawnGraphiteTypes.h"
 #include "dawn/native/DawnNative.h"
 #include "dawn/native/D3D12Backend.h"
+#include "dawn/dawn_proc.h"
+#include <mutex>
 #endif
 // <d3d12.h>/<wrl/client.h> (Dawn's, and Ganesh D3D's) drag in <windows.h>, which #defines
 // `interface` to `struct` for old COM/IDL compilers -- breaks every later `... interface = ...`
@@ -2800,7 +2803,21 @@ struct SkialinDawnTextureKeepAlive {
 skgpu::graphite::Context* skialin_bridge_GraphiteContext_MakeDawnD3D12(
     uint32_t adapterIndex, void** outKeepAlive, void** outD3D12Device, void** outD3D12CommandQueue) {
 #if defined(SK_DAWN) && defined(SK_BUILD_FOR_WIN)
-    auto* nativeInstance = new dawn::native::Instance();
+    // dawn_combined routes every wgpu* C entry point through dawn_proc's dispatch table, which is
+    // empty (null function pointers) until something installs dawn::native's own procs.
+    static std::once_flag procsOnce;
+    std::call_once(procsOnce, [] {
+        DawnProcTable procs = dawn::native::GetProcs();
+        dawnProcSetProcs(&procs);
+    });
+
+    // Graphite's Dawn backend waits on futures with a timeout (e.g. submit(SyncToCpu::kYes)),
+    // which needs TimedWaitAny -- same instance setup as Skia's own DawnTestContext.
+    static const auto timedWaitAny = wgpu::InstanceFeatureName::TimedWaitAny;
+    wgpu::InstanceDescriptor instanceDesc{};
+    instanceDesc.requiredFeatureCount = 1;
+    instanceDesc.requiredFeatures = &timedWaitAny;
+    auto* nativeInstance = new dawn::native::Instance(&instanceDesc);
 
     wgpu::RequestAdapterOptions adapterOptions;
     adapterOptions.backendType = wgpu::BackendType::D3D12;
@@ -2824,6 +2841,11 @@ skgpu::graphite::Context* skialin_bridge_GraphiteContext_MakeDawnD3D12(
     deviceDesc.nextInChain = &deviceToggles;
     deviceDesc.requiredFeatureCount = std::size(requiredFeatures);
     deviceDesc.requiredFeatures = requiredFeatures;
+    // Dawn reports validation failures (e.g. a bad SharedTextureMemory import) only through this
+    // callback; without it every such failure is a silent null return.
+    deviceDesc.SetUncapturedErrorCallback([](const wgpu::Device&, wgpu::ErrorType, wgpu::StringView message) {
+        std::fprintf(stderr, "skialin: Dawn device error: %.*s\n", static_cast<int>(message.length), message.data);
+    });
 
     WGPUDevice wgpuDevice = adapters[adapterIndex].CreateDevice(&deviceDesc);
     if (!wgpuDevice) {
