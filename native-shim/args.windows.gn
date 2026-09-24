@@ -3,3 +3,7 @@
 skia_use_metal = false
 skia_use_direct3d = true
 skia_use_dawn = true
+# Static CRT, to match dawn_combined.lib: Skia's Dawn build script (third_party/dawn/cmake_utils.py)
+# hard-codes /MT, and MSVC refuses to link /MT and /MD objects into one DLL. rust/.cargo/config.toml
+# makes rustc (and so the cc-built shim) use the static CRT as well.
+extra_cflags = [ "/MT" ]

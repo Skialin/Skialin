@@ -84,10 +84,10 @@ val setupSkia =
             val outDir = skiaDir.dir("out/Release").asFile
             outDir.mkdirs()
             val args = skiaDir.file("../../native-shim/args.gn").asFile.readText()
-            // GPU backends that only exist on one OS (Metal, Direct3D, Dawn) live in a per-OS file.
+            // GPU backends that only exist on one OS (Metal, Direct3D, Dawn), and the Windows CRT
+            // choice, live in a per-OS file.
             val osArgs = skiaDir.file("../../native-shim/args.$hostOs.gn").asFile.readText()
-            val platformCflags = if (hostOs == "windows") "\nextra_cflags = [\"/MD\"]\n" else ""
-            outDir.resolve("args.gn").writeText(args + "\n" + osArgs + platformCflags)
+            outDir.resolve("args.gn").writeText(args + "\n" + osArgs)
         }
         val gnName = if (hostOs == "windows") "bin/gn.exe" else "bin/gn"
         val gn = skiaDir.file(gnName).asFile.absolutePath

@@ -1,0 +1,7 @@
+# Static CRT on Windows, to match Skia/Dawn (see native-shim/args.windows.gn). The cc crate follows
+# this for the shim's own C++ too.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[target.aarch64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]

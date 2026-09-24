@@ -263,6 +263,8 @@ fn link_skia(skia_dir: &Path) {
             "gdi32", "user32", "ole32", "advapi32", "usp10", "dwrite", "fontsub", "shlwapi", "rpcrt4", "opengl32",
             // Ganesh D3D12 (skia_use_direct3d) and Dawn's D3D12 backend (Graphite D3D12).
             "d3d12", "dxgi", "dxguid", "d3dcompiler",
+            // Dawn calls CompareObjectHandles; same import lib third_party/dawn/BUILD.gn links.
+            "onecore",
         ] {
             println!("cargo:rustc-link-lib=dylib={lib}");
         }
