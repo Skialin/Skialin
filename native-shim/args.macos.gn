@@ -1,0 +1,4 @@
+# Appended to args.gn on macOS hosts. Metal backs both Ganesh and Graphite.
+skia_use_metal = true
+skia_use_direct3d = false
+skia_use_dawn = false

@@ -1,0 +1,4 @@
+# Appended to args.gn on Linux hosts. Vulkan (from args.gn) is the only non-GL backend here.
+skia_use_metal = false
+skia_use_direct3d = false
+skia_use_dawn = false

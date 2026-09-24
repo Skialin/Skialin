@@ -84,8 +84,10 @@ val setupSkia =
             val outDir = skiaDir.dir("out/Release").asFile
             outDir.mkdirs()
             val args = skiaDir.file("../../native-shim/args.gn").asFile.readText()
+            // GPU backends that only exist on one OS (Metal, Direct3D, Dawn) live in a per-OS file.
+            val osArgs = skiaDir.file("../../native-shim/args.$hostOs.gn").asFile.readText()
             val platformCflags = if (hostOs == "windows") "\nextra_cflags = [\"/MD\"]\n" else ""
-            outDir.resolve("args.gn").writeText(args + platformCflags)
+            outDir.resolve("args.gn").writeText(args + "\n" + osArgs + platformCflags)
         }
         val gnName = if (hostOs == "windows") "bin/gn.exe" else "bin/gn"
         val gn = skiaDir.file(gnName).asFile.absolutePath
@@ -98,31 +100,35 @@ val buildSkia =
         workingDir = skiaDir.asFile
         val ninjaName = if (hostOs == "windows") "ninja.exe" else "ninja"
         val ninja = skiaDir.file("third_party/ninja/$ninjaName").asFile.absolutePath
+        // Dawn is only enabled on Windows (args.windows.gn), where it backs Graphite D3D12.
+        val platformTargets = if (hostOs == "windows") listOf("dawn") else emptyList()
         commandLine(
-            ninja,
-            "-C",
-            "out/Release",
-            "skia",
-            "skparagraph",
-            "skshaper",
-            "skunicode_core",
-            "skunicode_icu",
-            "skcms",
-            "libpng",
-            "zlib",
-            "expat",
-            "harfbuzz",
-            "icu",
-            "pathops",
-            "svg",
-            "skresources",
-            "skottie",
-            "sksg",
-            "jsonreader",
-            "libjpeg",
-            "libwebp",
-            "libwebp_sse41",
-            "wuffs",
+            listOf(
+                ninja,
+                "-C",
+                "out/Release",
+                "skia",
+                "skparagraph",
+                "skshaper",
+                "skunicode_core",
+                "skunicode_icu",
+                "skcms",
+                "libpng",
+                "zlib",
+                "expat",
+                "harfbuzz",
+                "icu",
+                "pathops",
+                "svg",
+                "skresources",
+                "skottie",
+                "sksg",
+                "jsonreader",
+                "libjpeg",
+                "libwebp",
+                "libwebp_sse41",
+                "wuffs",
+            ) + platformTargets,
         )
     }
 

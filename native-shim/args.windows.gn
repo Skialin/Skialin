@@ -1,0 +1,5 @@
+# Appended to args.gn on Windows hosts. Direct3D backs Ganesh D3D12; Dawn backs Graphite D3D12
+# (Graphite has no native D3D12 backend of its own).
+skia_use_metal = false
+skia_use_direct3d = true
+skia_use_dawn = true

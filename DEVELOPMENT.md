@@ -21,7 +21,9 @@ cd ../..
 ```
 
 `buildSkia` regenerates and rebuilds `external/skia/out/Release`; rerun it after
-bumping the `external/skia` submodule, or after `native-shim/args.gn` or the
+bumping the `external/skia` submodule, or after `native-shim/args.gn` (or the
+per-OS `native-shim/args.<os>.gn` appended to it, which toggles Metal /
+Direct3D / Dawn) or the
 `buildSkia` ninja target list in `build.gradle.kts` change (both happen when
 new Skia modules get bound). Once Skia is built, iterating on the Rust/Kotlin
 sides only needs `./gradlew test -Pskialin.buildNative=true`.

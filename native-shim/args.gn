@@ -5,9 +5,8 @@ skia_enable_ganesh = true
 skia_enable_graphite = true
 skia_use_gl = true
 skia_use_vulkan = true
-skia_use_metal = false
-skia_use_direct3d = false
-skia_use_dawn = false
+# skia_use_metal/skia_use_direct3d/skia_use_dawn are per-OS: see args.<os>.gn, appended by
+# build.gradle.kts's setupSkia after this file.
 skia_enable_pdf = false
 skia_enable_skottie = true
 skia_enable_svg = true

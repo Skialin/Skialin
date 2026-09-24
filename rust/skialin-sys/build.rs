@@ -88,6 +88,10 @@ fn main() {
             .include(&skia_dir)
             .include(&shim_include)
             .include(skia_dir.join("include/third_party/vulkan"))
+            .include(skia_dir.join("third_party/externals/dawn/include"))
+            // dawn/webgpu_cpp.h and friends are codegen'd from webgpu.json at build time, staged
+            // here rather than checked into third_party/externals/dawn/include.
+            .include(skia_lib_dir(&skia_dir).join("gen/third_party/dawn/include"))
             .define("SK_USE_INTERNAL_VULKAN_HEADERS", None)
             .warnings(false);
         for define in &defines {
@@ -257,11 +261,16 @@ fn link_skia(skia_dir: &Path) {
     if cfg!(target_os = "windows") {
         for lib in [
             "gdi32", "user32", "ole32", "advapi32", "usp10", "dwrite", "fontsub", "shlwapi", "rpcrt4", "opengl32",
+            // Ganesh D3D12 (skia_use_direct3d) and Dawn's D3D12 backend (Graphite D3D12).
+            "d3d12", "dxgi", "dxguid", "d3dcompiler",
         ] {
             println!("cargo:rustc-link-lib=dylib={lib}");
         }
+        // Only built on Windows; see native-shim/args.windows.gn.
+        println!("cargo:rustc-link-lib=static=dawn_combined");
     } else if cfg!(target_os = "macos") {
-        for framework in ["AppKit", "ApplicationServices", "CoreFoundation", "CoreGraphics", "CoreText"] {
+        // Metal/Foundation back Ganesh and Graphite Metal (native-shim/args.macos.gn).
+        for framework in ["AppKit", "ApplicationServices", "CoreFoundation", "CoreGraphics", "CoreText", "Metal", "Foundation"] {
             println!("cargo:rustc-link-lib=framework={framework}");
         }
     } else if cfg!(target_os = "linux") {
