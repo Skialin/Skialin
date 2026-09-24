@@ -113,6 +113,10 @@
 #include "include/gpu/graphite/Surface.h"
 #include "include/gpu/graphite/vk/VulkanGraphiteContext.h"
 #include "include/gpu/graphite/vk/VulkanGraphiteTypes.h"
+#if defined(SK_METAL)
+#include "include/gpu/graphite/mtl/MtlBackendContext.h"
+#include "include/gpu/graphite/mtl/MtlGraphiteTypes_cpp.h"
+#endif
 #include "src/gpu/GpuTypesPriv.h"
 #include "src/gpu/vk/vulkanmemoryallocator/VulkanMemoryAllocatorPriv.h"
 // Graphite D3D12 goes through Dawn (Graphite has no native D3D12 backend); SK_DAWN is only set on
@@ -2782,6 +2786,30 @@ SkSurface* skialin_bridge_GraphiteSurface_WrapBackendTexture(
 
 void skialin_bridge_GraphiteRecording_delete(skgpu::graphite::Recording* recording) {
     delete recording;
+}
+
+skgpu::graphite::Context* skialin_bridge_GraphiteContext_MakeMetal(void* device, void* queue) {
+#if defined(SK_METAL)
+    skgpu::graphite::MtlBackendContext backendContext;
+    // sk_cfp's raw-pointer constructor adopts; sk_ret_cfp retains, so the caller keeps its own ref.
+    backendContext.fDevice = sk_ret_cfp<CFTypeRef>(device);
+    backendContext.fQueue = sk_ret_cfp<CFTypeRef>(queue);
+    skgpu::graphite::ContextOptions options;
+    return skgpu::graphite::ContextFactory::MakeMetal(backendContext, options).release();
+#else
+    return nullptr;
+#endif
+}
+
+skgpu::graphite::BackendTexture* skialin_bridge_GraphiteBackendTexture_MakeMetal(int32_t width, int32_t height, void* texture) {
+#if defined(SK_METAL)
+    skgpu::graphite::BackendTexture backendTexture =
+        skgpu::graphite::BackendTextures::MakeMetal(SkISize::Make(width, height), static_cast<CFTypeRef>(texture));
+    if (!backendTexture.isValid()) return nullptr;
+    return new skgpu::graphite::BackendTexture(backendTexture);
+#else
+    return nullptr;
+#endif
 }
 
 skgpu::graphite::BackendTexture* skialin_bridge_GraphiteBackendTexture_MakeVk(

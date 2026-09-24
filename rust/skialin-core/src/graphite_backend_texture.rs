@@ -52,6 +52,13 @@ impl GraphiteBackendTexture {
         GraphiteBackendTexture(ptr, None)
     }
 
+    /// Wraps a caller-owned `id<MTLTexture>`. Not retained: the caller keeps it alive for as long
+    /// as this is in use, same as `new_vk`'s `VkImage`. Always `None` off macOS.
+    pub fn new_metal(width: i32, height: i32, texture: *mut std::ffi::c_void) -> Option<Self> {
+        let ptr = unsafe { sys::skialin_bridge_GraphiteBackendTexture_MakeMetal(width, height, texture) };
+        (!ptr.is_null()).then_some(GraphiteBackendTexture(ptr, None))
+    }
+
     pub fn is_valid(&self) -> bool {
         unsafe { sys::skialin_bridge_GraphiteBackendTexture_isValid(self.0) }
     }

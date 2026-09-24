@@ -51,6 +51,20 @@ pub extern "system" fn Java_org_skialin_GraphiteBackendTextureNative_nMakeVk(
 }
 
 #[no_mangle]
+pub extern "system" fn Java_org_skialin_GraphiteBackendTextureNative_nMakeMetal(
+    _env: JNIEnv,
+    _class: jni::objects::JClass,
+    width: jint,
+    height: jint,
+    texture: jlong,
+) -> jlong {
+    match GraphiteBackendTexture::new_metal(width, height, texture as _) {
+        Some(texture) => box_ptr(texture),
+        None => 0,
+    }
+}
+
+#[no_mangle]
 pub extern "system" fn Java_org_skialin_GraphiteBackendTextureNative_nRelease(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong) {
     unsafe { drop_ptr::<GraphiteBackendTexture>(ptr) };
 }

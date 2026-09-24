@@ -3,8 +3,8 @@ package org.skialin
 import org.skialin.impl.NativeLoader
 
 /**
- * Wraps a skgpu::graphite::Context (Vulkan, or D3D12 through Dawn on
- * Windows -- see [makeDawnD3D12]). Thread-safe and
+ * Wraps a skgpu::graphite::Context (Vulkan, Metal on macOS, or D3D12
+ * through Dawn on Windows -- see [makeDawnD3D12]). Thread-safe and
  * long-lived, unlike a [GraphiteRecorder] made from it.
  *
  * Doesn't extend [org.skialin.impl.Managed]: same rationale as
@@ -117,6 +117,18 @@ class GraphiteContext private constructor(
         }
 
         /**
+         * [device]/[queue] are native `id<MTLDevice>`/`id<MTLCommandQueue>` pointers, each
+         * retained for as long as the context needs it. Always null off macOS.
+         */
+        fun makeMetal(
+            device: Long,
+            queue: Long,
+        ): GraphiteContext? {
+            val ptr = GraphiteContextNative.nMakeMetal(device, queue)
+            return if (ptr == 0L) null else GraphiteContext(ptr)
+        }
+
+        /**
          * Dawn/D3D12 only. Unlike [makeVulkan], Dawn creates and owns the ID3D12Device itself --
          * there's no way to hand it a caller-created one -- so this enumerates D3D12 adapters on
          * its own and picks [adapterIndex] (0 for the default/first). Always null off
@@ -208,6 +220,11 @@ private object GraphiteContextNative {
         maxApiVersion: Int,
         protectedContext: Boolean,
         getProc: VulkanGetProc,
+    ): Long
+
+    external fun nMakeMetal(
+        device: Long,
+        queue: Long,
     ): Long
 
     external fun nRelease(ptr: Long)

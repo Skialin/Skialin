@@ -1164,6 +1164,10 @@ skgpu::graphite::Context* skialin_bridge_GraphiteContext_MakeVulkan(
     VkInstance instance, VkPhysicalDevice physicalDevice, VkDevice device, VkQueue queue,
     uint32_t graphicsQueueIndex, uint32_t maxAPIVersion, void* getProcCtx, SkialinVulkanGetProc getProc,
     bool protectedContext);
+/* Graphite + Metal. device/queue are the caller's id<MTLDevice>/id<MTLCommandQueue> as void*
+ * (CFTypeRef), each retained for as long as the Context needs it. macOS only: always null
+ * elsewhere. Owned by the caller; free with skialin_bridge_GraphiteContext_delete. */
+skgpu::graphite::Context* skialin_bridge_GraphiteContext_MakeMetal(void* device, void* queue);
 void skialin_bridge_GraphiteContext_delete(skgpu::graphite::Context* context);
 /* Owned by the caller; free with skialin_bridge_GraphiteRecorder_delete. */
 skgpu::graphite::Recorder* skialin_bridge_GraphiteContext_makeRecorder(skgpu::graphite::Context* context);
@@ -1200,6 +1204,11 @@ skgpu::graphite::BackendTexture* skialin_bridge_GraphiteBackendTexture_MakeVk(
     VkFormat format, VkImageTiling imageTiling, VkImageUsageFlags imageUsageFlags, VkSharingMode sharingMode,
     VkImageAspectFlags aspectMask, VkImageLayout currentLayout, uint32_t queueFamilyIndex, VkImage image,
     VkDeviceMemory allocMemory, VkDeviceSize allocOffset, VkDeviceSize allocSize, uint32_t allocFlags);
+/* Wraps the caller's id<MTLTexture>. Unlike the Ganesh MakeMtl, Graphite's BackendTexture does
+ * *not* retain it (skgpu::graphite::BackendTextures::MakeMetal), so -- same as a VkImage passed to
+ * MakeVk -- the caller must keep it alive for as long as the BackendTexture is in use (a Surface
+ * wrapping it retains it on its own). macOS only: always null elsewhere. */
+skgpu::graphite::BackendTexture* skialin_bridge_GraphiteBackendTexture_MakeMetal(int32_t width, int32_t height, void* texture);
 void skialin_bridge_GraphiteBackendTexture_delete(skgpu::graphite::BackendTexture* texture);
 bool skialin_bridge_GraphiteBackendTexture_isValid(const skgpu::graphite::BackendTexture* texture);
 

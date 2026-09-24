@@ -9,6 +9,19 @@ class GraphiteBackendTexture internal constructor(
     val isValid: Boolean get() = GraphiteBackendTextureNative.nIsValid(nativePtr)
 
     companion object {
+        /**
+         * Wraps a caller-owned `id<MTLTexture>` ([texture] is the native pointer). Not retained:
+         * the caller keeps it alive for as long as this is in use. Null off macOS.
+         */
+        fun makeMetal(
+            width: Int,
+            height: Int,
+            texture: Long,
+        ): GraphiteBackendTexture? {
+            val ptr = GraphiteBackendTextureNative.nMakeMetal(width, height, texture)
+            return if (ptr == 0L) null else GraphiteBackendTexture(ptr)
+        }
+
         /** Wraps a caller-owned VkImage (not allocated or freed by Skia). */
         @Suppress("LongParameterList")
         fun makeVk(
@@ -79,6 +92,12 @@ private object GraphiteBackendTextureNative {
         allocOffset: Long,
         allocSize: Long,
         allocFlags: Int,
+    ): Long
+
+    external fun nMakeMetal(
+        width: Int,
+        height: Int,
+        texture: Long,
     ): Long
 
     external fun nRelease(ptr: Long)

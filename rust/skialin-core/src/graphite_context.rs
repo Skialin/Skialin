@@ -1,7 +1,7 @@
 use crate::sys;
 use crate::GraphiteBackendTexture;
 
-/// Wraps a skgpu::graphite::Context (Vulkan, or D3D12 through Dawn on Windows). Thread-safe and
+/// Wraps a skgpu::graphite::Context (Vulkan, Metal on macOS, or D3D12 through Dawn on Windows). Thread-safe and
 /// long-lived, unlike a Recorder made from it. The caller creates the
 /// Vulkan instance/device/queue and supplies a proc-address resolver, same
 /// as `DirectContext::new_vulkan`.
@@ -36,6 +36,13 @@ impl GraphiteContext {
         };
         let keep_alive = unsafe { Box::from_raw(ctx_ptr) };
         (!ptr.is_null()).then_some(GraphiteContext(ptr, Some(keep_alive)))
+    }
+
+    /// Wraps a caller-created `id<MTLDevice>`/`id<MTLCommandQueue>` (as raw pointers), each
+    /// retained for as long as the context needs it. Always `None` off macOS.
+    pub fn new_metal(device: *mut std::ffi::c_void, queue: *mut std::ffi::c_void) -> Option<Self> {
+        let ptr = unsafe { sys::skialin_bridge_GraphiteContext_MakeMetal(device, queue) };
+        (!ptr.is_null()).then_some(GraphiteContext(ptr, None))
     }
 
     pub fn make_recorder(&mut self) -> Option<GraphiteRecorder> {
