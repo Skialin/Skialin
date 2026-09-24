@@ -275,6 +275,7 @@ fn link_skia(skia_dir: &Path) {
         for framework in ["AppKit", "ApplicationServices", "CoreFoundation", "CoreGraphics", "CoreText", "Metal", "Foundation"] {
             println!("cargo:rustc-link-lib=framework={framework}");
         }
+        link_clang_runtime();
     } else if cfg!(target_os = "linux") {
         // GL is for Skia's GLX interface (GrGLMakeGLXInterface.cpp calls
         // glXGetProcAddress/glXGetCurrentContext directly), which args.gn pulls
@@ -285,6 +286,26 @@ fn link_skia(skia_dir: &Path) {
     }
 
     copy_icu_data(&lib_dir);
+}
+
+/// Skia's Metal code uses `@available`, which clang lowers to calls into
+/// `___isPlatformVersionAtLeast` from its own runtime, libclang_rt.osx.a.
+/// clang links that implicitly, but rustc links with -nodefaultlibs, so it has
+/// to be named here -- located via the same clang that builds the shim.
+fn link_clang_runtime() {
+    let output = std::process::Command::new("clang").arg("-print-file-name=libclang_rt.osx.a").output();
+    let Ok(output) = output else {
+        println!("cargo:warning=skialin-sys: could not run clang to locate libclang_rt.osx.a");
+        return;
+    };
+    let path = PathBuf::from(String::from_utf8_lossy(&output.stdout).trim());
+    match path.parent() {
+        Some(dir) if path.is_file() => {
+            println!("cargo:rustc-link-search=native={}", dir.display());
+            println!("cargo:rustc-link-lib=static=clang_rt.osx");
+        }
+        _ => println!("cargo:warning=skialin-sys: libclang_rt.osx.a not found (clang printed {})", path.display()),
+    }
 }
 
 /// SkLoadICU() (third_party/icu/SkLoadICU.cpp) looks for icudtl.dat next to
