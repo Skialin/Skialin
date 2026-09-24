@@ -57,6 +57,15 @@ impl BackendTexture {
         (!ptr.is_null()).then_some(BackendTexture(ptr))
     }
 
+    /// Wraps a caller-owned `id<MTLTexture>` (retained for as long as Skia needs it). Always
+    /// `None` off macOS.
+    pub fn new_metal(width: i32, height: i32, mipmapped: bool, texture: *mut std::ffi::c_void, label: &str) -> Option<Self> {
+        let ptr = unsafe {
+            sys::skialin_bridge_BackendTexture_MakeMtl(width, height, mipmapped, texture, label.as_ptr() as *const std::ffi::c_char, label.len())
+        };
+        (!ptr.is_null()).then_some(BackendTexture(ptr))
+    }
+
     /// Tells Skia the caller transitioned the wrapped `ID3D12Resource` to `resource_state` (a raw
     /// `D3D12_RESOURCE_STATES`). No-op for non-D3D textures.
     pub fn set_d3d_resource_state(&mut self, resource_state: u32) {

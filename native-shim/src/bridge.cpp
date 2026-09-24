@@ -90,6 +90,13 @@
 #include "include/gpu/ganesh/gl/GrGLBackendSurface.h"
 #include "include/gpu/ganesh/vk/GrVkBackendSurface.h"
 #include "include/gpu/ganesh/vk/GrVkDirectContext.h"
+#if defined(SK_METAL)
+// Plain C++: every Metal object crosses the API as a CFTypeRef, so no Objective-C++ is needed.
+#include "include/gpu/ganesh/mtl/GrMtlBackendContext.h"
+#include "include/gpu/ganesh/mtl/GrMtlBackendSurface.h"
+#include "include/gpu/ganesh/mtl/GrMtlDirectContext.h"
+#include "include/gpu/ganesh/mtl/GrMtlTypes.h"
+#endif
 #if defined(SK_DIRECT3D)
 #include "include/gpu/ganesh/d3d/GrD3DBackendContext.h"
 #include "include/gpu/ganesh/d3d/GrD3DBackendSurface.h"
@@ -2531,6 +2538,29 @@ void skialin_bridge_BackendTexture_setD3DResourceState(GrBackendTexture* texture
 #endif
 }
 
+GrDirectContext* skialin_bridge_DirectContext_MakeMetal(void* device, void* queue) {
+#if defined(SK_METAL)
+    GrMtlBackendContext backendContext;
+    // sk_cfp's raw-pointer constructor adopts; sk_ret_cfp retains, so the caller keeps its own ref.
+    backendContext.fDevice = sk_ret_cfp<GrMTLHandle>(device);
+    backendContext.fQueue = sk_ret_cfp<GrMTLHandle>(queue);
+    return GrDirectContexts::MakeMetal(backendContext).release();
+#else
+    return nullptr;
+#endif
+}
+
+GrBackendTexture* skialin_bridge_BackendTexture_MakeMtl(int32_t width, int32_t height, skgpu::Mipmapped mipmapped, void* texture, const char* label, size_t labelLength) {
+#if defined(SK_METAL)
+    GrMtlTextureInfo info;
+    info.fTexture = sk_ret_cfp<GrMTLHandle>(texture);
+    std::string_view labelView = label ? std::string_view(label, labelLength) : std::string_view();
+    return new GrBackendTexture(GrBackendTextures::MakeMtl(width, height, mipmapped, info, labelView));
+#else
+    return nullptr;
+#endif
+}
+
 GrBackendTexture* skialin_bridge_BackendTexture_MakeVk(int32_t width, int32_t height, const GrVkImageInfo* imageInfo, const char* label, size_t labelLength) {
     std::string_view labelView = label ? std::string_view(label, labelLength) : std::string_view();
     return new GrBackendTexture(GrBackendTextures::MakeVk(width, height, *imageInfo, labelView));
@@ -2593,6 +2623,16 @@ void skialin_bridge_BackendRenderTarget_setD3DResourceState(GrBackendRenderTarge
 #else
     (void)renderTarget;
     (void)resourceState;
+#endif
+}
+
+GrBackendRenderTarget* skialin_bridge_BackendRenderTarget_MakeMtl(int32_t width, int32_t height, void* texture) {
+#if defined(SK_METAL)
+    GrMtlTextureInfo info;
+    info.fTexture = sk_ret_cfp<GrMTLHandle>(texture);
+    return new GrBackendRenderTarget(GrBackendRenderTargets::MakeMtl(width, height, info));
+#else
+    return nullptr;
 #endif
 }
 

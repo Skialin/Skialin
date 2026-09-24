@@ -97,6 +97,19 @@ class BackendRenderTarget internal constructor(
         }
 
         /**
+         * Wraps a caller-owned `id<MTLTexture>` render target (e.g. a `CAMetalDrawable`'s
+         * texture), retained for as long as Skia needs it. Null off macOS.
+         */
+        fun makeMetal(
+            width: Int,
+            height: Int,
+            texture: Long,
+        ): BackendRenderTarget? {
+            val ptr = BackendRenderTargetNative.nMakeMetal(width, height, texture)
+            return if (ptr == 0L) null else BackendRenderTarget(ptr)
+        }
+
+        /**
          * Wraps a caller-owned GL framebuffer (not allocated or freed by
          * Skia), e.g. FBO 0 for the window-system framebuffer or an
          * app-managed multisampled renderbuffer. `format` is a sized
@@ -158,6 +171,12 @@ private object BackendRenderTargetNative {
         levelCount: Int,
         sampleQualityPattern: Int,
         isProtected: Boolean,
+    ): Long
+
+    external fun nMakeMetal(
+        width: Int,
+        height: Int,
+        texture: Long,
     ): Long
 
     external fun nSetD3DResourceState(

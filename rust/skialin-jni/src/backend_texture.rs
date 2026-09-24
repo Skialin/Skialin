@@ -98,6 +98,23 @@ pub extern "system" fn Java_org_skialin_BackendTextureNative_nMakeD3D(
 }
 
 #[no_mangle]
+pub extern "system" fn Java_org_skialin_BackendTextureNative_nMakeMetal(
+    mut env: JNIEnv,
+    _class: jni::objects::JClass,
+    width: jint,
+    height: jint,
+    mipmapped: jboolean,
+    texture: jlong,
+    label: JString,
+) -> jlong {
+    let label: String = env.get_string(&label).map(|s| s.into()).unwrap_or_default();
+    match BackendTexture::new_metal(width, height, mipmapped != 0, texture as _, &label) {
+        Some(texture) => box_ptr(texture),
+        None => 0,
+    }
+}
+
+#[no_mangle]
 pub extern "system" fn Java_org_skialin_BackendTextureNative_nSetD3DResourceState(_env: JNIEnv, _class: jni::objects::JClass, ptr: jlong, resource_state: jint) {
     unsafe { borrow_mut::<BackendTexture>(ptr) }.set_d3d_resource_state(resource_state as u32);
 }

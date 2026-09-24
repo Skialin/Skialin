@@ -97,6 +97,21 @@ class BackendTexture internal constructor(
         }
 
         /**
+         * Wraps a caller-owned `id<MTLTexture>` ([texture] is the native pointer, retained for as
+         * long as Skia needs it). Null off macOS.
+         */
+        fun makeMetal(
+            width: Int,
+            height: Int,
+            mipmapped: Boolean,
+            texture: Long,
+            label: String = "",
+        ): BackendTexture? {
+            val ptr = BackendTextureNative.nMakeMetal(width, height, mipmapped, texture, label)
+            return if (ptr == 0L) null else BackendTexture(ptr)
+        }
+
+        /**
          * Wraps a caller-owned GL texture (not allocated or freed by Skia).
          * `target` is typically `GL_TEXTURE_2D` (0x0DE1); `format` a sized
          * internal format like `GL_RGBA8` (0x8058).
@@ -160,6 +175,14 @@ private object BackendTextureNative {
         levelCount: Int,
         sampleQualityPattern: Int,
         isProtected: Boolean,
+        label: String,
+    ): Long
+
+    external fun nMakeMetal(
+        width: Int,
+        height: Int,
+        mipmapped: Boolean,
+        texture: Long,
         label: String,
     ): Long
 

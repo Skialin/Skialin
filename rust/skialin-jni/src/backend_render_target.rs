@@ -91,6 +91,20 @@ pub extern "system" fn Java_org_skialin_BackendRenderTargetNative_nMakeD3D(
 }
 
 #[no_mangle]
+pub extern "system" fn Java_org_skialin_BackendRenderTargetNative_nMakeMetal(
+    _env: JNIEnv,
+    _class: jni::objects::JClass,
+    width: jint,
+    height: jint,
+    texture: jlong,
+) -> jlong {
+    match BackendRenderTarget::new_metal(width, height, texture as _) {
+        Some(render_target) => box_ptr(render_target),
+        None => 0,
+    }
+}
+
+#[no_mangle]
 pub extern "system" fn Java_org_skialin_BackendRenderTargetNative_nSetD3DResourceState(
     _env: JNIEnv,
     _class: jni::objects::JClass,

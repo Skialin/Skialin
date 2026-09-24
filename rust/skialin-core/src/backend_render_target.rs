@@ -52,6 +52,13 @@ impl BackendRenderTarget {
         (!ptr.is_null()).then_some(BackendRenderTarget(ptr))
     }
 
+    /// Wraps a caller-owned `id<MTLTexture>` render target (e.g. a `CAMetalDrawable`'s texture),
+    /// retained for as long as Skia needs it. Always `None` off macOS.
+    pub fn new_metal(width: i32, height: i32, texture: *mut std::ffi::c_void) -> Option<Self> {
+        let ptr = unsafe { sys::skialin_bridge_BackendRenderTarget_MakeMtl(width, height, texture) };
+        (!ptr.is_null()).then_some(BackendRenderTarget(ptr))
+    }
+
     /// Tells Skia the caller transitioned the wrapped `ID3D12Resource` to `resource_state`. No-op
     /// for non-D3D render targets.
     pub fn set_d3d_resource_state(&mut self, resource_state: u32) {

@@ -3,7 +3,8 @@ package org.skialin
 import org.skialin.impl.NativeLoader
 
 /**
- * Wraps a native GrDirectContext (Ganesh + OpenGL, Vulkan, or Direct3D 12 on Windows). For GL, the
+ * Wraps a native GrDirectContext (Ganesh + OpenGL, Vulkan, Direct3D 12 on Windows, or Metal on
+ * macOS). For GL, the
  * caller must make a native GL context current on this thread first (e.g.
  * via LWJGL/GLFW); the resulting object, and any [Surface] made from it,
  * must then stay on that thread. Vulkan has no such requirement -- only
@@ -77,6 +78,19 @@ class DirectContext private constructor(
             protectedContext: Boolean = false,
         ): DirectContext? {
             val ptr = DirectContextNative.nMakeD3D(adapter, device, queue, protectedContext)
+            return if (ptr == 0L) null else DirectContext(ptr)
+        }
+
+        /**
+         * [device]/[queue] are native `id<MTLDevice>`/`id<MTLCommandQueue>` pointers (e.g. from
+         * LWJGL's Metal bindings). Each is retained for as long as the context needs it; the
+         * caller keeps its own reference. Always null off macOS.
+         */
+        fun makeMetal(
+            device: Long,
+            queue: Long,
+        ): DirectContext? {
+            val ptr = DirectContextNative.nMakeMetal(device, queue)
             return if (ptr == 0L) null else DirectContext(ptr)
         }
 
@@ -189,6 +203,11 @@ private object DirectContextNative {
         device: Long,
         queue: Long,
         protectedContext: Boolean,
+    ): Long
+
+    external fun nMakeMetal(
+        device: Long,
+        queue: Long,
     ): Long
 
     external fun nRelease(ptr: Long)
