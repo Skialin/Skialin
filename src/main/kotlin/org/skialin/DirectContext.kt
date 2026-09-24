@@ -3,7 +3,7 @@ package org.skialin
 import org.skialin.impl.NativeLoader
 
 /**
- * Wraps a native GrDirectContext (Ganesh + OpenGL or Vulkan). For GL, the
+ * Wraps a native GrDirectContext (Ganesh + OpenGL, Vulkan, or Direct3D 12 on Windows). For GL, the
  * caller must make a native GL context current on this thread first (e.g.
  * via LWJGL/GLFW); the resulting object, and any [Surface] made from it,
  * must then stay on that thread. Vulkan has no such requirement -- only
@@ -61,6 +61,22 @@ class DirectContext private constructor(
     companion object {
         fun makeGL(): DirectContext? {
             val ptr = DirectContextNative.nMakeGL()
+            return if (ptr == 0L) null else DirectContext(ptr)
+        }
+
+        /**
+         * [adapter]/[device]/[queue] are native `IDXGIAdapter1*`/`ID3D12Device*`/
+         * `ID3D12CommandQueue*` pointers (e.g. from LWJGL or a JNI-side D3D12 setup). Each is
+         * AddRef'd for as long as the context needs it; the caller keeps, and later releases, its
+         * own reference. Always null off Windows.
+         */
+        fun makeD3D(
+            adapter: Long,
+            device: Long,
+            queue: Long,
+            protectedContext: Boolean = false,
+        ): DirectContext? {
+            val ptr = DirectContextNative.nMakeD3D(adapter, device, queue, protectedContext)
             return if (ptr == 0L) null else DirectContext(ptr)
         }
 
@@ -166,6 +182,13 @@ private object DirectContextNative {
         maxApiVersion: Int,
         protectedContext: Boolean,
         getProc: VulkanGetProc,
+    ): Long
+
+    external fun nMakeD3D(
+        adapter: Long,
+        device: Long,
+        queue: Long,
+        protectedContext: Boolean,
     ): Long
 
     external fun nRelease(ptr: Long)

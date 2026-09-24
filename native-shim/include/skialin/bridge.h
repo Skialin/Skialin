@@ -1043,6 +1043,14 @@ GrDirectContext* skialin_bridge_DirectContext_MakeVulkan(
     uint32_t graphicsQueueIndex, uint32_t maxAPIVersion, void* getProcCtx, SkialinVulkanGetProc getProc,
     bool protectedContext);
 
+/* DirectContext (GrDirectContext, Ganesh + Direct3D 12). adapter/device/queue are the caller's
+ * IDXGIAdapter1*, ID3D12Device* and ID3D12CommandQueue*, passed as void* so this header doesn't pull in
+ * <d3d12.h>; each is AddRef'd for as long as the context needs it, so the caller keeps (and later
+ * releases) its own reference. The memory allocator is Skia's own D3D12MA-backed default. Windows
+ * only: always null elsewhere (Skia is only built with skia_use_direct3d on Windows). Ref-owned;
+ * free with skialin_bridge_DirectContext_unref. Null on failure. */
+GrDirectContext* skialin_bridge_DirectContext_MakeD3D(void* adapter, void* device, void* queue, bool protectedContext);
+
 /* Direct wrapper around SkSurfaces::RenderTarget (SkSurfaceGanesh.h); params
  * map 1:1 to the real signature. surfaceProps may be null. Ref-owned; free
  * with skialin_bridge_Surface_unref. Must run on context's thread. Null on
@@ -1061,6 +1069,16 @@ SkSurface* skialin_bridge_Surface_MakeRenderTarget(
 GrBackendTexture* skialin_bridge_BackendTexture_MakeVk(int32_t width, int32_t height, const GrVkImageInfo* imageInfo, const char* label, size_t labelLength);
 /* glInfo maps directly onto GrGLTextureInfo, another plain bindgen-bound struct. */
 GrBackendTexture* skialin_bridge_BackendTexture_MakeGL(int32_t width, int32_t height, skgpu::Mipmapped mipmapped, const GrGLTextureInfo* glInfo, const char* label, size_t labelLength);
+/* resource is the caller's ID3D12Resource* (AddRef'd for as long as the GrBackendTexture, or
+ * anything wrapping it, is alive); resourceState/format/sampleQualityPattern are raw
+ * D3D12_RESOURCE_STATES/DXGI_FORMAT/sample-quality values, mapping 1:1 onto
+ * GrD3DTextureResourceInfo. Windows only: always null elsewhere. */
+GrBackendTexture* skialin_bridge_BackendTexture_MakeD3D(
+    int32_t width, int32_t height, void* resource, uint32_t resourceState, uint32_t format, uint32_t sampleCount,
+    uint32_t levelCount, uint32_t sampleQualityPattern, bool isProtected, const char* label, size_t labelLength);
+/* Tells Skia the caller transitioned the wrapped ID3D12Resource to resourceState
+ * (GrBackendTextures::SetD3DResourceState). No-op for non-D3D textures, or off Windows. */
+void skialin_bridge_BackendTexture_setD3DResourceState(GrBackendTexture* texture, uint32_t resourceState);
 void skialin_bridge_BackendTexture_delete(GrBackendTexture* texture);
 GrBackendTexture* skialin_bridge_BackendTexture_clone(const GrBackendTexture* texture);
 int32_t skialin_bridge_BackendTexture_width(const GrBackendTexture* texture);
@@ -1082,6 +1100,12 @@ GrBackendRenderTarget* skialin_bridge_BackendRenderTarget_MakeGL(int32_t width, 
  * for Vulkan render targets -- Skia derives both from the image info rather
  * than accepting them as separate params, unlike the GL factory above. */
 GrBackendRenderTarget* skialin_bridge_BackendRenderTarget_MakeVk(int32_t width, int32_t height, const GrVkImageInfo* imageInfo);
+/* Same params/ownership as skialin_bridge_BackendTexture_MakeD3D, e.g. for a swapchain buffer.
+ * Windows only: always null elsewhere. */
+GrBackendRenderTarget* skialin_bridge_BackendRenderTarget_MakeD3D(
+    int32_t width, int32_t height, void* resource, uint32_t resourceState, uint32_t format, uint32_t sampleCount,
+    uint32_t levelCount, uint32_t sampleQualityPattern, bool isProtected);
+void skialin_bridge_BackendRenderTarget_setD3DResourceState(GrBackendRenderTarget* renderTarget, uint32_t resourceState);
 void skialin_bridge_BackendRenderTarget_delete(GrBackendRenderTarget* renderTarget);
 GrBackendRenderTarget* skialin_bridge_BackendRenderTarget_clone(const GrBackendRenderTarget* renderTarget);
 int32_t skialin_bridge_BackendRenderTarget_width(const GrBackendRenderTarget* renderTarget);

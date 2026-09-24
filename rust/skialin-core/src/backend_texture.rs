@@ -23,6 +23,46 @@ impl BackendTexture {
         BackendTexture(ptr)
     }
 
+    /// Wraps a caller-owned `ID3D12Resource` (AddRef'd for as long as Skia needs it).
+    /// `resource_state`/`format` are raw `D3D12_RESOURCE_STATES`/`DXGI_FORMAT` values. Always
+    /// `None` off Windows.
+    #[allow(clippy::too_many_arguments)]
+    pub fn new_d3d(
+        width: i32,
+        height: i32,
+        resource: *mut std::ffi::c_void,
+        resource_state: u32,
+        format: u32,
+        sample_count: u32,
+        level_count: u32,
+        sample_quality_pattern: u32,
+        is_protected: bool,
+        label: &str,
+    ) -> Option<Self> {
+        let ptr = unsafe {
+            sys::skialin_bridge_BackendTexture_MakeD3D(
+                width,
+                height,
+                resource,
+                resource_state,
+                format,
+                sample_count,
+                level_count,
+                sample_quality_pattern,
+                is_protected,
+                label.as_ptr() as *const std::ffi::c_char,
+                label.len(),
+            )
+        };
+        (!ptr.is_null()).then_some(BackendTexture(ptr))
+    }
+
+    /// Tells Skia the caller transitioned the wrapped `ID3D12Resource` to `resource_state` (a raw
+    /// `D3D12_RESOURCE_STATES`). No-op for non-D3D textures.
+    pub fn set_d3d_resource_state(&mut self, resource_state: u32) {
+        unsafe { sys::skialin_bridge_BackendTexture_setD3DResourceState(self.0, resource_state) };
+    }
+
     pub fn width(&self) -> i32 {
         unsafe { sys::skialin_bridge_BackendTexture_width(self.0) }
     }

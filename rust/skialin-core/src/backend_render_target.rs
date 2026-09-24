@@ -23,6 +23,41 @@ impl BackendRenderTarget {
         BackendRenderTarget(ptr)
     }
 
+    /// Same as `BackendTexture::new_d3d`, e.g. for a swapchain buffer. Always `None` off Windows.
+    #[allow(clippy::too_many_arguments)]
+    pub fn new_d3d(
+        width: i32,
+        height: i32,
+        resource: *mut std::ffi::c_void,
+        resource_state: u32,
+        format: u32,
+        sample_count: u32,
+        level_count: u32,
+        sample_quality_pattern: u32,
+        is_protected: bool,
+    ) -> Option<Self> {
+        let ptr = unsafe {
+            sys::skialin_bridge_BackendRenderTarget_MakeD3D(
+                width,
+                height,
+                resource,
+                resource_state,
+                format,
+                sample_count,
+                level_count,
+                sample_quality_pattern,
+                is_protected,
+            )
+        };
+        (!ptr.is_null()).then_some(BackendRenderTarget(ptr))
+    }
+
+    /// Tells Skia the caller transitioned the wrapped `ID3D12Resource` to `resource_state`. No-op
+    /// for non-D3D render targets.
+    pub fn set_d3d_resource_state(&mut self, resource_state: u32) {
+        unsafe { sys::skialin_bridge_BackendRenderTarget_setD3DResourceState(self.0, resource_state) };
+    }
+
     pub fn width(&self) -> i32 {
         unsafe { sys::skialin_bridge_BackendRenderTarget_width(self.0) }
     }

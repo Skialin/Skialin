@@ -12,6 +12,14 @@ class BackendTexture internal constructor(
     val isProtected: Boolean get() = BackendTextureNative.nIsProtected(nativePtr)
     val hasMipmaps: Boolean get() = BackendTextureNative.nHasMipmaps(nativePtr)
 
+    /**
+     * Tells Skia the caller transitioned the wrapped ID3D12Resource to [resourceState] (a raw
+     * `D3D12_RESOURCE_STATES` value). No-op for non-D3D textures.
+     */
+    fun setD3DResourceState(resourceState: Int) {
+        BackendTextureNative.nSetD3DResourceState(nativePtr, resourceState)
+    }
+
     companion object {
         /**
          * Wraps a caller-owned VkImage (not allocated or freed by Skia).
@@ -52,6 +60,40 @@ class BackendTexture internal constructor(
                     label,
                 )
             return BackendTexture(ptr)
+        }
+
+        /**
+         * Wraps a caller-owned ID3D12Resource ([resource] is the native `ID3D12Resource*`,
+         * AddRef'd for as long as Skia needs it). [resourceState]/[format] are raw
+         * `D3D12_RESOURCE_STATES`/`DXGI_FORMAT` values. Null off Windows.
+         */
+        @Suppress("LongParameterList")
+        fun makeD3D(
+            width: Int,
+            height: Int,
+            resource: Long,
+            resourceState: Int,
+            format: Int,
+            sampleCount: Int = 1,
+            levelCount: Int = 1,
+            sampleQualityPattern: Int = 0,
+            isProtected: Boolean = false,
+            label: String = "",
+        ): BackendTexture? {
+            val ptr =
+                BackendTextureNative.nMakeD3D(
+                    width,
+                    height,
+                    resource,
+                    resourceState,
+                    format,
+                    sampleCount,
+                    levelCount,
+                    sampleQualityPattern,
+                    isProtected,
+                    label,
+                )
+            return if (ptr == 0L) null else BackendTexture(ptr)
         }
 
         /**
@@ -106,6 +148,25 @@ private object BackendTextureNative {
         isProtected: Boolean,
         label: String,
     ): Long
+
+    @Suppress("LongParameterList")
+    external fun nMakeD3D(
+        width: Int,
+        height: Int,
+        resource: Long,
+        resourceState: Int,
+        format: Int,
+        sampleCount: Int,
+        levelCount: Int,
+        sampleQualityPattern: Int,
+        isProtected: Boolean,
+        label: String,
+    ): Long
+
+    external fun nSetD3DResourceState(
+        ptr: Long,
+        resourceState: Int,
+    )
 
     external fun nRelease(ptr: Long)
 

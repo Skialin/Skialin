@@ -14,6 +14,14 @@ class BackendRenderTarget internal constructor(
     val isProtected: Boolean get() = BackendRenderTargetNative.nIsProtected(nativePtr)
     val isFramebufferOnly: Boolean get() = BackendRenderTargetNative.nIsFramebufferOnly(nativePtr)
 
+    /**
+     * Tells Skia the caller transitioned the wrapped ID3D12Resource to [resourceState] (a raw
+     * `D3D12_RESOURCE_STATES` value). No-op for non-D3D render targets.
+     */
+    fun setD3DResourceState(resourceState: Int) {
+        BackendRenderTargetNative.nSetD3DResourceState(nativePtr, resourceState)
+    }
+
     companion object {
         /**
          * Wraps a caller-owned VkImage-backed render target (not allocated
@@ -55,6 +63,37 @@ class BackendRenderTarget internal constructor(
                     sharingMode,
                 )
             return BackendRenderTarget(ptr)
+        }
+
+        /**
+         * Wraps a caller-owned ID3D12Resource-backed render target (e.g. a swapchain buffer);
+         * same params as [BackendTexture.makeD3D]. Null off Windows.
+         */
+        @Suppress("LongParameterList")
+        fun makeD3D(
+            width: Int,
+            height: Int,
+            resource: Long,
+            resourceState: Int,
+            format: Int,
+            sampleCount: Int = 1,
+            levelCount: Int = 1,
+            sampleQualityPattern: Int = 0,
+            isProtected: Boolean = false,
+        ): BackendRenderTarget? {
+            val ptr =
+                BackendRenderTargetNative.nMakeD3D(
+                    width,
+                    height,
+                    resource,
+                    resourceState,
+                    format,
+                    sampleCount,
+                    levelCount,
+                    sampleQualityPattern,
+                    isProtected,
+                )
+            return if (ptr == 0L) null else BackendRenderTarget(ptr)
         }
 
         /**
@@ -107,6 +146,24 @@ private object BackendRenderTargetNative {
         format: Int,
         isProtected: Boolean,
     ): Long
+
+    @Suppress("LongParameterList")
+    external fun nMakeD3D(
+        width: Int,
+        height: Int,
+        resource: Long,
+        resourceState: Int,
+        format: Int,
+        sampleCount: Int,
+        levelCount: Int,
+        sampleQualityPattern: Int,
+        isProtected: Boolean,
+    ): Long
+
+    external fun nSetD3DResourceState(
+        ptr: Long,
+        resourceState: Int,
+    )
 
     external fun nRelease(ptr: Long)
 

@@ -27,7 +27,7 @@ impl From<SurfaceOrigin> for sys::skgpu::Origin {
     }
 }
 
-/// Wraps a GrDirectContext (Ganesh + OpenGL or Vulkan). The caller must make
+/// Wraps a GrDirectContext (Ganesh + OpenGL, Vulkan, or Direct3D 12 on Windows). The caller must make
 /// a native GL context current on this thread first for `new_gl*`; this type
 /// doesn't create one. Thread-affine after creation for GL: every method
 /// here, and every `Surface` made from it, must stay on that thread.
@@ -82,6 +82,14 @@ impl DirectContext {
         };
         let keep_alive = unsafe { Box::from_raw(ctx_ptr) };
         (!ptr.is_null()).then_some(DirectContext(ptr, Some(keep_alive)))
+    }
+
+    /// Wraps a caller-created `IDXGIAdapter1`/`ID3D12Device`/`ID3D12CommandQueue` (raw COM
+    /// pointers). Each is AddRef'd for as long as the context needs it; the caller keeps its own
+    /// reference. Always `None` off Windows.
+    pub fn new_d3d(adapter: *mut std::ffi::c_void, device: *mut std::ffi::c_void, queue: *mut std::ffi::c_void, protected_context: bool) -> Option<Self> {
+        let ptr = unsafe { sys::skialin_bridge_DirectContext_MakeD3D(adapter, device, queue, protected_context) };
+        (!ptr.is_null()).then_some(DirectContext(ptr, None))
     }
 
     pub fn flush(&mut self) {

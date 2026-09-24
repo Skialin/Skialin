@@ -89,6 +89,12 @@
 #include "include/gpu/ganesh/gl/GrGLBackendSurface.h"
 #include "include/gpu/ganesh/vk/GrVkBackendSurface.h"
 #include "include/gpu/ganesh/vk/GrVkDirectContext.h"
+#if defined(SK_DIRECT3D)
+#include "include/gpu/ganesh/d3d/GrD3DBackendContext.h"
+#include "include/gpu/ganesh/d3d/GrD3DBackendSurface.h"
+#include "include/gpu/ganesh/d3d/GrD3DDirectContext.h"
+#include "include/gpu/ganesh/d3d/GrD3DTypes.h"
+#endif
 #include "include/gpu/graphite/BackendTexture.h"
 #include "include/gpu/graphite/Context.h"
 #include "include/gpu/graphite/ContextOptions.h"
@@ -2464,6 +2470,64 @@ SkSurface* skialin_bridge_Surface_MakeRenderTarget(
         .release();
 }
 
+GrDirectContext* skialin_bridge_DirectContext_MakeD3D(void* adapter, void* device, void* queue, bool protectedContext) {
+#if defined(SK_DIRECT3D)
+    GrD3DBackendContext backendContext;
+    // gr_cp's raw-pointer constructor adopts; retain() AddRefs instead, so the caller keeps its own ref.
+    backendContext.fAdapter.retain(static_cast<IDXGIAdapter1*>(adapter));
+    backendContext.fDevice.retain(static_cast<ID3D12Device*>(device));
+    backendContext.fQueue.retain(static_cast<ID3D12CommandQueue*>(queue));
+    backendContext.fProtectedContext = protectedContext ? GrProtected::kYes : GrProtected::kNo;
+    return GrDirectContexts::MakeD3D(backendContext).release();
+#else
+    return nullptr;
+#endif
+}
+
+#if defined(SK_DIRECT3D)
+namespace {
+
+GrD3DTextureResourceInfo skialin_d3d_texture_resource_info(
+    void* resource, uint32_t resourceState, uint32_t format, uint32_t sampleCount, uint32_t levelCount,
+    uint32_t sampleQualityPattern, bool isProtected) {
+    GrD3DTextureResourceInfo info;
+    info.fResource.retain(static_cast<ID3D12Resource*>(resource));
+    info.fResourceState = static_cast<D3D12_RESOURCE_STATES>(resourceState);
+    info.fFormat = static_cast<DXGI_FORMAT>(format);
+    info.fSampleCount = sampleCount;
+    info.fLevelCount = levelCount;
+    info.fSampleQualityPattern = sampleQualityPattern;
+    info.fProtected = isProtected ? skgpu::Protected::kYes : skgpu::Protected::kNo;
+    return info;
+}
+
+} // namespace
+#endif
+
+GrBackendTexture* skialin_bridge_BackendTexture_MakeD3D(
+    int32_t width, int32_t height, void* resource, uint32_t resourceState, uint32_t format, uint32_t sampleCount,
+    uint32_t levelCount, uint32_t sampleQualityPattern, bool isProtected, const char* label, size_t labelLength) {
+#if defined(SK_DIRECT3D)
+    GrD3DTextureResourceInfo info =
+        skialin_d3d_texture_resource_info(resource, resourceState, format, sampleCount, levelCount, sampleQualityPattern, isProtected);
+    std::string_view labelView = label ? std::string_view(label, labelLength) : std::string_view();
+    return new GrBackendTexture(GrBackendTextures::MakeD3D(width, height, info, labelView));
+#else
+    return nullptr;
+#endif
+}
+
+void skialin_bridge_BackendTexture_setD3DResourceState(GrBackendTexture* texture, uint32_t resourceState) {
+#if defined(SK_DIRECT3D)
+    if (texture->backend() == GrBackendApi::kDirect3D) {
+        GrBackendTextures::SetD3DResourceState(texture, static_cast<GrD3DResourceStateEnum>(resourceState));
+    }
+#else
+    (void)texture;
+    (void)resourceState;
+#endif
+}
+
 GrBackendTexture* skialin_bridge_BackendTexture_MakeVk(int32_t width, int32_t height, const GrVkImageInfo* imageInfo, const char* label, size_t labelLength) {
     std::string_view labelView = label ? std::string_view(label, labelLength) : std::string_view();
     return new GrBackendTexture(GrBackendTextures::MakeVk(width, height, *imageInfo, labelView));
@@ -2504,6 +2568,29 @@ bool skialin_bridge_BackendTexture_hasMipmaps(const GrBackendTexture* texture) {
 
 GrBackendRenderTarget* skialin_bridge_BackendRenderTarget_MakeGL(int32_t width, int32_t height, int32_t sampleCnt, int32_t stencilBits, const GrGLFramebufferInfo* glInfo) {
     return new GrBackendRenderTarget(GrBackendRenderTargets::MakeGL(width, height, sampleCnt, stencilBits, *glInfo));
+}
+
+GrBackendRenderTarget* skialin_bridge_BackendRenderTarget_MakeD3D(
+    int32_t width, int32_t height, void* resource, uint32_t resourceState, uint32_t format, uint32_t sampleCount,
+    uint32_t levelCount, uint32_t sampleQualityPattern, bool isProtected) {
+#if defined(SK_DIRECT3D)
+    GrD3DTextureResourceInfo info =
+        skialin_d3d_texture_resource_info(resource, resourceState, format, sampleCount, levelCount, sampleQualityPattern, isProtected);
+    return new GrBackendRenderTarget(GrBackendRenderTargets::MakeD3D(width, height, info));
+#else
+    return nullptr;
+#endif
+}
+
+void skialin_bridge_BackendRenderTarget_setD3DResourceState(GrBackendRenderTarget* renderTarget, uint32_t resourceState) {
+#if defined(SK_DIRECT3D)
+    if (renderTarget->backend() == GrBackendApi::kDirect3D) {
+        GrBackendRenderTargets::SetD3DResourceState(renderTarget, static_cast<GrD3DResourceStateEnum>(resourceState));
+    }
+#else
+    (void)renderTarget;
+    (void)resourceState;
+#endif
 }
 
 GrBackendRenderTarget* skialin_bridge_BackendRenderTarget_MakeVk(int32_t width, int32_t height, const GrVkImageInfo* imageInfo) {
